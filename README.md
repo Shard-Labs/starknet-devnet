@@ -28,6 +28,22 @@ optional arguments:
   --port PORT  the port to listen at; defaults to 5000
 ```
 
+## Run - Docker
+This devnet is available as a Docker container ([shardlabs/starknet-devnet](https://hub.docker.com/repository/docker/shardlabs/starknet-devnet)):
+```text
+docker pull shardlabs/starknet-devnet
+```
+
+The server inside the container listens to the port 5000, which you need to publish to a desired `<PORT>`:
+```text
+docker run -it -p [HOST:]<PORT>:5000 shardlabs/starknet-devnet
+```
+E.g. if you want to use your host machine's `127.0.0.1:5000`, you need to run:
+```text
+docker run -it -p 127.0.0.1:5000:5000 shardlabs/starknet-devnet
+```
+If you don't specify `HOST:`, the server will be available on all of your host machine's addresses (localhost, local network IP, etc.).
+
 ## Important notes
 - Types in call/invoke:
   - You will NOT be able to pass or receive values of type other than `felt` and `felt*`.
@@ -52,7 +68,7 @@ poetry run starknet-devnet
 
 Create `.env` which will hold variables required by the test. See `.env.example` for help.
 ```text
-$ ./test.sh
+./test.sh
 ```
 
 ## Development - Build
