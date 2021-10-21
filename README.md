@@ -63,14 +63,6 @@ If you're a developer willing to contribute, be sure to have installed [Poetry](
 poetry run starknet-devnet
 ```
 
-## Development - Test
-`test.sh` contains a basic test to check if the devnet is working properly.
-
-Create `.env` which will hold variables required by the test. See `.env.example` for help.
-```text
-./test.sh
-```
-
 ## Development - Build
 ```text
 poetry build

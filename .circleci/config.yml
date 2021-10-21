@@ -1,22 +1,63 @@
 version: 2.1
 
+aliases:
+  - &on_master_after_test
+    context: shardlabs
+    filters:
+      branches:
+        only:
+          - master
+    requires:
+      - test
+
 jobs:
-  build_push:
+  test:
+    machine:
+      image: ubuntu-2004:202107-02
+    steps:
+      - checkout
+      - run:
+          name: Install poetry
+          command: pip install poetry
+      - run:
+          name: Install dependencies
+          command: poetry install
+      - run:
+          name: Setup example
+          command: ./scripts/setup-example.sh
+      - run:
+          name: Test CLI
+          command: ./scripts/test-cli.sh
+          environment:
+            CAIRO_PATH: starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract.json
+            ABI_PATH: starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract_abi.json
+      - run:
+          name: Test plugin
+          command: ./scripts/test-plugin.sh
+  package_build_and_publish:
+    docker:
+      - image: cimg/python:3.7
+    steps:
+      - checkout
+      - run: ./scripts/package_build_and_publish.sh
+  image_build_and_push:
     docker:
       - image: cimg/base:2021.04
     steps:
       - checkout
       - setup_remote_docker:
           version: 20.10.7
-      - run: ./build_and_push.sh
+      - run:
+          command: ./scripts/image_build_and_push.sh
+          environment:
+            CONFIG_FILE: pyproject.toml
 
 workflows:
-  version: 2.1
-  build_push:
+  version: 2
+  test_and_publish:
     jobs:
-      - build_push:
-          context: shardlabs
-          filters:
-            branches:
-              only:
-                - master
+      - test
+      - package_build_and_publish:
+          <<: *on_master_after_test
+      - image_build_and_push:
+          <<: *on_master_after_test
