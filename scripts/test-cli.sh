@@ -1,10 +1,14 @@
 #!/bin/bash
+set -e
+
+[ -f .env ] && source .env
 
 trap 'kill $(jobs -p)' EXIT
 
 host=localhost
 port=5000
 poetry run starknet-devnet --host="$host" --port="$port" &
+sleep 1 # give the server some time to get up
 
 GATEWAY_URL="http://$host:$port"
 FEEDER_GATEWAY_URL="http://$host:$port"
