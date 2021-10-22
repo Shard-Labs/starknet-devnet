@@ -2,14 +2,10 @@
 
 trap 'kill $(jobs -p)' EXIT
 
-host=localhost
-port=5000
-poetry run starknet-devnet --host="$host" --port="$port" &
-
-GATEWAY_URL="http://$host:$port"
-FEEDER_GATEWAY_URL="http://$host:$port"
+poetry run starknet-devnet --host=localhost --port=5000 &
 
 cd starknet-hardhat-example
-npx hardhat starknet-compile --starknet-network starknetLocalhost
+# npx hardhat starknet-compile <- Already executed in setup-example.sh
+# starknetLocalhost already defined as localhost:5000
 npx hardhat starknet-deploy --starknet-network starknetLocalhost
 npx hardhat test

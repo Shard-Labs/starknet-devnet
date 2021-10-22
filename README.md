@@ -63,6 +63,32 @@ If you're a developer willing to contribute, be sure to have installed [Poetry](
 poetry run starknet-devnet
 ```
 
+## Development - Test
+When running tests locally, do it from the project root.
+
+Setup an example project by running:
+```text
+./scripts/setup-example.sh
+```
+
+To see if the devnet can interact with starknet CLI commands, run:
+```text
+CONTRACT_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract.json \
+ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract_abi.json \
+./scripts/test-cli.sh
+```
+
+Instead of providing variables in CLI, you can `source` a file holding them:
+```text
+source .env
+./scripts/test-cli.sh
+```
+
+To see if the devnet can interact with the plugin, run:
+```text
+./scripts/test-plugin.sh
+```
+
 ## Development - Build
 ```text
 poetry build

@@ -9,6 +9,16 @@ poetry run starknet-devnet --host="$host" --port="$port" &
 GATEWAY_URL="http://$host:$port"
 FEEDER_GATEWAY_URL="http://$host:$port"
 
+if [ -z "$CONTRACT_PATH" ]; then
+    echo "No CONTRACT_PATH specified"
+    exit 1
+fi
+
+if [ -z "$ABI_PATH" ]; then
+    echo "No ABI_PATH specified"
+    exit 2
+fi
+
 output=$(starknet deploy --contract $CONTRACT_PATH --gateway_url=$GATEWAY_URL)
 deploy_tx_id=$(echo $output | sed -r "s/.*Transaction ID: (\w*).*/\1/")
 address=$(echo $output | sed -r "s/.*Contract address: (\w*).*/\1/")
