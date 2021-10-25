@@ -21,5 +21,6 @@ if [ $(docker_tag_exists $IMAGE $LOCAL_VERSION) = "yes" ]; then
     echo "Pushing skipped"
 else
     docker login --username "$DOCKER_USER" --password "$DOCKER_PASS"
-    docker push $IMAGE --all-tags
+    docker push $IMAGE:$LOCAL_VERSION
+    docker push $IMAGE:latest
 fi

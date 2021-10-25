@@ -42,7 +42,9 @@ E.g. if you want to use your host machine's `127.0.0.1:5000`, you need to run:
 ```text
 docker run -it -p 127.0.0.1:5000:5000 shardlabs/starknet-devnet
 ```
-If you don't specify `HOST:`, the server will be available on all of your host machine's addresses (localhost, local network IP, etc.).
+You may ignore any address-related output logged on container startup (e.g. `Running on all addresses` or `Running on http://172.17.0.2:5000`). What you will use is what you specified with the `-p` flag.
+
+If you don't specify the `HOST` part, the server will indeed be available on all of your host machine's addresses (localhost, local network IP, etc.), which may present a security issue if you don't want anyone from the local network to access your devnet.
 
 ## Important notes
 - Types in call/invoke:
