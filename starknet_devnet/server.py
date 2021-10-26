@@ -87,7 +87,11 @@ async def call_or_invoke(choice, contract_address: str, entry_point_selector: in
     for method_name in contract._abi_function_mapping:
         selector = get_selector_from_name(method_name)
         if selector == entry_point_selector:
-            method = getattr(contract, method_name)
+            try:
+                method = getattr(contract, method_name)
+            except NotImplementedError:
+                msg = f"{method_name} uses a currently not supported feature (such as providing structs)."
+                abort(Response(msg, 400))
             function_abi = contract._abi_function_mapping[method_name]
             break
     else:
