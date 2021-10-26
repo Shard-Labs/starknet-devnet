@@ -41,6 +41,43 @@ def attempt_hex(x):
         pass
     return x
 
+def adapt_calldata(calldata, expected_inputs):
+    last_name = None
+    last_value = None
+    calldata_i = 0
+    adapted_calldata = []
+    for input_entry in expected_inputs:
+        input_name = input_entry["name"]
+        input_type = input_entry["type"]
+        if calldata_i >= len(calldata):
+            abort(400, f"Too few function arguments provided: {len(calldata)}.")
+        input_value = calldata[calldata_i]
+
+        if input_type == "felt*":
+            if last_name != f"{input_name}_len":
+                abort(400, f"Array size argument {last_name} must appear right before {input_name}.")
+
+            arr_length = int(last_value)
+            arr = calldata[calldata_i : calldata_i + arr_length]
+            if len(arr) < arr_length:
+                abort(400, f"Too few function arguments provided: {len(calldata)}.")
+
+            adapted_calldata.pop() # last element was length, it's not needed
+            adapted_calldata.append(arr)
+            calldata_i += arr_length
+
+        elif input_type == "felt":
+            adapted_calldata.append(input_value)
+            calldata_i += 1
+        else:
+            # probably never reached if `getattr(contract, method_name)` is called before
+            abort(400, f"Input type not supported:{input_type}.")
+
+        last_name = input_name
+        last_value = input_value
+
+    return adapted_calldata
+
 async def call_or_invoke(choice, contract_address: str, entry_point_selector: int, calldata: list):
     if (contract_address not in address2contract):
         abort(400, f"No contract at the provided address ({hex(contract_address)})")
@@ -50,11 +87,14 @@ async def call_or_invoke(choice, contract_address: str, entry_point_selector: in
         selector = get_selector_from_name(method_name)
         if selector == entry_point_selector:
             method = getattr(contract, method_name)
+            function_abi = contract._abi_function_mapping[method_name]
             break
     else:
         abort(400, f"Illegal method selector: {entry_point_selector}")
 
-    prepared = method(*calldata)
+    adapted_calldata = adapt_calldata(calldata, function_abi["inputs"])
+
+    prepared = method(*adapted_calldata)
     called = getattr(prepared, choice)
     result = await called()
 
