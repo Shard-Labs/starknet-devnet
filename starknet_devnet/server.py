@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, abort
+from flask.wrappers import Response
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.contract import StarknetContract
@@ -50,17 +51,17 @@ def adapt_calldata(calldata, expected_inputs):
         input_name = input_entry["name"]
         input_type = input_entry["type"]
         if calldata_i >= len(calldata):
-            abort(400, f"Too few function arguments provided: {len(calldata)}.")
+            abort(Response(f"Too few function arguments provided: {len(calldata)}.", 400))
         input_value = calldata[calldata_i]
 
         if input_type == "felt*":
             if last_name != f"{input_name}_len":
-                abort(400, f"Array size argument {last_name} must appear right before {input_name}.")
+                abort(Response(f"Array size argument {last_name} must appear right before {input_name}.", 400))
 
             arr_length = int(last_value)
             arr = calldata[calldata_i : calldata_i + arr_length]
             if len(arr) < arr_length:
-                abort(400, f"Too few function arguments provided: {len(calldata)}.")
+                abort(Response(f"Too few function arguments provided: {len(calldata)}.", 400))
 
             adapted_calldata.pop() # last element was length, it's not needed
             adapted_calldata.append(arr)
@@ -71,7 +72,7 @@ def adapt_calldata(calldata, expected_inputs):
             calldata_i += 1
         else:
             # probably never reached if `getattr(contract, method_name)` is called before
-            abort(400, f"Input type not supported:{input_type}.")
+            abort(Response(f"Input type not supported:{input_type}.", 400))
 
         last_name = input_name
         last_value = input_value
@@ -80,7 +81,7 @@ def adapt_calldata(calldata, expected_inputs):
 
 async def call_or_invoke(choice, contract_address: str, entry_point_selector: int, calldata: list):
     if (contract_address not in address2contract):
-        abort(400, f"No contract at the provided address ({hex(contract_address)})")
+        abort(Response(f"No contract at the provided address ({hex(contract_address)}).", 400))
 
     contract: StarknetContract = address2contract[contract_address]
     for method_name in contract._abi_function_mapping:
@@ -90,7 +91,7 @@ async def call_or_invoke(choice, contract_address: str, entry_point_selector: in
             function_abi = contract._abi_function_mapping[method_name]
             break
     else:
-        abort(400, f"Illegal method selector: {entry_point_selector}")
+        abort(Response(f"Illegal method selector: {entry_point_selector}.", 400))
 
     adapted_calldata = adapt_calldata(calldata, function_abi["inputs"])
 
@@ -122,7 +123,7 @@ async def add_transaction():
             calldata=transaction.calldata
         )
     else:
-        abort(400, f"Invalid tx_type: {tx_type}")
+        abort(Response(f"Invalid tx_type: {tx_type}.", 400))
 
     new_id = len(transactions)
     transaction = {
