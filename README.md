@@ -18,14 +18,15 @@ brew install gmp
 
 ## Run
 ```text
-usage: starknet-devnet [-h] [--host HOST] [--port PORT]
+usage: starknet-devnet [-h] [-v] [--host HOST] [--port PORT]
 
 Run a local instance of Starknet devnet
 
 optional arguments:
-  -h, --help   show this help message and exit
-  --host HOST  the address to listen at; defaults to localhost (use the address the program outputs on start)
-  --port PORT  the port to listen at; defaults to 5000
+  -h, --help            show this help message and exit
+  -v, --version         Print the version
+  --host HOST           Specify the address to listen at; defaults to localhost (use the address the program outputs on start)
+  --port PORT, -p PORT  Specify the port to listen at; defaults to 5000
 ```
 
 ## Run - Docker
@@ -42,7 +43,7 @@ E.g. if you want to use your host machine's `127.0.0.1:5000`, you need to run:
 ```text
 docker run -it -p 127.0.0.1:5000:5000 shardlabs/starknet-devnet
 ```
-You may ignore any address-related output logged on container startup (e.g. `Running on all addresses` or `Running on http://172.17.0.2:5000`). What you will use is what you specified with the `-p` flag.
+You may ignore any address-related output logged on container startup (e.g. `Running on all addresses` or `Running on http://172.17.0.2:5000`). What you will use is what you specified with the `-p` argument.
 
 If you don't specify the `HOST` part, the server will indeed be available on all of your host machine's addresses (localhost, local network IP, etc.), which may present a security issue if you don't want anyone from the local network to access your devnet.
 
