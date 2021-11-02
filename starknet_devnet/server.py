@@ -10,6 +10,7 @@ from .util import TxStatus, parse_args
 
 app = Flask(__name__)
 address2contract = {}
+address2types = {}
 transactions = []
 
 class StarknetWrapper:
@@ -32,8 +33,9 @@ def is_alive():
 async def deploy(contract_definition: ContractDefinition):
     starknet = await starknet_wrapper.get_starknet()
     contract = await starknet.deploy(contract_def=contract_definition)
-    address2contract[contract.contract_address] = contract
-    return contract.contract_address, {}
+    hex_address = hex(contract.contract_address)
+    address2contract[hex_address] = contract
+    return hex_address, {}
 
 def attempt_hex(x):
     try:
@@ -42,7 +44,26 @@ def attempt_hex(x):
         pass
     return x
 
-def adapt_calldata(calldata, expected_inputs):
+def generate_complex(calldata, calldata_i, input_type, types):
+    if input_type == "felt":
+        return calldata[calldata_i], calldata_i + 1
+
+    arr = []
+    if input_type[0] == "(" and input_type[-1] == ")":
+        members = input_type[1:-1].split(", ")
+    else:
+        if input_type not in types:
+            raise ValueError(f"Unsupported type: {input_type}")
+        struct = types[input_type]
+        members = [x["type"] for x in struct["members"]]
+
+    for member in members:
+        generated_complex, calldata_i = generate_complex(calldata, calldata_i, member, types)
+        arr.append(generated_complex)
+
+    return tuple(arr), calldata_i
+
+def adapt_calldata(calldata, expected_inputs, types):
     last_name = None
     last_value = None
     calldata_i = 0
@@ -70,19 +91,32 @@ def adapt_calldata(calldata, expected_inputs):
         elif input_type == "felt":
             adapted_calldata.append(input_value)
             calldata_i += 1
-        else:
-            parse_input_type() # TODO
-            # probably never reached if `getattr(contract, method_name)` is called before
-            abort(Response(f"Input type not supported:{input_type}.", 400))
+
+        else: # struct
+            try:
+                generated_complex, calldata_i = generate_complex(calldata, calldata_i, input_type, types)
+            except ValueError as e:
+                abort(Response(str(e), 400))
+            adapted_calldata.append(generated_complex)
 
         last_name = input_name
         last_value = input_value
 
     return adapted_calldata
 
+def adapt_output(received, ret):
+    if isinstance(received, list):
+        ret.append(hex(len(received)))
+    try:
+        for el in received:
+            adapt_output(el, ret)
+    except TypeError:
+        ret.append(hex(received))
+
 async def call_or_invoke(choice, contract_address: str, entry_point_selector: int, calldata: list):
+    contract_address = hex(contract_address)
     if (contract_address not in address2contract):
-        abort(Response(f"No contract at the provided address ({hex(contract_address)}).", 400))
+        abort(Response(f"No contract at the provided address ({contract_address}).", 400))
 
     contract: StarknetContract = address2contract[contract_address]
     for method_name in contract._abi_function_mapping:
@@ -98,31 +132,58 @@ async def call_or_invoke(choice, contract_address: str, entry_point_selector: in
     else:
         abort(Response(f"Illegal method selector: {entry_point_selector}.", 400))
 
-    adapted_calldata = adapt_calldata(calldata, function_abi["inputs"])
+    types = address2types[contract_address]
+    adapted_calldata = adapt_calldata(calldata, function_abi["inputs"], types)
 
     prepared = method(*adapted_calldata)
     called = getattr(prepared, choice)
     executed = await called()
 
-    return { "result": [attempt_hex(r) for r in executed.result] }
+    adapted_output = []
+    adapt_output(executed.result, adapted_output)
+
+    return { "result": adapted_output }
 
 def is_transaction_hash_legal(transaction_hash: int) -> bool:
     return 0 <= transaction_hash < len(transactions)
+
+def store_types(contract_address: str, abi):
+    structs = [x for x in abi if x["type"] == "struct"]
+    type_dict = { struct["name"]: struct for struct in structs }
+    address2types[contract_address] = type_dict
+
+def store_transaction(contract_address: str, tx_type: str) -> str:
+    new_id = len(transactions)
+    hex_new_id = hex(new_id)
+    transaction = {
+        "block_id": new_id,
+        "block_number": new_id,
+        "status": TxStatus.PENDING.name,
+        "transaction": {
+            "contract_address": contract_address,
+            "type": tx_type
+        },
+        "transaction_hash": hex_new_id,
+        "transaction_index": 0 # always the first (and only) tx in the block
+    }
+    transactions.append(transaction)
+    return hex_new_id
 
 @app.route("/gateway/add_transaction", methods=["POST"])
 async def add_transaction():
     raw_data = request.get_data()
     transaction = Transaction.loads(raw_data)
+    # TODO transaction.calculate_hash()
 
     tx_type = transaction.tx_type.name
     result_dict = {}
     if tx_type == "DEPLOY":
-        # TODO store all types from contract_definition and their sizes
         contract_address, result_dict = await deploy(
             transaction.contract_definition
         )
+        store_types(contract_address, transaction.contract_definition.abi)
     elif tx_type == "INVOKE_FUNCTION":
-        contract_address = transaction.contract_address
+        contract_address = hex(transaction.contract_address)
         result_dict = await call_or_invoke("invoke",
             contract_address=transaction.contract_address,
             entry_point_selector=transaction.entry_point_selector,
@@ -131,26 +192,12 @@ async def add_transaction():
     else:
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
 
-    hex_address = hex(contract_address)
-    new_id = len(transactions)
-    hex_new_id = hex(new_id)
-    transaction = {
-        "block_id": new_id,
-        "block_number": new_id,
-        "status": TxStatus.PENDING.name,
-        "transaction": {
-            "contract_address": hex_address,
-            "type": tx_type
-        },
-        "transaction_hash": hex_new_id,
-        "transaction_index": 0 # always the first (and only) tx in the block
-    }
-    transactions.append(transaction)
+    transaction_hash = store_transaction(contract_address, tx_type)
 
     return jsonify({
         "code": StarkErrorCode.TRANSACTION_RECEIVED.name,
-        "transaction_hash": hex_new_id,
-        "address": hex_address,
+        "transaction_hash": transaction_hash,
+        "address": contract_address,
         **result_dict
     })
 
