@@ -97,7 +97,13 @@ def adapt_calldata(calldata, expected_inputs, types):
         input_name = input_entry["name"]
         input_type = input_entry["type"]
         if calldata_i >= len(calldata):
-            abort(Response(f"Too few function arguments provided: {len(calldata)}.", 400))
+            if input_type == "felt*" and last_name == f"{input_name}_len" and last_value == 0:
+                # This means that an empty array is provided.
+                # Last element was array length (0), it's replaced with the array itself
+                adapted_calldata[-1] = []
+                continue
+            else:
+                abort(Response(f"Too few function arguments provided: {len(calldata)}.", 400))
         input_value = calldata[calldata_i]
 
         if input_type == "felt*":
@@ -109,8 +115,8 @@ def adapt_calldata(calldata, expected_inputs, types):
             if len(arr) < arr_length:
                 abort(Response(f"Too few function arguments provided: {len(calldata)}.", 400))
 
-            adapted_calldata.pop() # last element was length, it's not needed
-            adapted_calldata.append(arr)
+            # last element was array length, it's replaced with the array itself
+            adapted_calldata[-1] = arr
             calldata_i += arr_length
 
         elif input_type == "felt":
