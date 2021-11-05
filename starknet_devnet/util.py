@@ -3,8 +3,24 @@ import argparse
 from . import __version__
 
 class TxStatus(Enum):
+    """
+    According to: https://www.cairo-lang.org/docs/hello_starknet/intro.html#interact-with-the-contract
+    """
+
     PENDING = auto()
+    """The transaction passed the validation and is waiting to be sent on-chain."""
+
     NOT_RECEIVED = auto()
+    """The transaction has not been received yet (i.e., not written to storage"""
+
+    RECEIVED = auto()
+    """The transaction was received by the operator."""
+
+    REJECTED = auto()
+    """The transaction failed validation and thus was skipped."""
+
+    ACCEPTED_ONCHAIN = auto()
+    """The transaction was accepted on-chain."""
 
 
 DEFAULT_HOST = "localhost"
