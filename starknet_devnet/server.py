@@ -49,7 +49,8 @@ async def add_transaction():
                 Choice.INVOKE,
                 contract_address=transaction.contract_address,
                 entry_point_selector=transaction.entry_point_selector,
-                calldata=transaction.calldata
+                calldata=transaction.calldata,
+                signature=transaction.signature
             )
         except StarkException as e:
             error_message = e.message
@@ -90,7 +91,8 @@ async def call_contract():
             Choice.CALL,
             contract_address=call_specifications.contract_address,
             entry_point_selector=call_specifications.entry_point_selector,
-            calldata=call_specifications.calldata
+            calldata=call_specifications.calldata,
+            signature=call_specifications.signature
         )
     except StarkException as e:
         # code 400 would make more sense, but alpha returns 500

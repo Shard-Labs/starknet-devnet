@@ -1,3 +1,5 @@
+from starknet_devnet.util import StarknetDevnetException
+
 def adapt_calldata(calldata, expected_inputs, types):
     """
     Simulatenously iterates over `calldata` and `expected_inputs`.
@@ -23,17 +25,19 @@ def adapt_calldata(calldata, expected_inputs, types):
                 adapted_calldata[-1] = []
                 continue
             else:
-                raise Exception(f"Too few function arguments provided: {len(calldata)}.")
+                message = f"Too few function arguments provided: {len(calldata)}."
+                raise StarknetDevnetException(message=message)
         input_value = calldata[calldata_i]
 
         if input_type == "felt*":
             if last_name != f"{input_name}_len":
-                raise Exception(f"Array size argument {last_name} must appear right before {input_name}.")
+                raise StarknetDevnetException(f"Array size argument {last_name} must appear right before {input_name}.")
 
             arr_length = int(last_value)
             arr = calldata[calldata_i : calldata_i + arr_length]
             if len(arr) < arr_length:
-                raise Exception(f"Too few function arguments provided: {len(calldata)}.")
+                message = f"Too few function arguments provided: {len(calldata)}."
+                raise StarknetDevnetException(message=message)
 
             # last element was array length, it's replaced with the array itself
             adapted_calldata[-1] = arr

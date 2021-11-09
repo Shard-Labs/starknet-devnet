@@ -32,6 +32,12 @@ jobs:
             CONTRACT_PATH: starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract.json
             ABI_PATH: starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract_abi.json
       - run:
+          name: Test CLI with authentication
+          command: ./scripts/test-cli-auth.sh
+          environment:
+            CONTRACT_PATH: starknet-hardhat-example/starknet-artifacts/contracts/auth_contract.cairo/auth_contract.json
+            ABI_PATH: starknet-hardhat-example/starknet-artifacts/contracts/auth_contract.cairo/auth_contract.json
+      - run:
           name: Test plugin
           command: ./scripts/test-plugin.sh
   package_build_and_publish:

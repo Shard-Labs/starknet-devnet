@@ -2,12 +2,12 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 from starkware.starknet.compiler.compile import get_selector_from_name
-from .util import TxStatus
+from .util import StarknetDevnetException, TxStatus
 from .adapt import adapt_output, adapt_calldata
 from typing import List
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.transaction_type import TransactionType
-from enum import Enum, auto
+from enum import Enum
 
 class Choice(Enum):
     CALL = "call"
@@ -58,10 +58,11 @@ class StarknetWrapper:
 
         return hex_address
 
-    async def call_or_invoke(self, choice: Choice, contract_address: str, entry_point_selector: int, calldata: list):
+    async def call_or_invoke(self, choice: Choice, contract_address: str, entry_point_selector: int, calldata: list, signature: List[int]):
         contract_address = hex(contract_address)
         if (contract_address not in self.address2contract):
-            raise Exception(f"No contract at the provided address ({contract_address}).")
+            message = f"No contract at the provided address ({contract_address})."
+            raise StarknetDevnetException(message=message)
 
         contract: StarknetContract = self.address2contract[contract_address]
         for method_name in contract._abi_function_mapping:
@@ -70,18 +71,20 @@ class StarknetWrapper:
                 try:
                     method = getattr(contract, method_name)
                 except NotImplementedError:
-                    raise Exception(f"{method_name} uses a currently not supported feature (such as providing structs).")
+                    message = f"{method_name} uses a currently not supported feature (such as providing structs)."
+                    raise StarknetDevnetException(message=message)
                 function_abi = contract._abi_function_mapping[method_name]
                 break
         else:
-            raise Exception(f"Illegal method selector: {entry_point_selector}.")
+            message = f"Illegal method selector: {entry_point_selector}."
+            raise StarknetDevnetException(message=message)
 
         types = self.address2types[contract_address]
         adapted_calldata = adapt_calldata(calldata, function_abi["inputs"], types)
 
         prepared = method(*adapted_calldata)
         called = getattr(prepared, choice.value)
-        executed = await called()
+        executed = await called(signature=signature)
 
         adapted_output = adapt_output(executed.result)
         return { "result": adapted_output }

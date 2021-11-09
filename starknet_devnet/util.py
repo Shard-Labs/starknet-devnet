@@ -1,5 +1,7 @@
 from enum import Enum, auto
 import argparse
+
+from starkware.starkware_utils.error_handling import StarkException
 from . import __version__
 
 class TxStatus(Enum):
@@ -46,3 +48,7 @@ def parse_args():
     )
 
     return parser.parse_args()
+
+class StarknetDevnetException(StarkException):
+    def __init__(self, code=500, message=None):
+        super().__init__(code=code, message=message)
