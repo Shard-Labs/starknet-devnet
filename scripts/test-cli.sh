@@ -24,12 +24,26 @@ if [ -z "$ABI_PATH" ]; then
 fi
 
 output=$(starknet deploy --contract $CONTRACT_PATH --gateway_url=$GATEWAY_URL)
-deploy_tx_id=$(echo $output | sed -r "s/.*Transaction ID: (\w*).*/\1/")
+deploy_tx_hash=$(echo $output | sed -r "s/.*Transaction hash: (\w*).*/\1/")
 address=$(echo $output | sed -r "s/.*Contract address: (\w*).*/\1/")
 echo "Address: $address"
-echo "tx_id: $deploy_tx_id"
+echo "tx_hash: $deploy_tx_hash"
+
+# inspects status from tx_status object
+deploy_tx_status=$(starknet tx_status --hash $deploy_tx_hash --feeder_gateway_url $FEEDER_GATEWAY_URL | jq ".tx_status" -r)
+if [ "$deploy_tx_status" != "PENDING" ]; then
+    echo "Wrong tx_status: $deploy_tx_status"
+    exit 3
+fi
+
+# inspects status from tx object
+deploy_tx_status2=$(starknet get_transaction --hash $deploy_tx_hash --feeder_gateway_url $FEEDER_GATEWAY_URL | jq ".status" -r)
+if [ "$deploy_tx_status2" != "PENDING" ]; then
+    echo "Wrong status in tx: $deploy_tx_status2"
+    exit 4
+fi
+
 starknet invoke --function increase_balance --inputs 10 20 --address $address --abi $ABI_PATH --gateway_url=$GATEWAY_URL
-#starknet tx_status --id $deploy_tx_id
 result=$(starknet call --function get_balance --address $address --abi $ABI_PATH --feeder_gateway_url=$FEEDER_GATEWAY_URL)
 
 expected=30
@@ -40,5 +54,5 @@ else
     echo "Test failed!"
     echo "Expected: $expected"
     echo "Received: $result"
-    exit 1
+    exit 5
 fi

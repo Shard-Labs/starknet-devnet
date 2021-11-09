@@ -108,7 +108,7 @@ class StarknetWrapper:
         }
 
     def get_transaction(self, transaction_hash: str):
-        transaction_hash_int = int(transaction_hash)
+        transaction_hash_int = int(transaction_hash, 16)
         if self.is_transaction_hash_legal(transaction_hash_int):
             return self.transactions[transaction_hash_int]
         return {
