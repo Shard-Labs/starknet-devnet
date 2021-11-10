@@ -13,20 +13,13 @@ sleep 1 # give the server some time to get up
 GATEWAY_URL="http://$host:$port"
 FEEDER_GATEWAY_URL="http://$host:$port"
 
-if [ -z "$CONTRACT_PATH" ]; then
-    echo "No CONTRACT_PATH specified"
-    exit 1
-fi
-
-if [ -z "$ABI_PATH" ]; then
-    echo "No ABI_PATH specified"
-    exit 1
-fi
+CONTRACT_PATH=starknet-hardhat-example/starknet-artifacts/contracts/auth_contract.cairo/auth_contract.json
+ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/auth_contract.cairo/auth_contract_abi.json
 
 #private_key=12345
 public_key=1628448741648245036800002906075225705100596136133912895015035902954123957052
 
-output=$(starknet deploy --contract $CONTRACT_PATH --gateway_url=$GATEWAY_URL)
+output=$(starknet deploy --contract $CONTRACT_PATH --gateway_url $GATEWAY_URL)
 deploy_tx_hash=$(echo $output | sed -r "s/.*Transaction hash: (\w*).*/\1/")
 address=$(echo $output | sed -r "s/.*Contract address: (\w*).*/\1/")
 echo "Address: $address"
@@ -57,13 +50,13 @@ starknet invoke \
         3568809569741913715045370357918125425757114920266578211811626257903121825123 \
     --address $address \
     --abi $ABI_PATH \
-    --gateway_url=$GATEWAY_URL
+    --gateway_url $GATEWAY_URL
 
 result=$(starknet call \
     --function get_balance \
     --address $address \
     --abi $ABI_PATH \
-    --feeder_gateway_url=$FEEDER_GATEWAY_URL \
+    --feeder_gateway_url $FEEDER_GATEWAY_URL \
     --inputs $public_key
 )
 

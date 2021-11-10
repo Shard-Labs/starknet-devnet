@@ -13,15 +13,8 @@ sleep 1 # give the server some time to get up
 GATEWAY_URL="http://$host:$port"
 FEEDER_GATEWAY_URL="http://$host:$port"
 
-if [ -z "$CONTRACT_PATH" ]; then
-    echo "No CONTRACT_PATH specified"
-    exit 1
-fi
-
-if [ -z "$ABI_PATH" ]; then
-    echo "No ABI_PATH specified"
-    exit 1
-fi
+CONTRACT_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract.json
+ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract_abi.json
 
 output=$(starknet deploy --contract $CONTRACT_PATH --gateway_url=$GATEWAY_URL)
 deploy_tx_hash=$(echo $output | sed -r "s/.*Transaction hash: (\w*).*/\1/")

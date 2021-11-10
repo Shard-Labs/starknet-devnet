@@ -62,7 +62,7 @@ poetry run starknet-devnet
 ```
 
 ## Development - Test
-When running tests locally, do it from the project root. Be sure to create an `.env` file, modeled after `.env.example`.
+When running tests locally, do it from the project root.
 
 Setup an example project by running:
 ```text
