@@ -18,8 +18,12 @@ ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/auth_contract.cai
 
 #private_key=12345
 public_key=1628448741648245036800002906075225705100596136133912895015035902954123957052
-
-output=$(starknet deploy --contract $CONTRACT_PATH --gateway_url $GATEWAY_URL)
+initial_balance=1000
+output=$(starknet deploy \
+    --contract $CONTRACT_PATH \
+    --inputs $public_key $initial_balance \
+    --gateway_url $GATEWAY_URL
+)
 deploy_tx_hash=$(echo $output | sed -r "s/.*Transaction hash: (\w*).*/\1/")
 address=$(echo $output | sed -r "s/.*Contract address: (\w*).*/\1/")
 echo "Address: $address"
@@ -42,9 +46,7 @@ fi
 input_value=4321
 starknet invoke \
     --function increase_balance \
-    --inputs \
-        $public_key \
-        $input_value \
+    --inputs $public_key $input_value \
     --signature \
         1225578735933442828068102633747590437426782890965066746429241472187377583468 \
         3568809569741913715045370357918125425757114920266578211811626257903121825123 \
@@ -60,7 +62,7 @@ result=$(starknet call \
     --inputs $public_key
 )
 
-if [ "$result" == "$input_value" ]; then
+if [ "$result" == 5321 ]; then
     echo "Success!"
 else
     echo "Test failed!"

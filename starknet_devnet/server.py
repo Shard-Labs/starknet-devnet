@@ -29,14 +29,15 @@ async def add_transaction():
     result_dict = {}
 
     if tx_type == TransactionType.DEPLOY.name:
-        transaction: Deploy = transaction
+        deploy_transaction: Deploy = transaction
 
         contract_address = await starknet_wrapper.deploy(
-            transaction.contract_definition,
+            contract_definition=deploy_transaction.contract_definition,
+            constructor_calldata=deploy_transaction.constructor_calldata
         )
         transaction_hash = starknet_wrapper.store_deploy_transaction(
             contract_address=contract_address,
-            constructor_calldata=transaction.constructor_calldata
+            constructor_calldata=deploy_transaction.constructor_calldata
         )
 
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:

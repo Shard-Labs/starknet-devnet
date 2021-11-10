@@ -41,15 +41,17 @@ class StarknetWrapper:
         type_dict = { struct["name"]: struct for struct in structs }
         self.address2types[contract_address] = type_dict
 
-    # TODO constructor_calldata
-    async def deploy(self, contract_definition: ContractDefinition):
+    async def deploy(self, contract_definition: ContractDefinition, constructor_calldata):
         """
         Deploys the contract whose definition is provided and returns deployment address in hex form.
         The other returned object is present to conform to a past version of call_or_invoke, but will be removed in future versions.
         """
 
         starknet = await self.get_starknet()
-        contract = await starknet.deploy(contract_def=contract_definition)
+        contract = await starknet.deploy(
+            contract_def=contract_definition,
+            constructor_calldata=constructor_calldata
+        )
 
         hex_address = hex(contract.contract_address)
         self.address2contract[hex_address] = contract
@@ -129,7 +131,7 @@ class StarknetWrapper:
             "transaction": {
                 "constructor_calldata": constructor_calldata,
                 "contract_address": contract_address,
-                # TODO contract_address_salt
+                # contract_address_salt
                 "transaction_hash": hex_new_id,
                 "type": TransactionType.DEPLOY.name
             },
@@ -150,7 +152,7 @@ class StarknetWrapper:
                 "calldata": calldata, # TODO str(arg) for arg in calldata
                 "contract_address": contract_address,
                 "entry_point_selector": entry_point_selector,
-                # TODO entry_point_type
+                # entry_point_type
                 "transaction_hash": hex_new_id,
                 "type": TransactionType.INVOKE_FUNCTION.name,
             },
