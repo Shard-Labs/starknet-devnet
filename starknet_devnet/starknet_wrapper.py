@@ -2,6 +2,7 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 from starkware.starknet.compiler.compile import get_selector_from_name
+from starkware.starknet.testing.state import CastableToAddressSalt
 from .util import StarknetDevnetException, TxStatus
 from .adapt import adapt_output, adapt_calldata
 from typing import List
@@ -31,6 +32,11 @@ class StarknetWrapper:
             self.starknet = await Starknet.empty()
         return self.starknet
 
+    async def get_state(self):
+        if not self.starknet:
+            self.starknet = await Starknet.empty()
+        return self.starknet.state.general_config
+
     def store_types(self, contract_address: str, abi):
         """
         Stores the types (structs) used in a contract.
@@ -41,7 +47,7 @@ class StarknetWrapper:
         type_dict = { struct["name"]: struct for struct in structs }
         self.address2types[contract_address] = type_dict
 
-    async def deploy(self, contract_definition: ContractDefinition, constructor_calldata):
+    async def deploy(self, contract_definition: ContractDefinition, contract_address_salt: CastableToAddressSalt, constructor_calldata: List[int]):
         """
         Deploys the contract whose definition is provided and returns deployment address in hex form.
         The other returned object is present to conform to a past version of call_or_invoke, but will be removed in future versions.
@@ -50,7 +56,8 @@ class StarknetWrapper:
         starknet = await self.get_starknet()
         contract = await starknet.deploy(
             contract_def=contract_definition,
-            constructor_calldata=constructor_calldata
+            constructor_calldata=constructor_calldata,
+            contract_address_salt=contract_address_salt
         )
 
         hex_address = hex(contract.contract_address)
@@ -121,7 +128,7 @@ class StarknetWrapper:
             "transaction_hash": transaction_hash
         }
 
-    def store_deploy_transaction(self, contract_address: str, constructor_calldata: List[str]) -> str:
+    def store_deploy_transaction(self, contract_address: str, constructor_calldata: List[str], status: TxStatus, error_message=None) -> str:
         new_id = len(self.transactions)
         hex_new_id = hex(new_id)
         transaction = {
@@ -138,6 +145,14 @@ class StarknetWrapper:
             "transaction_hash": hex_new_id,
             "transaction_index": 0 # always the first (and only) tx in the block
         }
+
+        if status == TxStatus.REJECTED:
+            transaction["transaction_failure_reason"] = {
+                "code": StarknetErrorCode.TRANSACTION_FAILED.name,
+                "error_message": error_message,
+                "tx_id": new_id
+            }
+
         self.transactions.append(transaction)
         return hex_new_id
 
