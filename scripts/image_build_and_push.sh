@@ -10,7 +10,7 @@ function docker_tag_exists() {
 }
 
 IMAGE=shardlabs/starknet-devnet
-LOCAL_VERSION=$(./scripts/get-version.sh)
+LOCAL_VERSION=$(./scripts/get-version.sh version)
 echo "Local version: $LOCAL_VERSION"
 
 # Building is executed regardless of versions

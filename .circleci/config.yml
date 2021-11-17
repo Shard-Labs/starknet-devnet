@@ -17,8 +17,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install poetry and cairo-lang
-          command: pip3 install poetry cairo-lang==0.5.2
+          name: Install development tools
+          command: ./scripts/install-dev-tools.sh
       - run:
           name: Install dependencies
           command: poetry install
