@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, abort
 from flask.wrappers import Response
+from flask_cors import CORS
 from starkware.starknet.services.api.gateway.transaction import Deploy, InvokeFunction, Transaction
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
@@ -7,6 +8,7 @@ from .util import TxStatus, parse_args
 from .starknet_wrapper import Choice, StarknetWrapper
 
 app = Flask(__name__)
+CORS(app)
 
 starknet_wrapper = StarknetWrapper()
 
