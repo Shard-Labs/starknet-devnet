@@ -1,10 +1,15 @@
 ## Introduction
-A Flask wrapper of Starknet dummy network. Similar in purpose to Ganache.
+A Flask wrapper of Starknet state. Similar in purpose to Ganache.
+
+Aims to mimic Starknet's Alpha testnet, but is not guaranteed to have the same functionality. After testing on devnet, be sure to test on testnet!
 
 ## Install
 ```text
 pip install starknet-devnet
 ```
+
+## Requirements
+Works with Python versions <=3.9.7.
 
 On Ubuntu/Debian, first run:
 ```text
@@ -17,6 +22,7 @@ brew install gmp
 ```
 
 ## Run
+Installing the package adds the `starknet-devnet` command.
 ```text
 usage: starknet-devnet [-h] [-v] [--host HOST] [--port PORT]
 
