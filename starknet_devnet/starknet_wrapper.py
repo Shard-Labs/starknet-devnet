@@ -65,8 +65,6 @@ class StarknetWrapper:
 
         self.store_types(hex_address, contract_definition.abi)
 
-        return hex_address
-
     async def call_or_invoke(self, choice: Choice, contract_address: str, entry_point_selector: int, calldata: list, signature: List[int]):
         contract_address = hex(contract_address)
         if (contract_address not in self.address2contract):

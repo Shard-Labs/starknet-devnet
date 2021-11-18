@@ -7,6 +7,7 @@ from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
 from .util import TxStatus, parse_args
 from .starknet_wrapper import Choice, StarknetWrapper
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -161,6 +162,9 @@ def get_transaction():
     return jsonify(ret)
 
 def main():
+    # suppress startup logging
+    os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+
     args = parse_args()
     app.run(**vars(args))
 
