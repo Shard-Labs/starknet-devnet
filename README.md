@@ -1,7 +1,7 @@
 ## Introduction
 A Flask wrapper of Starknet state. Similar in purpose to Ganache.
 
-Aims to mimic Starknet's Alpha testnet, but is not guaranteed to have the same functionality. After testing on devnet, be sure to test on testnet!
+Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 
 ## Install
 ```text
@@ -20,6 +20,10 @@ On Mac, you can use `brew`:
 ```text
 brew install gmp
 ```
+
+## Disclaimer
+- This devnet should not be used as a replacement for Alpha testnet. After testing on devnet, be sure to test on testnet!
+- Hash calculation of transactions and blocks differs from the one used in Alpha testnet.
 
 ## Run
 Installing the package adds the `starknet-devnet` command.
