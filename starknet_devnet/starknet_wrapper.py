@@ -108,8 +108,8 @@ class StarknetWrapper:
                 "tx_status": transaction["status"]
             }
 
-            if "block_id" in transaction:
-                ret["block_id"] = transaction["block_id"]
+            if "block_hash" in transaction:
+                ret["block_hash"] = transaction["block_hash"]
 
             return ret
 
@@ -130,7 +130,7 @@ class StarknetWrapper:
         new_id = len(self.transactions)
         hex_new_id = hex(new_id)
         transaction = {
-            "block_id": new_id,
+            "block_hash": hex_new_id,
             "block_number": new_id,
             "status": status.name,
             "transaction": {
@@ -157,7 +157,7 @@ class StarknetWrapper:
         new_id = len(self.transactions)
         hex_new_id = hex(new_id)
         transaction = {
-            "block_id": new_id,
+            "block_hash": hex_new_id,
             "block_number": new_id,
             "status": status.name,
             "transaction": {

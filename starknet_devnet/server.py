@@ -117,14 +117,14 @@ async def call_contract():
 
 @app.route("/feeder_gateway/get_block", methods=["GET"])
 def get_block():
-    block_id = request.args.get("blockId", type=int)
-    print(block_id)
+    block_hash = request.args.get("blockHash", type=int)
+    print(block_hash)
     return "Not implemented", 501
 
 @app.route("/feeder_gateway/get_code", methods=["GET"])
 def get_code():
-    block_id = request.args.get("blockId", type=int)
-    print(block_id)
+    block_hash = request.args.get("blockHash", type=int)
+    print(block_hash)
 
     contract_address = request.args.get("contractAddress", type=int)
     print(contract_address)
@@ -138,8 +138,8 @@ def get_storage_at():
     key = request.args.get("key")
     print(key)
 
-    block_id = request.args.get("blockId", type=int)
-    print(block_id)
+    block_hash = request.args.get("blockHash", type=int)
+    print(block_hash)
     return "Not implemented", 501
 
 @app.route("/feeder_gateway/get_transaction_status", methods=["GET"])
