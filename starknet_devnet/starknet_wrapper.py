@@ -126,21 +126,20 @@ class StarknetWrapper:
             "transaction_hash": transaction_hash
         }
 
-    def store_deploy_transaction(self, contract_address: str, constructor_calldata: List[str], status: TxStatus, error_message=None) -> str:
+    def store_deploy_transaction(self, contract_address: str, calldata: List[str], salt: str, status: TxStatus, error_message=None) -> str:
         new_id = len(self.transactions)
         hex_new_id = hex(new_id)
         transaction = {
             "block_id": new_id,
             "block_number": new_id,
-            "status": TxStatus.PENDING.name,
+            "status": status.name,
             "transaction": {
-                "constructor_calldata": constructor_calldata,
+                "constructor_calldata": calldata,
                 "contract_address": contract_address,
-                # contract_address_salt
+                "contract_address_salt": salt,
                 "transaction_hash": hex_new_id,
                 "type": TransactionType.DEPLOY.name
             },
-            "transaction_hash": hex_new_id,
             "transaction_index": 0 # always the first (and only) tx in the block
         }
 
@@ -154,7 +153,7 @@ class StarknetWrapper:
         self.transactions.append(transaction)
         return hex_new_id
 
-    def store_invoke_transaction(self, contract_address: str, calldata: List[str], entry_point_selector: str, status: TxStatus, error_message=None) -> str:
+    def store_invoke_transaction(self, contract_address: str, calldata: List[str], entry_point_selector: str, status: TxStatus, error_message: str=None) -> str:
         new_id = len(self.transactions)
         hex_new_id = hex(new_id)
         transaction = {
@@ -162,14 +161,13 @@ class StarknetWrapper:
             "block_number": new_id,
             "status": status.name,
             "transaction": {
-                "calldata": calldata, # TODO str(arg) for arg in calldata
+                "calldata": [str(arg) for arg in calldata],
                 "contract_address": contract_address,
                 "entry_point_selector": entry_point_selector,
                 # entry_point_type
                 "transaction_hash": hex_new_id,
                 "type": TransactionType.INVOKE_FUNCTION.name,
             },
-            "transaction_hash": hex_new_id,
             "transaction_index": 0 # always the first (and only) tx in the block
         }
 

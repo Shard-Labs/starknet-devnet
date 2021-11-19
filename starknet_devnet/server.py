@@ -50,7 +50,8 @@ async def add_transaction():
 
         transaction_hash = starknet_wrapper.store_deploy_transaction(
             contract_address=contract_address,
-            constructor_calldata=deploy_transaction.constructor_calldata,
+            calldata=deploy_transaction.constructor_calldata,
+            salt=deploy_transaction.contract_address_salt,
             status=status,
             error_message=error_message
         )
@@ -162,7 +163,7 @@ def get_transaction():
     return jsonify(ret)
 
 def main():
-    # suppress startup logging
+    # reduce startup logging
     os.environ['WERKZEUG_RUN_MAIN'] = 'true'
 
     args = parse_args()
