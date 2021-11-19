@@ -162,6 +162,14 @@ def get_transaction():
     ret = starknet_wrapper.get_transaction(transaction_hash)
     return jsonify(ret)
 
+@app.route("/feeder_gateway/get_transaction_receipt", methods=["GET"])
+def get_transaction_receipt():
+    """
+    Returns the transaction receipt identified by the transactionHash argument in the GET request.
+    """
+
+    return "Not implemented", 501
+
 def main():
     # reduce startup logging
     os.environ['WERKZEUG_RUN_MAIN'] = 'true'
