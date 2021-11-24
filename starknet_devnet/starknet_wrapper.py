@@ -111,6 +111,10 @@ class StarknetWrapper:
             if "block_hash" in transaction:
                 ret["block_hash"] = transaction["block_hash"]
 
+            failure_key = "transaction_failure_reason"
+            if failure_key in transaction:
+                ret[failure_key] = transaction[failure_key]
+
             return ret
 
         return {
@@ -126,47 +130,17 @@ class StarknetWrapper:
             "transaction_hash": transaction_hash
         }
 
-    def store_deploy_transaction(self, contract_address: str, calldata: List[str], salt: str, status: TxStatus, error_message=None) -> str:
+    def store_transaction(self, contract_address: str, status: TxStatus, error_message: str=None, **transaction_details: dict):
         new_id = len(self.transactions)
         hex_new_id = hex(new_id)
+
         transaction = {
-            "block_hash": hex_new_id,
-            "block_number": new_id,
             "status": status.name,
             "transaction": {
-                "constructor_calldata": calldata,
                 "contract_address": contract_address,
-                "contract_address_salt": salt,
-                "transaction_hash": hex_new_id,
-                "type": TransactionType.DEPLOY.name
-            },
-            "transaction_index": 0 # always the first (and only) tx in the block
-        }
-
-        if status == TxStatus.REJECTED:
-            transaction["transaction_failure_reason"] = {
-                "code": StarknetErrorCode.TRANSACTION_FAILED.name,
-                "error_message": error_message,
-                "tx_id": new_id
-            }
-
-        self.transactions.append(transaction)
-        return hex_new_id
-
-    def store_invoke_transaction(self, contract_address: str, calldata: List[str], entry_point_selector: str, status: TxStatus, error_message: str=None) -> str:
-        new_id = len(self.transactions)
-        hex_new_id = hex(new_id)
-        transaction = {
-            "block_hash": hex_new_id,
-            "block_number": new_id,
-            "status": status.name,
-            "transaction": {
-                "calldata": [str(arg) for arg in calldata],
-                "contract_address": contract_address,
-                "entry_point_selector": entry_point_selector,
-                # entry_point_type
                 "transaction_hash": hex_new_id,
                 "type": TransactionType.INVOKE_FUNCTION.name,
+                **transaction_details
             },
             "transaction_index": 0 # always the first (and only) tx in the block
         }
@@ -177,6 +151,28 @@ class StarknetWrapper:
                 "error_message": error_message,
                 "tx_id": new_id
             }
+        else:
+            transaction["block_hash"] = hex_new_id
+            transaction["block_number"] = new_id
 
         self.transactions.append(transaction)
         return hex_new_id
+
+    def store_deploy_transaction(self, contract_address: str, calldata: List[str], salt: str, status: TxStatus, error_message: str=None) -> str:
+        return self.store_transaction(
+            contract_address,
+            status,
+            error_message,
+            constructor_calldata=calldata,
+            contract_address_salt=salt
+        )
+
+    def store_invoke_transaction(self, contract_address: str, calldata: List[str], entry_point_selector: str, status: TxStatus, error_message: str=None) -> str:
+        return self.store_transaction(
+            contract_address,
+            status,
+            error_message,
+            calldata=calldata,
+            entry_point_selector=entry_point_selector,
+            # entry_point_type
+        )
