@@ -26,9 +26,14 @@ async def add_transaction():
     Endpoint for accepting DEPLOY and INVOKE_FUNCTION transactions.
     """
 
-    state = await starknet_wrapper.get_state()
     raw_data = request.get_data()
-    transaction = Transaction.loads(raw_data)
+    try:
+        transaction = Transaction.loads(raw_data)
+    except TypeError as e:
+        msg = "Invalid transaction format. Try recompiling your contract with a newer version."
+        abort(Response(msg, 400))
+
+    state = await starknet_wrapper.get_state()
 
     tx_type = transaction.tx_type.name
     result_dict = {}
