@@ -4,6 +4,7 @@ set -e
 trap 'kill $(jobs -p)' EXIT
 
 poetry run starknet-devnet --host=localhost --port=5000 &
+GATEWAY_URL=http://localhost:5000
 sleep 1 # give the server some time to get up
 
 function extract_address () {
@@ -15,7 +16,7 @@ function call_wrapper() {
     starknet call \
         --abi starknet-artifacts/contracts/contract.cairo/contract_abi.json \
         --address $ADDRESS \
-        --starknet-network devnet \
+        --feeder_gateway_url $GATEWAY_URL \
         --func get_balance
 }
 
@@ -37,5 +38,6 @@ npx hardhat starknet-deploy \
 | extract_address \
 | call_wrapper \
 | result_assertion
+echo "Finished deploy-call procedure"
 
 npx hardhat test
