@@ -170,3 +170,9 @@ class StarknetWrapper:
             "abi": {},
             "bytecode": []
         }
+
+    async def get_storage_at(self, contract_address: str, key: int) -> str:
+        state_wrapper = await self.get_state()
+        state = state_wrapper.state.contract_states[contract_address]
+        ## TODO handle if address not present, then test
+        state.state.get(key)

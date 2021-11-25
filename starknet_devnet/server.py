@@ -143,15 +143,14 @@ def get_code():
     return jsonify(result_dict)
 
 @app.route("/feeder_gateway/get_storage_at", methods=["GET"])
-def get_storage_at():
+async def get_storage_at():
     check_block_hash(request.args)
 
-    contract_address = request.args.get("contractAddress", type=int)
-    print(contract_address)
+    contract_address = request.args.get("contractAddress", type=fixed_length_hex)
+    key = request.args.get("key", type=int)
 
-    key = request.args.get("key")
-    print(key)
-    return "Not implemented", 501
+    storage = await starknet_wrapper.get_storage_at(contract_address, key)
+    return jsonify(storage)
 
 @app.route("/feeder_gateway/get_transaction_status", methods=["GET"])
 def get_transaction_status():
