@@ -125,7 +125,6 @@ class StarknetWrapper:
             "transaction": {
                 "contract_address": contract_address,
                 "transaction_hash": hex_new_id,
-                "type": TransactionType.INVOKE_FUNCTION.name,
                 **transaction_details
             },
             "transaction_index": 0 # always the first (and only) tx in the block
@@ -149,6 +148,7 @@ class StarknetWrapper:
             contract_address,
             status,
             error_message,
+            type=TransactionType.DEPLOY.name,
             constructor_calldata=calldata,
             contract_address_salt=salt
         )
@@ -158,6 +158,7 @@ class StarknetWrapper:
             contract_address,
             status,
             error_message,
+            type=TransactionType.INVOKE_FUNCTION.name,
             calldata=calldata,
             entry_point_selector=entry_point_selector,
             # entry_point_type
