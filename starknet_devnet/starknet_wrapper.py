@@ -2,7 +2,7 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 from starkware.starknet.compiler.compile import get_selector_from_name
 from starkware.starknet.testing.state import CastableToAddressSalt
-from .util import StarknetDevnetException, TxStatus
+from .util import StarknetDevnetException, TxStatus, fixed_length_hex
 from .adapt import adapt_output, adapt_calldata
 from .contract_wrapper import ContractWrapper
 from typing import List, Dict
@@ -47,11 +47,11 @@ class StarknetWrapper:
             contract_address_salt=contract_address_salt
         )
 
-        hex_address = hex(contract.contract_address)
-        self.address2contract_wrapper[hex_address] = ContractWrapper(contract, contract_definition)
+        address = fixed_length_hex(contract.contract_address)
+        self.address2contract_wrapper[address] = ContractWrapper(contract, contract_definition)
 
     async def call_or_invoke(self, choice: Choice, contract_address: str, entry_point_selector: int, calldata: list, signature: List[int]):
-        contract_address = hex(contract_address)
+        contract_address = fixed_length_hex(contract_address)
         if (contract_address not in self.address2contract_wrapper):
             message = f"No contract at the provided address ({contract_address})."
             raise StarknetDevnetException(message=message)
