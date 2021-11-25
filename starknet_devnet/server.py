@@ -42,7 +42,7 @@ async def add_transaction():
     error_message = None
 
     if tx_type == TransactionType.DEPLOY.name:
-        deploy_transaction: InternalDeploy = InternalDeploy.from_external(transaction, state)
+        deploy_transaction: InternalDeploy = InternalDeploy.from_external(transaction, state.general_config)
         contract_address = hex(deploy_transaction.contract_address)
         try:
             await starknet_wrapper.deploy(

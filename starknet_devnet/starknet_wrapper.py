@@ -1,5 +1,4 @@
 from starkware.starknet.testing.starknet import Starknet
-from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 from starkware.starknet.compiler.compile import get_selector_from_name
 from starkware.starknet.testing.state import CastableToAddressSalt
@@ -33,7 +32,7 @@ class StarknetWrapper:
     async def get_state(self):
         if not self.starknet:
             self.starknet = await Starknet.empty()
-        return self.starknet.state.general_config
+        return self.starknet.state
 
     async def deploy(self, contract_definition: ContractDefinition, contract_address_salt: CastableToAddressSalt, constructor_calldata: List[int]):
         """
