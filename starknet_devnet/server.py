@@ -2,9 +2,10 @@ from flask import Flask, request, jsonify, abort
 from flask.wrappers import Response
 from flask_cors import CORS
 from starkware.starknet.business_logic.internal_transaction import InternalDeploy
-from starkware.starknet.services.api.gateway.transaction import Deploy, InvokeFunction, Transaction
+from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Transaction
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
+from werkzeug.datastructures import MultiDict
 from .util import TxStatus, parse_args
 from .starknet_wrapper import Choice, StarknetWrapper
 import os
@@ -120,31 +121,36 @@ async def call_contract():
 
     return jsonify(result_dict)
 
+def check_block_hash(request_args: MultiDict[str, str]):
+    block_hash = request_args.get("blockHash", type=int)
+    if block_hash is not None:
+        print("Specifying a block by its hash is not supported. All interaction is done with the latest block.")
+
 @app.route("/feeder_gateway/get_block", methods=["GET"])
 def get_block():
-    block_hash = request.args.get("blockHash", type=int)
-    print(block_hash)
+    check_block_hash(request.args)
     return "Not implemented", 501
 
 @app.route("/feeder_gateway/get_code", methods=["GET"])
 def get_code():
-    block_hash = request.args.get("blockHash", type=int)
-    print(block_hash)
+    """
+    Returns the ABI and bytecode of the contract whose contractAddress is provided.
+    """
+    check_block_hash(request.args)
 
-    contract_address = request.args.get("contractAddress", type=int)
-    print(contract_address)
-    return "Not implemented", 501
+    contract_address = request.args.get("contractAddress")
+    result_dict = starknet_wrapper.get_code(contract_address)
+    return jsonify(result_dict)
 
 @app.route("/feeder_gateway/get_storage_at", methods=["GET"])
 def get_storage_at():
+    check_block_hash(request.args)
+
     contract_address = request.args.get("contractAddress", type=int)
     print(contract_address)
 
     key = request.args.get("key")
     print(key)
-
-    block_hash = request.args.get("blockHash", type=int)
-    print(block_hash)
     return "Not implemented", 501
 
 @app.route("/feeder_gateway/get_transaction_status", methods=["GET"])

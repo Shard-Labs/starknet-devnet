@@ -16,6 +16,7 @@ FEEDER_GATEWAY_URL="http://$host:$port"
 CONTRACT_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract.json
 ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract_abi.json
 
+# deploy the contract
 output=$(starknet deploy \
     --contract $CONTRACT_PATH \
     --inputs 0 \
@@ -40,6 +41,14 @@ if [ "$deploy_tx_status2" != "PENDING" ]; then
     exit 2
 fi
 
+# check code
+code_result_file=$(mktemp)
+code_expected_file=scripts/code.expected.json
+starknet get_code --contract_address $address --feeder_gateway_url=$FEEDER_GATEWAY_URL > "$code_result_file"
+diff "$code_result_file" "$code_expected_file"
+rm "$code_result_file"
+
+# increase and get balance
 starknet invoke --function increase_balance --inputs 10 20 --address $address --abi $ABI_PATH --gateway_url=$GATEWAY_URL
 result=$(starknet call --function get_balance --address $address --abi $ABI_PATH --feeder_gateway_url=$FEEDER_GATEWAY_URL)
 

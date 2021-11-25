@@ -5,7 +5,8 @@ from starkware.starknet.compiler.compile import get_selector_from_name
 from starkware.starknet.testing.state import CastableToAddressSalt
 from .util import StarknetDevnetException, TxStatus
 from .adapt import adapt_output, adapt_calldata
-from typing import List
+from .contract_wrapper import ContractWrapper
+from typing import List, Dict
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.transaction_type import TransactionType
 from enum import Enum
@@ -16,11 +17,8 @@ class Choice(Enum):
 
 class StarknetWrapper:
     def __init__(self):
-        self.address2contract = {}
-        """Maps contract address to contract instance."""
-
-        self.address2types = {}
-        """Maps contract address to a dict of types (structs) used in that contract."""
+        self.address2contract_wrapper: Dict[str, ContractWrapper] = {}
+        """Maps contract address to contract wrapper."""
 
         self.transactions = []
         """A chronological list of transactions."""
@@ -37,16 +35,6 @@ class StarknetWrapper:
             self.starknet = await Starknet.empty()
         return self.starknet.state.general_config
 
-    def store_types(self, contract_address: str, abi):
-        """
-        Stores the types (structs) used in a contract.
-        The types are read from `abi`, and stored to a global map under the key `contract_address` which is expected to be a hex string.
-        """
-
-        structs = [entry for entry in abi if entry["type"] == "struct"]
-        type_dict = { struct["name"]: struct for struct in structs }
-        self.address2types[contract_address] = type_dict
-
     async def deploy(self, contract_definition: ContractDefinition, contract_address_salt: CastableToAddressSalt, constructor_calldata: List[int]):
         """
         Deploys the contract whose definition is provided and returns deployment address in hex form.
@@ -61,17 +49,15 @@ class StarknetWrapper:
         )
 
         hex_address = hex(contract.contract_address)
-        self.address2contract[hex_address] = contract
-
-        self.store_types(hex_address, contract_definition.abi)
+        self.address2contract_wrapper[hex_address] = ContractWrapper(contract, contract_definition)
 
     async def call_or_invoke(self, choice: Choice, contract_address: str, entry_point_selector: int, calldata: list, signature: List[int]):
         contract_address = hex(contract_address)
-        if (contract_address not in self.address2contract):
+        if (contract_address not in self.address2contract_wrapper):
             message = f"No contract at the provided address ({contract_address})."
             raise StarknetDevnetException(message=message)
 
-        contract: StarknetContract = self.address2contract[contract_address]
+        contract = self.address2contract_wrapper[contract_address].contract
         for method_name in contract._abi_function_mapping:
             selector = get_selector_from_name(method_name)
             if selector == entry_point_selector:
@@ -86,7 +72,7 @@ class StarknetWrapper:
             message = f"Illegal method selector: {entry_point_selector}."
             raise StarknetDevnetException(message=message)
 
-        types = self.address2types[contract_address]
+        types = self.address2contract_wrapper[contract_address].types
         adapted_calldata = adapt_calldata(calldata, function_abi["inputs"], types)
 
         prepared = method(*adapted_calldata)
@@ -176,3 +162,11 @@ class StarknetWrapper:
             entry_point_selector=entry_point_selector,
             # entry_point_type
         )
+
+    def get_code(self, contract_address: str) -> dict:
+        if contract_address in self.address2contract_wrapper:
+            return self.address2contract_wrapper[contract_address].code
+        return {
+            "abi": {},
+            "bytecode": []
+        }
