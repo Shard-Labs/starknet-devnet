@@ -6,7 +6,7 @@ from starkware.starknet.services.api.gateway.transaction import InvokeFunction, 
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
 from werkzeug.datastructures import MultiDict
-from .util import TxStatus, fixed_length_hex, parse_args
+from .util import StarknetDevnetException, TxStatus, custom_int, fixed_length_hex, parse_args
 from .starknet_wrapper import Choice, StarknetWrapper
 import os
 
@@ -30,7 +30,7 @@ async def add_transaction():
     raw_data = request.get_data()
     try:
         transaction = Transaction.loads(raw_data)
-    except TypeError as e:
+    except TypeError:
         msg = "Invalid transaction format. Try recompiling your contract with a newer version."
         abort(Response(msg, 400))
 
@@ -43,7 +43,7 @@ async def add_transaction():
 
     if tx_type == TransactionType.DEPLOY.name:
         deploy_transaction: InternalDeploy = InternalDeploy.from_external(transaction, state.general_config)
-        contract_address = fixed_length_hex(deploy_transaction.contract_address)
+        contract_address = deploy_transaction.contract_address
         try:
             await starknet_wrapper.deploy(
                 contract_definition=deploy_transaction.contract_definition,
@@ -64,11 +64,11 @@ async def add_transaction():
 
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:
         transaction: InvokeFunction = transaction
-        contract_address = fixed_length_hex(transaction.contract_address)
+        contract_address = transaction.contract_address
         try:
             result_dict = await starknet_wrapper.call_or_invoke(
                 Choice.INVOKE,
-                contract_address=transaction.contract_address,
+                contract_address=contract_address,
                 entry_point_selector=transaction.entry_point_selector,
                 calldata=transaction.calldata,
                 signature=transaction.signature
@@ -91,7 +91,7 @@ async def add_transaction():
     return jsonify({
         "code": StarkErrorCode.TRANSACTION_RECEIVED.name,
         "transaction_hash": transaction_hash,
-        "address": contract_address,
+        "address": fixed_length_hex(contract_address),
         **result_dict
     })
 
@@ -122,7 +122,7 @@ async def call_contract():
     return jsonify(result_dict)
 
 def check_block_hash(request_args: MultiDict[str, str]):
-    block_hash = request_args.get("blockHash", type=fixed_length_hex)
+    block_hash = request_args.get("blockHash", type=custom_int)
     if block_hash is not None:
         print("Specifying a block by its hash is not supported. All interaction is done with the latest block.")
 
@@ -138,7 +138,7 @@ def get_code():
     """
     check_block_hash(request.args)
 
-    contract_address = request.args.get("contractAddress", type=fixed_length_hex)
+    contract_address = request.args.get("contractAddress", type=custom_int)
     result_dict = starknet_wrapper.get_code(contract_address)
     return jsonify(result_dict)
 
@@ -146,8 +146,8 @@ def get_code():
 async def get_storage_at():
     check_block_hash(request.args)
 
-    contract_address = request.args.get("contractAddress", type=fixed_length_hex)
-    key = request.args.get("key", type=int)
+    contract_address = request.args.get("contractAddress", type=custom_int)
+    key = request.args.get("key", type=custom_int)
 
     storage = await starknet_wrapper.get_storage_at(contract_address, key)
     return jsonify(storage)

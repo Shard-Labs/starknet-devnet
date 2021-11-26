@@ -1,17 +1,13 @@
 #!/bin/bash
 set -e
 
+source scripts/settings.ini
 [ -f .env ] && source .env
 
 trap 'kill $(jobs -p)' EXIT
 
-host=localhost
-port=5000
 poetry run starknet-devnet --host="$host" --port="$port" &
 sleep 1 # give the server some time to get up
-
-GATEWAY_URL="http://$host:$port"
-FEEDER_GATEWAY_URL="http://$host:$port"
 
 CONTRACT_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract.json
 ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract_abi.json
@@ -20,7 +16,7 @@ ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/co
 output=$(starknet deploy \
     --contract $CONTRACT_PATH \
     --inputs 0 \
-    --gateway_url=$GATEWAY_URL
+    --gateway_url $GATEWAY_URL
 )
 deploy_tx_hash=$(echo $output | sed -r "s/.*Transaction hash: (\w*).*/\1/")
 address=$(echo $output | sed -r "s/.*Contract address: (\w*).*/\1/")
@@ -41,6 +37,10 @@ if [ "$deploy_tx_status2" != "PENDING" ]; then
     exit 2
 fi
 
+# check storage after deployment
+balance_key=916907772491729262376534102982219947830828984996257231353398618781993312401
+scripts/test-storage.sh "$address" "$balance_key" 0x0
+
 # check code
 code_result_file=$(mktemp)
 code_expected_file=scripts/code.expected.json
@@ -55,10 +55,13 @@ result=$(starknet call --function get_balance --address $address --abi $ABI_PATH
 expected=30
 echo
 if [ "$result" == "$expected" ]; then
-    echo "Success!"
+    echo "Invoke successful!"
 else
-    echo "Test failed!"
+    echo "Invoke failed!"
     echo "Expected: $expected"
     echo "Received: $result"
     exit 2
 fi
+
+# check storage after increase
+scripts/test-storage.sh "$address" "$balance_key" 0x1e

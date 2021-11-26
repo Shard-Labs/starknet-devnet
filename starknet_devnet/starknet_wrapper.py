@@ -16,7 +16,7 @@ class Choice(Enum):
 
 class StarknetWrapper:
     def __init__(self):
-        self.address2contract_wrapper: Dict[str, ContractWrapper] = {}
+        self.address2contract_wrapper: Dict[int, ContractWrapper] = {}
         """Maps contract address to contract wrapper."""
 
         self.transactions = []
@@ -34,6 +34,17 @@ class StarknetWrapper:
             self.starknet = await Starknet.empty()
         return self.starknet.state
 
+    def contract_deployed(self, address: int) -> bool:
+        return address in self.address2contract_wrapper
+
+    def get_contract_wrapper(self, address: int) -> ContractWrapper:
+        # TODO use default state dict
+        if (not self.contract_deployed(address)):
+            message = f"No contract at the provided address ({fixed_length_hex(address)})."
+            raise StarknetDevnetException(message=message)
+
+        return self.address2contract_wrapper[address]
+
     async def deploy(self, contract_definition: ContractDefinition, contract_address_salt: CastableToAddressSalt, constructor_calldata: List[int]):
         """
         Deploys the contract whose definition is provided and returns deployment address in hex form.
@@ -47,16 +58,10 @@ class StarknetWrapper:
             contract_address_salt=contract_address_salt
         )
 
-        address = fixed_length_hex(contract.contract_address)
-        self.address2contract_wrapper[address] = ContractWrapper(contract, contract_definition)
+        self.address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, contract_definition)
 
-    async def call_or_invoke(self, choice: Choice, contract_address: str, entry_point_selector: int, calldata: list, signature: List[int]):
-        contract_address = fixed_length_hex(contract_address)
-        if (contract_address not in self.address2contract_wrapper):
-            message = f"No contract at the provided address ({contract_address})."
-            raise StarknetDevnetException(message=message)
-
-        contract = self.address2contract_wrapper[contract_address].contract
+    async def call_or_invoke(self, choice: Choice, contract_address: int, entry_point_selector: int, calldata: list, signature: List[int]):
+        contract = self.get_contract_wrapper(contract_address).contract
         for method_name in contract._abi_function_mapping:
             selector = get_selector_from_name(method_name)
             if selector == entry_point_selector:
@@ -71,7 +76,7 @@ class StarknetWrapper:
             message = f"Illegal method selector: {entry_point_selector}."
             raise StarknetDevnetException(message=message)
 
-        types = self.address2contract_wrapper[contract_address].types
+        types = self.get_contract_wrapper(contract_address).types
         adapted_calldata = adapt_calldata(calldata, function_abi["inputs"], types)
 
         prepared = method(*adapted_calldata)
@@ -122,7 +127,7 @@ class StarknetWrapper:
         transaction = {
             "status": status.name,
             "transaction": {
-                "contract_address": contract_address,
+                "contract_address": fixed_length_hex(contract_address),
                 "transaction_hash": hex_new_id,
                 **transaction_details
             },
@@ -163,16 +168,20 @@ class StarknetWrapper:
             # entry_point_type
         )
 
-    def get_code(self, contract_address: str) -> dict:
-        if contract_address in self.address2contract_wrapper:
-            return self.address2contract_wrapper[contract_address].code
+    def get_code(self, contract_address: int) -> dict:
+        if self.contract_deployed(contract_address):
+            contract_wrapper = self.get_contract_wrapper(contract_address)
+            return contract_wrapper.code
         return {
             "abi": {},
             "bytecode": []
         }
 
-    async def get_storage_at(self, contract_address: str, key: int) -> str:
-        state_wrapper = await self.get_state()
-        state = state_wrapper.state.contract_states[contract_address]
-        ## TODO handle if address not present, then test
-        state.state.get(key)
+    async def get_storage_at(self, contract_address: int, key: int) -> str:
+        state = await self.get_state()
+        contract_states = state.state.contract_states
+
+        state = contract_states[contract_address]
+        if key in state.storage_updates:
+            return hex(state.storage_updates[key].value)
+        return hex(0)

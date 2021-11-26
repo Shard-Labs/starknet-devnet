@@ -25,14 +25,16 @@ class TxStatus(Enum):
     ACCEPTED_ONCHAIN = auto()
     """The transaction was accepted on-chain."""
 
+def custom_int(arg: str) -> str:
+    base = 16 if arg.startswith("0x") else 10
+    return int(arg, base)
 
-def fixed_length_hex(address: Union[int, str]) -> str:
+def fixed_length_hex(arg: int) -> str:
     """
-    Converts the int or 0x-prefixed address to a hex address of fixed length
+    Converts the int input to a hex output of fixed length
     """
 
-    address = int(address)
-    return f"0x{address:064x}"
+    return f"0x{arg:064x}"
 
 
 DEFAULT_HOST = "localhost"
