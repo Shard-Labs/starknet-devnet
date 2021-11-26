@@ -3,3 +3,4 @@ __pycache__/
 .env
 dist/
 starknet-hardhat-example/
+.vscode
