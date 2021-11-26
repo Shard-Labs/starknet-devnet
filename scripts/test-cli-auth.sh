@@ -59,11 +59,12 @@ result=$(starknet call \
     --inputs $public_key
 )
 
-if [ "$result" == 5321 ]; then
+expected=5321
+if [ "$result" == "$expected" ]; then
     echo "Invoke successful!"
 else
     echo "Invoke failed!"
-    echo "Expected: $input_value"
+    echo "Expected: $expected"
     echo "Received: $result"
     exit 2
 fi

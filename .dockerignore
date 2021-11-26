@@ -3,6 +3,7 @@
 .env
 **/dist/
 starknet-hardhat-example/
+**/.vscode/
 
 .git
 .gitignore
