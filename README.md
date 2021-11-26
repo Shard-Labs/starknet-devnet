@@ -25,19 +25,7 @@ brew install gmp
 - This devnet should not be used as a replacement for Alpha testnet. After testing on devnet, be sure to test on testnet!
 - Hash calculation of transactions and blocks differs from the one used in Alpha testnet.
 - Specifying a block by its hash/number is not supported. All interaction is done with the latest block.
-- The following Starknet CLI commands are supported:
-  - `call`
-  - `deploy`
-  - `get_block`
-  - `get_code`
-  - `get_storage_at`
-  - `get_transaction`
-  - `invoke`
-  - `tx_status`
-- The following Starknet CLI commands are **not** supported:
-  - `get_block` - transactions are not organized into blocks
-  - `get_contract_addresses` - L1-L2 interaction is currently not supported
-  - `get_transaction_receipt` - soon to be supported
+- Read more in [interaction](#interaction-api).
 
 ## Run
 Installing the package adds the `starknet-devnet` command.
@@ -71,8 +59,22 @@ You may ignore any address-related output logged on container startup (e.g. `Run
 
 If you don't specify the `HOST` part, the server will indeed be available on all of your host machine's addresses (localhost, local network IP, etc.), which may present a security issue if you don't want anyone from the local network to access your devnet.
 
-## Interaction (API)
-Interact with this devnet as you would with the official Starknet [Alpha testnet](https://www.cairo-lang.org/docs/hello_starknet/amm.html?highlight=alpha#interaction-examples).
+## Interaction
+- Interact with this devnet as you would with the official Starknet [Alpha testnet](https://www.cairo-lang.org/docs/hello_starknet/amm.html?highlight=alpha#interaction-examples).
+- The exact underlying API is not exposed for the same reason Alpha testnet does not expose it.
+- The following Starknet CLI commands are supported:
+  - `call`
+  - `deploy`
+  - `get_block`
+  - `get_code`
+  - `get_storage_at`
+  - `get_transaction`
+  - `invoke`
+  - `tx_status`
+- The following Starknet CLI commands are **not** supported:
+  - `get_block` - transactions are not organized into blocks
+  - `get_contract_addresses` - L1-L2 interaction is currently not supported
+  - `get_transaction_receipt` - soon to be supported
 
 ## Hardhat integration
 - If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate this devnet.
