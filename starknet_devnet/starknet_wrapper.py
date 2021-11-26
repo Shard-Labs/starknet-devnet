@@ -38,7 +38,7 @@ class StarknetWrapper:
         return address in self.address2contract_wrapper
 
     def get_contract_wrapper(self, address: int) -> ContractWrapper:
-        # TODO use default state dict
+        # TODO use default Starknet.state
         if (not self.contract_deployed(address)):
             message = f"No contract at the provided address ({fixed_length_hex(address)})."
             raise StarknetDevnetException(message=message)
