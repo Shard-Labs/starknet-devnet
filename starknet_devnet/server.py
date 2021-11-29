@@ -6,7 +6,7 @@ from starkware.starknet.services.api.gateway.transaction import InvokeFunction, 
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
 from werkzeug.datastructures import MultiDict
-from .util import StarknetDevnetException, TxStatus, custom_int, fixed_length_hex, parse_args
+from .util import TxStatus, custom_int, fixed_length_hex, parse_args
 from .starknet_wrapper import Choice, StarknetWrapper
 import os
 
