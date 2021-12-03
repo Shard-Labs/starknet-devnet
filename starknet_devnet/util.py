@@ -1,6 +1,5 @@
 from enum import Enum, auto
 import argparse
-from typing import Union
 
 from starkware.starkware_utils.error_handling import StarkException
 from . import __version__
@@ -11,7 +10,7 @@ class TxStatus(Enum):
     """
 
     NOT_RECEIVED = auto()
-    """The transaction has not been received yet (i.e., not written to storage"""
+    """The transaction has not been received yet (i.e. not written to storage)."""
 
     RECEIVED = auto()
     """The transaction was received by the operator."""
