@@ -3,7 +3,6 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 from starkware.starknet.compiler.compile import get_selector_from_name
 from starkware.starknet.testing.state import CastableToAddressSalt
-from starkware.starkware_utils.error_handling import StarkErrorCode
 from .util import StarknetDevnetException, TxStatus, fixed_length_hex
 from .adapt import adapt_output, adapt_calldata
 from .contract_wrapper import ContractWrapper
@@ -151,7 +150,7 @@ class StarknetWrapper:
         }
 
         self.blocks.append(block)
-        self.hash2block[block_hash] = block
+        self.hash2block[int(block_hash, 16)] = block
         return block_hash, block_number
 
     def get_block(self, block_hash: str=None, block_number: int=None):
@@ -160,8 +159,9 @@ class StarknetWrapper:
             raise StarknetDevnetException(message=message)
 
         if block_hash is not None:
-            if block_hash in self.hash2block:
-                return self.hash2block[block_hash]
+            block_hash_int = int(block_hash, 16)
+            if block_hash_int in self.hash2block:
+                return self.hash2block[block_hash_int]
             message = f"Block hash not found; got: {block_hash}."
             raise StarknetDevnetException(message=message)
 
@@ -210,23 +210,23 @@ class StarknetWrapper:
         self.transactions.append(transaction)
         return hex_new_id
 
-    async def store_deploy_transaction(self, contract_address: str, calldata: List[str], salt: str, status: TxStatus, error_message: str=None) -> str:
+    async def store_deploy_transaction(self, contract_address: str, calldata: List[int], salt: int, status: TxStatus, error_message: str=None) -> str:
         return await self.store_transaction(
             contract_address,
             status,
             error_message,
             type=TransactionType.DEPLOY.name,
-            constructor_calldata=calldata,
-            contract_address_salt=salt
+            constructor_calldata=[str(arg) for arg in calldata],
+            contract_address_salt=hex(salt)
         )
 
-    async def store_invoke_transaction(self, contract_address: str, calldata: List[str], entry_point_selector: str, status: TxStatus, error_message: str=None) -> str:
+    async def store_invoke_transaction(self, contract_address: str, calldata: List[int], entry_point_selector: str, status: TxStatus, error_message: str=None) -> str:
         return await self.store_transaction(
             contract_address,
             status,
             error_message,
             type=TransactionType.INVOKE_FUNCTION.name,
-            calldata=calldata,
+            calldata=[str(arg) for arg in calldata],
             entry_point_selector=entry_point_selector,
             # entry_point_type
         )

@@ -34,14 +34,13 @@ async def add_transaction():
         msg = "Invalid transaction format. Try recompiling your contract with a newer version."
         abort(Response(msg, 400))
 
-    state = await starknet_wrapper.get_state()
-
     tx_type = transaction.tx_type.name
     result_dict = {}
     status = TxStatus.ACCEPTED_ON_L2
     error_message = None
 
     if tx_type == TransactionType.DEPLOY.name:
+        state = await starknet_wrapper.get_state()
         deploy_transaction: InternalDeploy = InternalDeploy.from_external(transaction, state.general_config)
         contract_address = deploy_transaction.contract_address
         try:

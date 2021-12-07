@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e # TODO remove
+set -e
 
 source scripts/settings.ini
 [ -f .env ] && source .env
