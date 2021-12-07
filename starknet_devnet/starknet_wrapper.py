@@ -142,7 +142,7 @@ class StarknetWrapper:
         block = {
             "block_hash": block_hash,
             "block_number": block_number,
-            "parent_block_hash": self.blocks[-1].block_hash if self.blocks else "0x0",
+            "parent_block_hash": self.blocks[-1]["block_hash"] if self.blocks else "0x0",
             "state_root": starknet.state.state.shared_state.contract_states.root.hex(),
             "status": TxStatus.ACCEPTED_ONCHAIN.name,
             "timestamp": int(time.time()),
