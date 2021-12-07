@@ -31,7 +31,7 @@ function result_assertion() {
 }
 
 cd starknet-hardhat-example
-# npx hardhat starknet-compile <- Already executed in setup-example.sh
+# npx hardhat starknet-compile <- Already executed in setup_example.sh
 # devnet already defined in config as localhost:5000
 npx hardhat starknet-deploy \
     starknet-artifacts/contracts/contract.cairo \

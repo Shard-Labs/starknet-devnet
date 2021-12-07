@@ -6,7 +6,7 @@ set -e
 PYPI_VERSION=$(curl -Ls https://pypi.org/pypi/starknet-devnet/json | jq ".releases | keys | .[length-1]" -r)
 echo "Pypi version: $PYPI_VERSION"
 
-LOCAL_VERSION=$(./scripts/get-version.sh version)
+LOCAL_VERSION=$(./scripts/get_version.sh version)
 echo "Local version: $LOCAL_VERSION"
 
 # Building is executed regardles of versions

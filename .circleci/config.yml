@@ -18,22 +18,22 @@ jobs:
       - checkout
       - run:
           name: Install development tools
-          command: ./scripts/install-dev-tools.sh
+          command: ./scripts/install_dev_tools.sh
       - run:
           name: Install dependencies
           command: poetry install
       - run:
           name: Setup example
-          command: ./scripts/setup-example.sh
+          command: ./scripts/setup_example.sh
       - run:
           name: Test CLI
-          command: ./scripts/test-cli.sh
+          command: ./scripts/test_cli.sh
       - run:
           name: Test CLI with authentication
-          command: ./scripts/test-cli-auth.sh
+          command: ./scripts/test_cli_auth.sh
       - run:
           name: Test plugin
-          command: ./scripts/test-plugin.sh
+          command: ./scripts/test_plugin.sh
           no_output_timeout: 1m
   package_build_and_publish:
     docker:

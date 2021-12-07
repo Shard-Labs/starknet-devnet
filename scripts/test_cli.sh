@@ -9,15 +9,13 @@ trap 'kill $(jobs -p)' EXIT
 poetry run starknet-devnet --host="$host" --port="$port" &
 sleep 1 # give the server some time to get up
 
-CONTRACT_PATH=starknet-hardhat-example/starknet-artifacts/contracts/auth_contract.cairo/auth_contract.json
-ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/auth_contract.cairo/auth_contract_abi.json
+CONTRACT_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract.json
+ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract_abi.json
 
-#private_key=12345
-public_key=1628448741648245036800002906075225705100596136133912895015035902954123957052
-initial_balance=1000
+# deploy the contract
 output=$(starknet deploy \
     --contract $CONTRACT_PATH \
-    --inputs $public_key $initial_balance \
+    --inputs 0 \
     --gateway_url $GATEWAY_URL
 )
 deploy_tx_hash=$(echo $output | sed -r "s/.*Transaction hash: (\w*).*/\1/")
@@ -39,27 +37,23 @@ if [ "$deploy_tx_status2" != "ACCEPTED_ON_L2" ]; then
     exit 2
 fi
 
+# check storage after deployment
+balance_key=916907772491729262376534102982219947830828984996257231353398618781993312401
+scripts/test_storage.sh "$address" "$balance_key" 0x0
+
+# check code
+code_result_file=$(mktemp)
+code_expected_file=scripts/code.expected.json
+starknet get_code --contract_address $address --feeder_gateway_url=$FEEDER_GATEWAY_URL > "$code_result_file"
+diff "$code_result_file" "$code_expected_file"
+rm "$code_result_file"
+
 # increase and get balance
-input_value=4321
-starknet invoke \
-    --function increase_balance \
-    --inputs $public_key $input_value \
-    --signature \
-        1225578735933442828068102633747590437426782890965066746429241472187377583468 \
-        3568809569741913715045370357918125425757114920266578211811626257903121825123 \
-    --address $address \
-    --abi $ABI_PATH \
-    --gateway_url $GATEWAY_URL
+starknet invoke --function increase_balance --inputs 10 20 --address $address --abi $ABI_PATH --gateway_url=$GATEWAY_URL
+result=$(starknet call --function get_balance --address $address --abi $ABI_PATH --feeder_gateway_url=$FEEDER_GATEWAY_URL)
 
-result=$(starknet call \
-    --function get_balance \
-    --address $address \
-    --abi $ABI_PATH \
-    --feeder_gateway_url $FEEDER_GATEWAY_URL \
-    --inputs $public_key
-)
-
-expected=5321
+expected=30
+echo
 if [ "$result" == "$expected" ]; then
     echo "Invoke successful!"
 else
@@ -69,6 +63,5 @@ else
     exit 2
 fi
 
-# check storage
-balance_key=142452623821144136554572927896792266630776240502820879601186867231282346767
-scripts/test-storage.sh "$address" "$balance_key" 0x14c9
+# check storage after increase
+scripts/test_storage.sh "$address" "$balance_key" 0x1e

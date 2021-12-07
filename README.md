@@ -92,17 +92,17 @@ When running tests locally, do it from the project root.
 
 Setup an example project by running:
 ```text
-./scripts/setup-example.sh
+./scripts/setup_example.sh
 ```
 
 To see if the devnet can interact with starknet CLI commands, run:
 ```text
-./scripts/test-cli.sh
+./scripts/test_cli.sh
 ```
 
 To see if the devnet can interact with the plugin, run:
 ```text
-./scripts/test-plugin.sh
+./scripts/test_plugin.sh
 ```
 
 ## Development - Build
