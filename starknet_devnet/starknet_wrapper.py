@@ -171,7 +171,7 @@ class StarknetWrapper:
                 raise StarknetDevnetException(message=message)
 
             if block_number >= len(self.blocks):
-                message = f"Block number too high; got: {block_number}; expected less than: {len(self.blocks)}."
+                message = f"Block number too high. There are currently {len(self.blocks)} blocks; got: {block_number}."
                 raise StarknetDevnetException(message=message)
 
             return self.blocks[block_number]
