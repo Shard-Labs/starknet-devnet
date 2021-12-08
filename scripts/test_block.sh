@@ -30,7 +30,7 @@ custom_get_block -1 2>&1 && echo "Should fail" && exit 2 || echo "Correctly reje
 # this tests behavior in case of bad input and retrieves number of blocks
 TOO_BIG=1000
 total_blocks=$(
-    custom_get_block $TOO_BIG 2>&1 |
+    custom_get_block "$TOO_BIG" 2>&1 |
     sed -rn "s/^.*There are currently (.*) blocks.*$/\1/p"
 )
 extracted_latest_block=$((total_blocks - 1))
@@ -39,6 +39,7 @@ if [ "$LATEST_BLOCK" != "$extracted_latest_block" ]; then
     echo "Expected and extracted latest block are different"
     echo "Expected: $LATEST_BLOCK"
     echo "Extracted: $extracted_latest_block"
+    exit 2
 fi
 
 latest_block_file=$(mktemp)
@@ -52,7 +53,7 @@ extracted_block_number=$(jq -r ".block_number" "$latest_block_file")
     echo "Wrong block_number in block: $extracted_block_number" && exit 2
 
 extracted_status=$(jq -r ".status" "$latest_block_file")
-[ "$extracted_status" != "ACCEPTED_ONCHAIN" ] &&
+[ "$extracted_status" != "ACCEPTED_ON_L2" ] &&
     echo "Wrong status in block: $extracted_status" && exit 2
 
 extracted_tx_hash=$(jq -r ".transactions[0].transaction.transaction_hash" "$latest_block_file")
