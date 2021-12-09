@@ -15,11 +15,10 @@ from werkzeug.datastructures import MultiDict
 
 from .util import DummyExecutionInfo, TxStatus, custom_int, fixed_length_hex, parse_args
 from .starknet_wrapper import Choice, StarknetWrapper
+from .origin import Origin, NullOrigin
 
 app = Flask(__name__)
 CORS(app)
-
-starknet_wrapper = StarknetWrapper()
 
 @app.route("/is_alive", methods=["GET"])
 @app.route("/gateway/is_alive", methods=["GET"])
@@ -172,13 +171,10 @@ def get_transaction_receipt():
     ret = starknet_wrapper.get_transaction_receipt(transaction_hash)
     return jsonify(ret)
 
-def main():
-    """The main function, used when running this module directly."""
-    # reduce startup logging
-    os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+# reduce startup logging
+os.environ['WERKZEUG_RUN_MAIN'] = 'true'
 
-    args = parse_args()
-    app.run(**vars(args))
-
-if __name__ == "__main__":
-    main()
+args = parse_args()
+origin = Origin(args.fork) if args.fork else NullOrigin()
+starknet_wrapper = StarknetWrapper()
+app.run(**vars(args))
