@@ -34,6 +34,7 @@ jobs:
       - run:
           name: Test plugin
           command: ./scripts/test-plugin.sh
+          no_output_timeout: 1m
   package_build_and_publish:
     docker:
       - image: cimg/python:3.7
