@@ -38,7 +38,7 @@ async def add_transaction():
 
     tx_type = transaction.tx_type.name
     result_dict = {}
-    status = TxStatus.PENDING
+    status = TxStatus.ACCEPTED_ON_L2
     error_message = None
 
     if tx_type == TransactionType.DEPLOY.name:

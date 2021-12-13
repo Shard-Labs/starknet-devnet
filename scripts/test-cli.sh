@@ -25,14 +25,14 @@ echo "tx_hash: $deploy_tx_hash"
 
 # inspects status from tx_status object
 deploy_tx_status=$(starknet tx_status --hash $deploy_tx_hash --feeder_gateway_url $FEEDER_GATEWAY_URL | jq ".tx_status" -r)
-if [ "$deploy_tx_status" != "PENDING" ]; then
+if [ "$deploy_tx_status" != "ACCEPTED_ON_L2" ]; then
     echo "Wrong tx_status: $deploy_tx_status"
     exit 2
 fi
 
 # inspects status from tx object
 deploy_tx_status2=$(starknet get_transaction --hash $deploy_tx_hash --feeder_gateway_url $FEEDER_GATEWAY_URL | jq ".status" -r)
-if [ "$deploy_tx_status2" != "PENDING" ]; then
+if [ "$deploy_tx_status2" != "ACCEPTED_ON_L2" ]; then
     echo "Wrong status in tx: $deploy_tx_status2"
     exit 2
 fi
