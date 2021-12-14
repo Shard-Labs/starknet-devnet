@@ -1,10 +1,12 @@
 #!/bin/bash
 set -e
 
+source scripts/settings.ini
+[ -f .env ] && source .env
+
 trap 'kill $(jobs -p)' EXIT
 
-poetry run starknet-devnet --host=localhost --port=5000 &
-GATEWAY_URL=http://localhost:5000
+poetry run starknet-devnet --host="$host" --port="$port" &
 sleep 1 # give the server some time to get up
 
 function extract_address () {
