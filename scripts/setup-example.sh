@@ -2,11 +2,12 @@
 set -e
 
 echo "Installing starknet-hardhat-plugin from source"
-git clone -b master -single-branch git@github.com:Shard-Labs/starknet-hardhat-plugin.git
-cd starknet-hardhat-example
+git clone -b master --single-branch git@github.com:Shard-Labs/starknet-hardhat-plugin.git
+cd starknet-hardhat-plugin
 npm ci
 npm run build
 npm link
+cd ..
 
 echo "Cloning starknet-hardhat-example branch 'devnet'"
 git clone -b devnet --single-branch git@github.com:Shard-Labs/starknet-hardhat-example.git
