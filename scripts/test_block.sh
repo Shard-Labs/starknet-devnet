@@ -50,15 +50,15 @@ diff "$latest_block_file" "$specific_block_file"
 
 extracted_block_number=$(jq -r ".block_number" "$latest_block_file")
 [ "$extracted_block_number" != "$LATEST_BLOCK" ] &&
-    echo "Wrong block_number in block: $extracted_block_number" && exit 2
+    echo "Wrong block_number in block: $extracted_block_number; expected: $LATEST_BLOCK" && exit 2
 
 extracted_status=$(jq -r ".status" "$latest_block_file")
 [ "$extracted_status" != "ACCEPTED_ON_L2" ] &&
     echo "Wrong status in block: $extracted_status" && exit 2
 
-extracted_tx_hash=$(jq -r ".transactions[0].transaction.transaction_hash" "$latest_block_file")
+extracted_tx_hash=$(jq -r ".transactions[0].transaction_hash" "$latest_block_file")
 [ "$extracted_tx_hash" != "$LATEST_TX_HASH" ] &&
-    echo "Wrong tx_hash in block: $extracted_tx_hash" && exit 2
+    echo "Wrong tx_hash in block: $extracted_tx_hash; expected: $LATEST_TX_HASH" && exit 2
 
 rm "$latest_block_file"
 rm "$specific_block_file"
