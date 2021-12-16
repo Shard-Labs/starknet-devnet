@@ -14,6 +14,7 @@ jobs:
   test:
     machine:
       image: ubuntu-2004:202010-01
+    resource_class: medium
     steps:
       - checkout
       - run:
