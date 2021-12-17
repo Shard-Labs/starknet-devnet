@@ -24,7 +24,7 @@ output=$(starknet deploy \
     --gateway_url $GATEWAY_URL
 )
 deploy_tx_hash=$(extract_tx_hash "$output")
-address=$(echo $output | sed -r "s/.*Contract address: (\w*).*/\1/")
+address=$(echo "$output" | sed -r "s/.*Contract address: (\w*).*/\1/")
 echo "Address: $address"
 echo "tx_hash: $deploy_tx_hash"
 
@@ -53,9 +53,9 @@ scripts/test_block.sh 0 "$deploy_tx_hash"
 scripts/test_code.sh "$address"
 
 # increase and get balance
-invoke_output=$(starknet invoke --function increase_balance --inputs 10 20 --address $address --abi $ABI_PATH --gateway_url=$GATEWAY_URL)
+invoke_output=$(starknet invoke --function increase_balance --inputs 10 20 --address $address --abi "$ABI_PATH" --gateway_url "$GATEWAY_URL")
 invoke_tx_hash=$(extract_tx_hash "$invoke_output")
-result=$(starknet call --function get_balance --address $address --abi $ABI_PATH --feeder_gateway_url=$FEEDER_GATEWAY_URL)
+result=$(starknet call --function get_balance --address $address --abi "$ABI_PATH" --feeder_gateway_url "$FEEDER_GATEWAY_URL")
 
 expected=30
 echo
