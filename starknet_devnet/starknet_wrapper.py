@@ -109,7 +109,7 @@ class StarknetWrapper:
         Performs `ContractWrapper.call_or_invoke` on the contract at `contract_address`.
         """
         contract_wrapper = self.__get_contract_wrapper(contract_address)
-        result = contract_wrapper.call_or_invoke(choice, contract_address, entry_point_selector, calldata, signature)
+        result = contract_wrapper.call_or_invoke(choice, entry_point_selector, calldata, signature)
         await self.__update_state()
         return { "result": result }
 
