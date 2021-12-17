@@ -20,8 +20,8 @@ output=$(starknet deploy \
     --inputs $public_key $initial_balance \
     --gateway_url $GATEWAY_URL
 )
-deploy_tx_hash=$(echo $output | sed -r "s/.*Transaction hash: (\w*).*/\1/")
-address=$(echo $output | sed -r "s/.*Contract address: (\w*).*/\1/")
+deploy_tx_hash=$(echo "$output" | sed -rn "s/.*Transaction hash: (\w*).*/\1/p")
+address=$(echo "$output" | sed -rn "s/.*Contract address: (\w*).*/\1/p")
 echo "Address: $address"
 echo "tx_hash: $deploy_tx_hash"
 

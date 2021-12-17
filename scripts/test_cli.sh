@@ -24,7 +24,7 @@ output=$(starknet deploy \
     --gateway_url $GATEWAY_URL
 )
 deploy_tx_hash=$(extract_tx_hash "$output")
-address=$(echo "$output" | sed -r "s/.*Contract address: (\w*).*/\1/")
+address=$(echo "$output" | sed -rn "s/.*Contract address: (\w*).*/\1/p")
 echo "Address: $address"
 echo "tx_hash: $deploy_tx_hash"
 
