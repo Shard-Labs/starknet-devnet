@@ -1,56 +1,67 @@
+"""
+This module introduces `StarknetWrapper`, a wrapper class of
+starkware.starknet.testing.starknet.Starknet.
+"""
+
 import time
+from copy import deepcopy
+from typing import List, Dict
+
 from starkware.starknet.business_logic.state import CarriedState
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.services.api.contract_definition import ContractDefinition
-from starkware.starknet.compiler.compile import get_selector_from_name
 from starkware.starknet.testing.state import CastableToAddressSalt
-from .util import StarknetDevnetException, TxStatus, fixed_length_hex
-from .adapt import adapt_output, adapt_calldata
-from .contract_wrapper import ContractWrapper
-from copy import deepcopy
-from typing import List, Dict
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.transaction_type import TransactionType
-from enum import Enum
 
-class Choice(Enum):
-    CALL = "call"
-    INVOKE = "invoke"
+from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex
+from .contract_wrapper import ContractWrapper
 
 class StarknetWrapper:
+    """
+    Wraps a Starknet instance and stores data to be returned by the server:
+    contract states, transactions, blocks, storages.
+    """
     def __init__(self):
-        self.address2contract_wrapper: Dict[int, ContractWrapper] = {}
+        self.__address2contract_wrapper: Dict[int, ContractWrapper] = {}
         """Maps contract address to contract wrapper."""
 
-        self.transactions = []
+        self.__transactions = []
         """A chronological list of transactions."""
 
-        self.hash2block = {}
+        self.__hash2block = {}
         """Maps block hash to block."""
 
-        self.blocks = []
+        self.__blocks = []
         """A chronological list of blocks (one transaction per block)."""
 
-        self.starknet = None
+        self.__starknet = None
 
-        self.current_carried_state = None
+        self.__current_carried_state = None
 
-    async def preserve_current_state(self, state: CarriedState):
-        self.current_carried_state = deepcopy(state)
-        self.current_carried_state.shared_state = state.shared_state
+    async def __preserve_current_state(self, state: CarriedState):
+        self.__current_carried_state = deepcopy(state)
+        self.__current_carried_state.shared_state = state.shared_state
 
     async def get_starknet(self):
-        if not self.starknet:
-            self.starknet = await Starknet.empty()
-            await self.preserve_current_state(self.starknet.state.state)
-        return self.starknet
+        """
+        Returns the underlying Starknet instance, creating it first if necessary.
+        """
+        if not self.__starknet:
+            self.__starknet = await Starknet.empty()
+            await self.__preserve_current_state(self.__starknet.state.state)
+        return self.__starknet
 
     async def get_state(self):
+        """
+        Returns the StarknetState of the underlyling Starknet instance,
+        creating the instance first if necessary.
+        """
         starknet = await self.get_starknet()
         return starknet.state
-    
-    async def update_state(self):
-        previous_state = self.current_carried_state
+
+    async def __update_state(self):
+        previous_state = self.__current_carried_state
         assert previous_state is not None
         current_carried_state = (await self.get_state()).state
         updated_shared_state = await current_carried_state.shared_state.apply_state_updates(
@@ -58,24 +69,23 @@ class StarknetWrapper:
             previous_carried_state=previous_state,
             current_carried_state=current_carried_state
         )
-        self.starknet.state.state.shared_state = updated_shared_state
-        await self.preserve_current_state(self.starknet.state.state)
+        self.__starknet.state.state.shared_state = updated_shared_state
+        await self.__preserve_current_state(self.__starknet.state.state)
         # await self.preserve_carried_state(current_carried_state)
 
-    async def get_state_root(self):
+    async def __get_state_root(self):
         state = await self.get_state()
         return state.state.shared_state.contract_states.root.hex()
 
-    def contract_deployed(self, address: int) -> bool:
-        return address in self.address2contract_wrapper
+    def __is_contract_deployed(self, address: int) -> bool:
+        return address in self.__address2contract_wrapper
 
-    def get_contract_wrapper(self, address: int) -> ContractWrapper:
-        # TODO use default Starknet.state
-        if not self.contract_deployed(address):
+    def __get_contract_wrapper(self, address: int) -> ContractWrapper:
+        if not self.__is_contract_deployed(address):
             message = f"No contract at the provided address ({fixed_length_hex(address)})."
             raise StarknetDevnetException(message=message)
 
-        return self.address2contract_wrapper[address]
+        return self.__address2contract_wrapper[address]
 
     async def deploy(self, contract_definition: ContractDefinition, contract_address_salt: CastableToAddressSalt, constructor_calldata: List[int]):
         """
@@ -89,45 +99,30 @@ class StarknetWrapper:
             constructor_calldata=constructor_calldata,
             contract_address_salt=contract_address_salt
         )
-        await self.update_state()
+        await self.__update_state()
 
-        self.address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, contract_definition)
+        self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, contract_definition)
 
+    # pylint: disable=too-many-arguments
     async def call_or_invoke(self, choice: Choice, contract_address: int, entry_point_selector: int, calldata: List[int], signature: List[int]):
-        contract = self.get_contract_wrapper(contract_address).contract
-        for method_name in contract._abi_function_mapping:
-            selector = get_selector_from_name(method_name)
-            if selector == entry_point_selector:
-                try:
-                    method = getattr(contract, method_name)
-                except NotImplementedError:
-                    message = f"{method_name} uses a currently not supported feature (such as providing structs)."
-                    raise StarknetDevnetException(message=message)
-                function_abi = contract._abi_function_mapping[method_name]
-                break
-        else:
-            message = f"Illegal method selector: {entry_point_selector}."
-            raise StarknetDevnetException(message=message)
+        """
+        Performs `ContractWrapper.call_or_invoke` on the contract at `contract_address`.
+        """
+        contract_wrapper = self.__get_contract_wrapper(contract_address)
+        result = contract_wrapper.call_or_invoke(choice, contract_address, entry_point_selector, calldata, signature)
+        await self.__update_state()
+        return { "result": result }
 
-        types = self.get_contract_wrapper(contract_address).types
-        adapted_calldata = adapt_calldata(calldata, function_abi["inputs"], types)
-
-        prepared = method(*adapted_calldata)
-        called = getattr(prepared, choice.value)
-        executed = await called(signature=signature)
-        await self.update_state()
-
-        adapted_output = adapt_output(executed.result)
-        return { "result": adapted_output }
-
-    def is_transaction_hash_legal(self, transaction_hash_int: int) -> bool:
-        return 0 <= transaction_hash_int < len(self.transactions)
+    def __is_transaction_hash_legal(self, transaction_hash_int: int) -> bool:
+        return 0 <= transaction_hash_int < len(self.__transactions)
 
     def get_transaction_status(self, transaction_hash: str):
+        """Returns the status of the transaction identified by `transaction_hash`."""
+
         transaction_hash_int = int(transaction_hash, 16)
 
-        if self.is_transaction_hash_legal(transaction_hash_int):
-            transaction = self.transactions[transaction_hash_int]
+        if self.__is_transaction_hash_legal(transaction_hash_int):
+            transaction = self.__transactions[transaction_hash_int]
             ret = {
                 "tx_status": transaction["status"]
             }
@@ -146,49 +141,52 @@ class StarknetWrapper:
         }
 
     def get_transaction(self, transaction_hash: str):
+        """Returns the transaction identified by `transaction_hash`."""
+
         transaction_hash_int = int(transaction_hash, 16)
-        if self.is_transaction_hash_legal(transaction_hash_int):
-            return self.transactions[transaction_hash_int]
+        if self.__is_transaction_hash_legal(transaction_hash_int):
+            return self.__transactions[transaction_hash_int]
         return {
             "status": TxStatus.NOT_RECEIVED.name,
             "transaction_hash": transaction_hash
         }
 
-    async def generate_block(self, transaction: dict):
+    async def __generate_block(self, transaction: dict):
         """
         Generates a block and stores it to blocks and hash2block. The block contains just the passed transaction.
-
         Returns (block_hash, block_number)
         """
 
-        block_number = len(self.blocks)
+        block_number = len(self.__blocks)
         block_hash = hex(block_number)
-        state_root = await self.get_state_root()
+        state_root = await self.__get_state_root()
 
         block = {
             "block_hash": block_hash,
             "block_number": block_number,
-            "parent_block_hash": self.blocks[-1]["block_hash"] if self.blocks else "0x0",
+            "parent_block_hash": self.__blocks[-1]["block_hash"] if self.__blocks else "0x0",
             "state_root": state_root,
             "status": TxStatus.ACCEPTED_ON_L2.name,
             "timestamp": int(time.time()),
-            "transaction_receipts": ["Not yet supported!"], # TODO
+            "transaction_receipts": ["Not yet supported!"],
             "transactions": [transaction],
         }
 
-        self.blocks.append(block)
-        self.hash2block[int(block_hash, 16)] = block
+        self.__blocks.append(block)
+        self.__hash2block[int(block_hash, 16)] = block
         return block_hash, block_number
 
     def get_block(self, block_hash: str=None, block_number: int=None):
+        """Returns the block identified either by its `block_hash` or `block_number`."""
+
         if block_hash is not None and block_number is not None:
-            message = f"Ambiguous criteria: only one of (block number, block hash) can be provided."
+            message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
             raise StarknetDevnetException(message=message)
 
         if block_hash is not None:
             block_hash_int = int(block_hash, 16)
-            if block_hash_int in self.hash2block:
-                return self.hash2block[block_hash_int]
+            if block_hash_int in self.__hash2block:
+                return self.__hash2block[block_hash_int]
             message = f"Block hash not found; got: {block_hash}."
             raise StarknetDevnetException(message=message)
 
@@ -197,20 +195,20 @@ class StarknetWrapper:
                 message = f"Block number must be a non-negative integer; got: {block_number}."
                 raise StarknetDevnetException(message=message)
 
-            if block_number >= len(self.blocks):
-                message = f"Block number too high. There are currently {len(self.blocks)} blocks; got: {block_number}."
+            if block_number >= len(self.__blocks):
+                message = f"Block number too high. There are currently {len(self.__blocks)} blocks; got: {block_number}."
                 raise StarknetDevnetException(message=message)
 
-            return self.blocks[block_number]
-        
+            return self.__blocks[block_number]
+
         # no block identifier means latest block
-        if self.blocks:
-            return self.blocks[-1]
-        message = f"Requested the latest block, but there are no blocks so far."
+        if self.__blocks:
+            return self.__blocks[-1]
+        message = "Requested the latest block, but there are no blocks so far."
         raise StarknetDevnetException(message=message)
 
-    async def store_transaction(self, contract_address: str, status: TxStatus, error_message: str=None, **transaction_details: dict):
-        new_id = len(self.transactions)
+    async def __store_transaction(self, contract_address: str, status: TxStatus, error_message: str=None, **transaction_details: dict):
+        new_id = len(self.__transactions)
         hex_new_id = hex(new_id)
 
         transaction = {
@@ -230,15 +228,17 @@ class StarknetWrapper:
                 "tx_id": new_id
             }
         else:
-            block_hash, block_number = await self.generate_block(transaction["transaction"])
+            block_hash, block_number = await self.__generate_block(transaction["transaction"])
             transaction["block_hash"] = block_hash
             transaction["block_number"] = block_number
 
-        self.transactions.append(transaction)
+        self.__transactions.append(transaction)
         return hex_new_id
 
+    # pylint: disable=too-many-arguments
     async def store_deploy_transaction(self, contract_address: str, calldata: List[int], salt: int, status: TxStatus, error_message: str=None):
-        return await self.store_transaction(
+        """Stores the provided data as a deploy transaction in `self.transactions`."""
+        return await self.__store_transaction(
             contract_address,
             status,
             error_message,
@@ -247,8 +247,12 @@ class StarknetWrapper:
             contract_address_salt=hex(salt)
         )
 
-    async def store_invoke_transaction(self, contract_address: str, calldata: List[int], entry_point_selector: int, status: TxStatus, error_message: str=None):
-        return await self.store_transaction(
+    # pylint: disable=too-many-arguments
+    async def store_invoke_transaction(
+        self, contract_address: str, calldata: List[int], entry_point_selector: int, status: TxStatus, error_message: str=None
+    ):
+        """Stores the provided data as an invoke transaction in `self.transactions`."""
+        return await self.__store_transaction(
             contract_address,
             status,
             error_message,
@@ -259,8 +263,9 @@ class StarknetWrapper:
         )
 
     def get_code(self, contract_address: int) -> dict:
-        if self.contract_deployed(contract_address):
-            contract_wrapper = self.get_contract_wrapper(contract_address)
+        """Returns a `dict` with `abi` and `bytecode` of the contract at `contract_address`."""
+        if self.__is_contract_deployed(contract_address):
+            contract_wrapper = self.__get_contract_wrapper(contract_address)
             return contract_wrapper.code
         return {
             "abi": {},
@@ -268,6 +273,10 @@ class StarknetWrapper:
         }
 
     async def get_storage_at(self, contract_address: int, key: int) -> str:
+        """
+        Returns the storage identified by `key`
+        from the contract at `contract_address`.
+        """
         state = await self.get_state()
         contract_states = state.state.contract_states
 

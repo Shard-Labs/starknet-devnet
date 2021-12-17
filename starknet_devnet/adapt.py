@@ -1,3 +1,7 @@
+"""
+Contains functions for adapting Starknet function input and output.
+"""
+
 from starknet_devnet.util import StarknetDevnetException
 
 def adapt_calldata(calldata, expected_inputs, types):
@@ -24,9 +28,8 @@ def adapt_calldata(calldata, expected_inputs, types):
                 # Last element was array length (0), it's replaced with the array itself
                 adapted_calldata[-1] = []
                 continue
-            else:
-                message = f"Too few function arguments provided: {len(calldata)}."
-                raise StarknetDevnetException(message=message)
+            message = f"Too few function arguments provided: {len(calldata)}."
+            raise StarknetDevnetException(message=message)
         input_value = calldata[calldata_i]
 
         if input_type == "felt*":
@@ -81,8 +84,8 @@ def adapt_output_rec(received, ret):
     if isinstance(received, list):
         ret.append(hex(len(received)))
     try:
-        for el in received:
-            adapt_output_rec(el, ret)
+        for element in received:
+            adapt_output_rec(element, ret)
     except TypeError:
         ret.append(hex(received))
 
@@ -95,7 +98,8 @@ def generate_complex(calldata, calldata_i: int, input_type: str, types):
     The `calldata_i` is incremented according to how many `calldata` members were consumed.
     `types` is a dict that maps a type's name to its specification.
 
-    Returns the `calldata` converted to the type specified by `input_type` (tuple if struct or tuple, number). Also returns the incremented `calldata_i`.
+    Returns the `calldata` converted to the type specified by `input_type` (tuple if struct or tuple, number).
+    Also returns the incremented `calldata_i`.
     """
 
     if input_type == "felt":

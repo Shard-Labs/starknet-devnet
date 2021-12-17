@@ -1,3 +1,7 @@
+"""
+Utility functions used across the project.
+"""
+
 from enum import Enum, auto
 import argparse
 
@@ -27,7 +31,18 @@ class TxStatus(Enum):
     ACCEPTED_ON_L1 = auto()
     """The transaction was accepted on-chain."""
 
+
+class Choice(Enum):
+    """Enumerates ways of interacting with a Starknet function."""
+    CALL = "call"
+    INVOKE = "invoke"
+
+
 def custom_int(arg: str) -> str:
+    """
+    Converts the argument to an integer.
+    Conversion base is 16 if `arg` starts with `0x`, otherwise `10`.
+    """
     base = 16 if arg.startswith("0x") else 10
     return int(arg, base)
 
@@ -38,10 +53,12 @@ def fixed_length_hex(arg: int) -> str:
 
     return f"0x{arg:064x}"
 
-
 DEFAULT_HOST = "localhost"
 DEFAULT_PORT = 5000
 def parse_args():
+    """
+    Parses CLI arguments.
+    """
     parser = argparse.ArgumentParser(description="Run a local instance of Starknet devnet")
     parser.add_argument(
         "-v", "--version",
@@ -64,5 +81,9 @@ def parse_args():
     return parser.parse_args()
 
 class StarknetDevnetException(StarkException):
+    """
+    Exception raised across the project.
+    Indicates the raised issue is devnet-related.
+    """
     def __init__(self, code=500, message=None):
         super().__init__(code=code, message=message)

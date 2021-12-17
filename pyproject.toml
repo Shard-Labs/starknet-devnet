@@ -17,6 +17,7 @@ flask-cors = "^3.0.10"
 cairo-lang = "0.6.2"
 
 [tool.poetry.dev-dependencies]
+pylint = "^2.12.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
