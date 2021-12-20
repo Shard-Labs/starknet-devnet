@@ -31,9 +31,10 @@ function result_assertion() {
 }
 
 cd starknet-hardhat-example
-# npx hardhat starknet-compile --config "$HARDHAT_CONFIG" <- Already executed in setup_example.sh
+mv "$HARDHAT_CONFIG_FILE" hardhat.config.ts
+# npx hardhat starknet-compile <- Already executed in setup_example.sh
 # devnet already defined in config as localhost:5000
-npx hardhat starknet-deploy --config "$HARDHAT_CONFIG" \
+npx hardhat starknet-deploy \
     starknet-artifacts/contracts/contract.cairo \
     --starknet-network devnet \
     --inputs 10 \
@@ -42,4 +43,4 @@ npx hardhat starknet-deploy --config "$HARDHAT_CONFIG" \
 | result_assertion
 echo "Finished deploy-call procedure"
 
-npx hardhat test test/quick-test.ts --config "$HARDHAT_CONFIG"
+npx hardhat test test/quick-test.ts
