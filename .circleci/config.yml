@@ -33,8 +33,12 @@ jobs:
           name: Test CLI with authentication
           command: ./scripts/test_cli_auth.sh
       - run:
-          name: Test plugin
-          command: ./scripts/test_plugin.sh
+          name: Test plugin - dockerized
+          command: HARDHAT_CONFIG=../scripts/hardhat.config.dockerized.ts ./scripts/test_plugin.sh
+          no_output_timeout: 1m
+      - run:
+          name: Test plugin - venv
+          command: HARDHAT_CONFIG=../scripts/hardhat.config.venv.ts ./scripts/test_plugin.sh
           no_output_timeout: 1m
   package_build_and_publish:
     docker:
