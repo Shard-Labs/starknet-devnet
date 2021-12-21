@@ -43,4 +43,9 @@ npx hardhat starknet-deploy \
 | result_assertion
 echo "Finished deploy-call procedure"
 
-npx hardhat test test/quick-test.ts
+if [ -f "TEST_FILE" ]; then
+    echo "Invalid TEST_FILE provided"
+    exit 1
+fi
+
+npx hardhat test "$TEST_FILE"
