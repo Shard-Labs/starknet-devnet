@@ -42,7 +42,6 @@ async def add_transaction():
         abort(Response(msg, 400))
 
     tx_type = transaction.tx_type.name
-    result_dict = {}
     status = TxStatus.ACCEPTED_ON_L2
     error_message = None
 
@@ -50,43 +49,22 @@ async def add_transaction():
         state = await starknet_wrapper.get_state()
         deploy_transaction: InternalDeploy = InternalDeploy.from_external(transaction, state.general_config)
         contract_address = deploy_transaction.contract_address
-        try:
-            await starknet_wrapper.deploy(
-                contract_definition=deploy_transaction.contract_definition,
-                contract_address_salt=deploy_transaction.contract_address_salt,
-                constructor_calldata=deploy_transaction.constructor_calldata
-            )
-        except StarkException as err:
-            error_message = err.message
-            status = TxStatus.REJECTED
-
-        transaction_hash = await starknet_wrapper.store_deploy_transaction(
-            contract_address=contract_address,
-            calldata=deploy_transaction.constructor_calldata,
-            salt=deploy_transaction.contract_address_salt,
-            status=status,
-            error_message=error_message
-        )
+        transaction_hash = await starknet_wrapper.deploy(deploy_transaction)
 
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:
         transaction: InvokeFunction = transaction
         contract_address = transaction.contract_address
         try:
-            result_dict = await starknet_wrapper.call_or_invoke(
+            await starknet_wrapper.call_or_invoke(
                 Choice.INVOKE,
-                contract_address=contract_address,
-                entry_point_selector=transaction.entry_point_selector,
-                calldata=transaction.calldata,
-                signature=transaction.signature
+                transaction
             )
         except StarkException as err:
             error_message = err.message
             status = TxStatus.REJECTED
 
         transaction_hash = await starknet_wrapper.store_invoke_transaction(
-            contract_address=contract_address,
-            calldata=transaction.calldata,
-            entry_point_selector=transaction.entry_point_selector,
+            transaction=transaction,
             status=status,
             error_message=error_message
         )
@@ -97,8 +75,7 @@ async def add_transaction():
     return jsonify({
         "code": StarkErrorCode.TRANSACTION_RECEIVED.name,
         "transaction_hash": transaction_hash,
-        "address": fixed_length_hex(contract_address),
-        **result_dict
+        "address": fixed_length_hex(contract_address)
     })
 
 @app.route("/feeder_gateway/get_contract_addresses", methods=["GET"])
@@ -113,14 +90,11 @@ async def call_contract():
     """
 
     raw_data = request.get_data()
-    call_specifications = InvokeFunction.loads(raw_data)
     try:
+        call_specifications = InvokeFunction.loads(raw_data)
         result_dict = await starknet_wrapper.call_or_invoke(
             Choice.CALL,
-            contract_address=call_specifications.contract_address,
-            entry_point_selector=call_specifications.entry_point_selector,
-            calldata=call_specifications.calldata,
-            signature=call_specifications.signature
+            call_specifications
         )
     except StarkException as err:
         # code 400 would make more sense, but alpha returns 500

@@ -5,14 +5,15 @@ starkware.starknet.testing.starknet.Starknet.
 
 import time
 from copy import deepcopy
-from typing import List, Dict
+from typing import Dict
+from starkware.starknet.business_logic.internal_transaction import InternalDeploy
 
 from starkware.starknet.business_logic.state import CarriedState
+from starkware.starknet.services.api.gateway.transaction import InvokeFunction
 from starkware.starknet.testing.starknet import Starknet
-from starkware.starknet.services.api.contract_definition import ContractDefinition
-from starkware.starknet.testing.state import CastableToAddressSalt
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.transaction_type import TransactionType
+from starkware.starkware_utils.error_handling import StarkException
 
 from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex
 from .contract_wrapper import ContractWrapper
@@ -87,30 +88,52 @@ class StarknetWrapper:
 
         return self.__address2contract_wrapper[address]
 
-    async def deploy(self, contract_definition: ContractDefinition, contract_address_salt: CastableToAddressSalt, constructor_calldata: List[int]):
+    async def deploy(self, transaction: InternalDeploy):
         """
         Deploys the contract whose definition is provided and returns deployment address in hex form.
         The other returned object is present to conform to a past version of call_or_invoke, but will be removed in future versions.
         """
 
         starknet = await self.get_starknet()
-        contract = await starknet.deploy(
-            contract_def=contract_definition,
-            constructor_calldata=constructor_calldata,
-            contract_address_salt=contract_address_salt
+        status = TxStatus.ACCEPTED_ON_L2
+        error_message = None
+
+        try:
+            contract = await starknet.deploy(
+                contract_def=transaction.contract_definition,
+                constructor_calldata=transaction.constructor_calldata,
+                contract_address_salt=transaction.contract_address_salt
+            )
+        except StarkException as err:
+            error_message = err.message
+            status = TxStatus.REJECTED
+
+        transaction_hash = await self.__store_deploy_transaction(
+            transaction,
+            status=status,
+            error_message=error_message
         )
+
         await self.__update_state()
+        self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, transaction.contract_definition)
+        return transaction_hash
 
-        self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, contract_definition)
-
-    # pylint: disable=too-many-arguments
-    async def call_or_invoke(self, choice: Choice, contract_address: int, entry_point_selector: int, calldata: List[int], signature: List[int]):
+    async def call_or_invoke(self, choice: Choice, specifications: InvokeFunction):
         """
         Performs `ContractWrapper.call_or_invoke` on the contract at `contract_address`.
+        if `choice` is INVOKE, updates the state.
         """
-        contract_wrapper = self.__get_contract_wrapper(contract_address)
-        result = await contract_wrapper.call_or_invoke(choice, entry_point_selector, calldata, signature)
-        await self.__update_state()
+        contract_wrapper = self.__get_contract_wrapper(specifications.contract_address)
+        result = await contract_wrapper.call_or_invoke(
+            choice,
+            entry_point_selector=specifications.entry_point_selector,
+            calldata=specifications.calldata,
+            signature=specifications.signature
+        )
+
+        if choice == Choice.INVOKE:
+            await self.__update_state()
+
         return { "result": result }
 
     def __is_transaction_hash_legal(self, transaction_hash_int: int) -> bool:
@@ -235,30 +258,26 @@ class StarknetWrapper:
         self.__transactions.append(transaction)
         return hex_new_id
 
-    # pylint: disable=too-many-arguments
-    async def store_deploy_transaction(self, contract_address: str, calldata: List[int], salt: int, status: TxStatus, error_message: str=None):
+    async def __store_deploy_transaction(self, transaction: InternalDeploy, status: TxStatus, error_message: str=None):
         """Stores the provided data as a deploy transaction in `self.transactions`."""
         return await self.__store_transaction(
-            contract_address,
+            transaction.contract_address,
             status,
             error_message,
             type=TransactionType.DEPLOY.name,
-            constructor_calldata=[str(arg) for arg in calldata],
-            contract_address_salt=hex(salt)
+            constructor_calldata=[str(arg) for arg in transaction.constructor_calldata],
+            contract_address_salt=hex(transaction.contract_address_salt)
         )
 
-    # pylint: disable=too-many-arguments
-    async def store_invoke_transaction(
-        self, contract_address: str, calldata: List[int], entry_point_selector: int, status: TxStatus, error_message: str=None
-    ):
+    async def store_invoke_transaction(self, transaction: InvokeFunction, status: TxStatus, error_message: str=None):
         """Stores the provided data as an invoke transaction in `self.transactions`."""
         return await self.__store_transaction(
-            contract_address,
+            transaction.contract_address,
             status,
             error_message,
             type=TransactionType.INVOKE_FUNCTION.name,
-            calldata=[str(arg) for arg in calldata],
-            entry_point_selector=str(entry_point_selector),
+            calldata=[str(arg) for arg in transaction.calldata],
+            entry_point_selector=str(transaction.entry_point_selector),
             # entry_point_type
         )
 
