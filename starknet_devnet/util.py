@@ -51,7 +51,6 @@ def fixed_length_hex(arg: int) -> str:
     """
     Converts the int input to a hex output of fixed length
     """
-
     return f"0x{arg:064x}"
 
 def fork_url(name: str):

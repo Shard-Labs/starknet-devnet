@@ -176,5 +176,5 @@ os.environ['WERKZEUG_RUN_MAIN'] = 'true'
 
 args = parse_args()
 origin = Origin(args.fork) if args.fork else NullOrigin()
-starknet_wrapper = StarknetWrapper()
+starknet_wrapper = StarknetWrapper(origin)
 app.run(**vars(args))

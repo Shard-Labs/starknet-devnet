@@ -16,6 +16,7 @@ from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkException
 
+from .origin import Origin
 from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo
 from .contract_wrapper import ContractWrapper
 
@@ -45,7 +46,10 @@ class StarknetWrapper:
     Wraps a Starknet instance and stores data to be returned by the server:
     contract states, transactions, blocks, storages.
     """
-    def __init__(self):
+    def __init__(self, origin):
+        self.origin: Origin = origin
+        """Parent chain that this devnet was forked from."""
+
         self.__address2contract_wrapper: Dict[int, ContractWrapper] = {}
         """Maps contract address to contract wrapper."""
 
@@ -187,9 +191,7 @@ class StarknetWrapper:
 
             return ret
 
-        return {
-            "tx_status": TxStatus.NOT_RECEIVED.name
-        }
+        return self.origin.get_transaction_status(transaction_hash)
 
     def get_transaction(self, transaction_hash: str):
         """Returns the transaction identified by `transaction_hash`."""
@@ -197,10 +199,7 @@ class StarknetWrapper:
         transaction_hash_int = int(transaction_hash, 16)
         if self.__is_transaction_hash_legal(transaction_hash_int):
             return self.__transactions[transaction_hash_int]
-        return {
-            "status": TxStatus.NOT_RECEIVED.name,
-            "transaction_hash": transaction_hash
-        }
+        return self.origin.get_transaction(transaction_hash)
 
     def get_transaction_receipt(self, transaction_hash: str):
         """Returns the transaction receipt of the transaction identified by `transaction_hash`."""
@@ -329,10 +328,7 @@ class StarknetWrapper:
         if self.__is_contract_deployed(contract_address):
             contract_wrapper = self.__get_contract_wrapper(contract_address)
             return contract_wrapper.code
-        return {
-            "abi": {},
-            "bytecode": []
-        }
+        return self.origin.get_code(contract_address)
 
     async def get_storage_at(self, contract_address: int, key: int) -> str:
         """
@@ -345,4 +341,4 @@ class StarknetWrapper:
         state = contract_states[contract_address]
         if key in state.storage_updates:
             return hex(state.storage_updates[key].value)
-        return hex(0)
+        return self.origin.get_storage_at(self, contract_address, key)
