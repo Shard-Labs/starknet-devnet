@@ -223,7 +223,7 @@ class StarknetWrapper:
         The `transaction` dict should also contain a key `transaction`.
         """
 
-        block_number = len(self.__own_blocks)
+        block_number = self.get_number_of_blocks()
         block_hash = hex(block_number)
         state_root = await self.__get_state_root()
 
@@ -233,7 +233,7 @@ class StarknetWrapper:
         block = {
             "block_hash": block_hash,
             "block_number": block_number,
-            "parent_block_hash": self.__own_blocks[-1]["block_hash"] if self.__own_blocks else "0x0",
+            "parent_block_hash": self.__get_last_block()["block_hash"] if self.__own_blocks else "0x0",
             "state_root": state_root,
             "status": TxStatus.ACCEPTED_ON_L2.name,
             "timestamp": int(time.time()),
@@ -244,6 +244,10 @@ class StarknetWrapper:
         number_of_blocks = self.get_number_of_blocks()
         self.__own_blocks[number_of_blocks] = block
         self.__hash2block[int(block_hash, 16)] = block
+
+    def __get_last_block(self):
+        number_of_blocks = self.get_number_of_blocks()
+        return self.get_block_by_number(number_of_blocks - 1)
 
     def get_block_by_hash(self, block_hash: str):
         """Returns the block identified either by its `block_hash`"""
@@ -257,7 +261,7 @@ class StarknetWrapper:
         """Returns the block whose block_number is provided"""
         if block_number is None:
             if self.__own_blocks:
-                return self.__own_blocks[-1]
+                return self.__get_last_block()
             return self.origin.get_block_by_number(block_number)
 
         if block_number < 0:
