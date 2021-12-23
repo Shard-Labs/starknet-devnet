@@ -48,7 +48,7 @@ class StarknetWrapper:
     """
     def __init__(self, origin):
         self.origin: Origin = origin
-        """Parent chain that this devnet was forked from."""
+        """Origin chain that this devnet was forked from."""
 
         self.__address2contract_wrapper: Dict[int, ContractWrapper] = {}
         """Maps contract address to contract wrapper."""
@@ -62,8 +62,8 @@ class StarknetWrapper:
         self.__hash2block = {}
         """Maps block hash to block."""
 
-        self.__blocks = []
-        """A chronological list of blocks (one transaction per block)."""
+        self.__own_blocks = {}
+        """Maps block number to block (one transaction per block); holds only own blocks."""
 
         self.__starknet = None
 
@@ -213,13 +213,17 @@ class StarknetWrapper:
             "transaction_hash": transaction_hash
         }
 
+    def get_number_of_blocks(self):
+        """Returns the number of blocks stored so far."""
+        return len(self.__own_blocks) + self.origin.get_number_of_blocks()
+
     async def __generate_block(self, transaction: dict, receipt: dict):
         """
         Generates a block and stores it to blocks and hash2block. The block contains just the passed transaction.
         The `transaction` dict should also contain a key `transaction`.
         """
 
-        block_number = len(self.__blocks)
+        block_number = len(self.__own_blocks)
         block_hash = hex(block_number)
         state_root = await self.__get_state_root()
 
@@ -229,7 +233,7 @@ class StarknetWrapper:
         block = {
             "block_hash": block_hash,
             "block_number": block_number,
-            "parent_block_hash": self.__blocks[-1]["block_hash"] if self.__blocks else "0x0",
+            "parent_block_hash": self.__own_blocks[-1]["block_hash"] if self.__own_blocks else "0x0",
             "state_root": state_root,
             "status": TxStatus.ACCEPTED_ON_L2.name,
             "timestamp": int(time.time()),
@@ -237,39 +241,37 @@ class StarknetWrapper:
             "transactions": [transaction["transaction"]],
         }
 
-        self.__blocks.append(block)
+        number_of_blocks = self.get_number_of_blocks()
+        self.__own_blocks[number_of_blocks] = block
         self.__hash2block[int(block_hash, 16)] = block
 
-    def get_block(self, block_hash: str=None, block_number: int=None):
-        """Returns the block identified either by its `block_hash` or `block_number`."""
+    def get_block_by_hash(self, block_hash: str):
+        """Returns the block identified either by its `block_hash`"""
 
-        if block_hash is not None and block_number is not None:
-            message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
+        block_hash_int = int(block_hash, 16)
+        if block_hash_int in self.__hash2block:
+            return self.__hash2block[block_hash_int]
+        return self.origin.get_block_by_hash(block_hash=block_hash)
+
+    def get_block_by_number(self, block_number: int):
+        """Returns the block whose block_number is provided"""
+        if block_number is None:
+            if self.__own_blocks:
+                return self.__own_blocks[-1]
+            return self.origin.get_block_by_number(block_number)
+
+        if block_number < 0:
+            message = f"Block number must be a non-negative integer; got: {block_number}."
             raise StarknetDevnetException(message=message)
 
-        if block_hash is not None:
-            block_hash_int = int(block_hash, 16)
-            if block_hash_int in self.__hash2block:
-                return self.__hash2block[block_hash_int]
-            message = f"Block hash not found; got: {block_hash}."
+        if block_number >= self.get_number_of_blocks():
+            message = f"Block number too high. There are currently {len(self.__own_blocks)} blocks; got: {block_number}."
             raise StarknetDevnetException(message=message)
 
-        if block_number is not None:
-            if block_number < 0:
-                message = f"Block number must be a non-negative integer; got: {block_number}."
-                raise StarknetDevnetException(message=message)
+        if block_number in self.__own_blocks:
+            return self.__own_blocks[block_number]
 
-            if block_number >= len(self.__blocks):
-                message = f"Block number too high. There are currently {len(self.__blocks)} blocks; got: {block_number}."
-                raise StarknetDevnetException(message=message)
-
-            return self.__blocks[block_number]
-
-        # no block identifier means latest block
-        if self.__blocks:
-            return self.__blocks[-1]
-        message = "Requested the latest block, but there are no blocks so far."
-        raise StarknetDevnetException(message=message)
+        return self.origin.get_block_by_number(block_number)
 
     async def __store_transaction(self, contract_address: str, status: TxStatus,
         execution_info: StarknetTransactionExecutionInfo, error_message: str=None, **transaction_details: dict

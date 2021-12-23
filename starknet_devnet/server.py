@@ -110,11 +110,20 @@ def _check_block_hash(request_args: MultiDict):
 
 @app.route("/feeder_gateway/get_block", methods=["GET"])
 async def get_block():
-    """Endpoint for retrieving blocks identified by their hash or number."""
+    """Endpoint for retrieving a block identified by its hash or number."""
+
     block_hash = request.args.get("blockHash")
     block_number = request.args.get("blockNumber", type=custom_int)
+
+    if block_hash is not None and block_number is not None:
+        message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
+        abort(Response(message, 500))
+
     try:
-        result_dict = starknet_wrapper.get_block(block_hash=block_hash, block_number=block_number)
+        if block_hash is not None:
+            result_dict = starknet_wrapper.get_block_by_hash(block_hash)
+        else:
+            result_dict = starknet_wrapper.get_block_by_number(block_number)
     except StarkException as err:
         abort(Response(err.message, 500))
     return jsonify(result_dict)
@@ -171,10 +180,17 @@ def get_transaction_receipt():
     ret = starknet_wrapper.get_transaction_receipt(transaction_hash)
     return jsonify(ret)
 
-# reduce startup logging
-os.environ['WERKZEUG_RUN_MAIN'] = 'true'
-
 args = parse_args()
 origin = Origin(args.fork) if args.fork else NullOrigin()
 starknet_wrapper = StarknetWrapper(origin)
-app.run(host=args.host, port=args.port)
+
+def main():
+    """Runs the server."""
+
+    # reduce startup logging
+    os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+
+    app.run(host=args.host, port=args.port)
+
+if __name__ == "__main__":
+    main()
