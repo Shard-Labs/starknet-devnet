@@ -71,10 +71,12 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `get_transaction`
   - `invoke`
   - `tx_status`
+  - `get_transaction_receipt`:
+    - returns complete data for invoke transactions
+    - returns partial data for deploy transactions
 - The following Starknet CLI commands are **not** supported:
   - `get_block` - transactions are not organized into blocks
   - `get_contract_addresses` - L1-L2 interaction is currently not supported
-  - `get_transaction_receipt` - soon to be supported
 
 ## Hardhat integration
 - If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate this devnet.
