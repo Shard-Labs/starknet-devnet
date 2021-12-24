@@ -8,6 +8,7 @@ from typing import List
 from starkware.starknet.public.abi import get_selector_from_name
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 from starkware.starknet.testing.contract import StarknetContract
+from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 
 from starknet_devnet.adapt import adapt_calldata, adapt_output
 from starknet_devnet.util import Choice, StarknetDevnetException
@@ -57,6 +58,5 @@ class ContractWrapper:
 
         prepared = method(*adapted_calldata)
         called = getattr(prepared, choice.value)
-        executed = await called(signature=signature)
-
-        return adapt_output(executed.result)
+        execution_info: StarknetTransactionExecutionInfo = await called(signature=signature)
+        return adapt_output(execution_info.result), execution_info

@@ -13,7 +13,7 @@ from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
 from werkzeug.datastructures import MultiDict
 
-from .util import TxStatus, custom_int, fixed_length_hex, parse_args
+from .util import DummyExecutionInfo, TxStatus, custom_int, fixed_length_hex, parse_args
 from .starknet_wrapper import Choice, StarknetWrapper
 
 app = Flask(__name__)
@@ -54,8 +54,9 @@ async def add_transaction():
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:
         transaction: InvokeFunction = transaction
         contract_address = transaction.contract_address
+        execution_info = DummyExecutionInfo()
         try:
-            await starknet_wrapper.call_or_invoke(
+            _, execution_info = await starknet_wrapper.call_or_invoke(
                 Choice.INVOKE,
                 transaction
             )
@@ -66,6 +67,7 @@ async def add_transaction():
         transaction_hash = await starknet_wrapper.store_invoke_transaction(
             transaction=transaction,
             status=status,
+            execution_info=execution_info,
             error_message=error_message
         )
 
@@ -92,7 +94,7 @@ async def call_contract():
     raw_data = request.get_data()
     try:
         call_specifications = InvokeFunction.loads(raw_data)
-        result_dict = await starknet_wrapper.call_or_invoke(
+        result_dict, _ = await starknet_wrapper.call_or_invoke(
             Choice.CALL,
             call_specifications
         )
@@ -166,7 +168,9 @@ def get_transaction_receipt():
     Returns the transaction receipt identified by the transactionHash argument in the GET request.
     """
 
-    return "Not implemented", 501
+    transaction_hash = request.args.get("transactionHash")
+    ret = starknet_wrapper.get_transaction_receipt(transaction_hash)
+    return jsonify(ret)
 
 def main():
     """The main function, used when running this module directly."""

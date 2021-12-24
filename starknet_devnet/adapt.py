@@ -51,7 +51,7 @@ def adapt_calldata(calldata, expected_inputs, types):
             calldata_i += 1
 
         else: # struct
-            generated_complex, calldata_i = generate_complex(calldata, calldata_i, input_type, types)
+            generated_complex, calldata_i = _generate_complex(calldata, calldata_i, input_type, types)
             adapted_calldata.append(generated_complex)
 
         last_name = input_name
@@ -73,23 +73,19 @@ def adapt_output(received):
     """
 
     ret = []
-    adapt_output_rec(received, ret)
+    _adapt_output_rec(received, ret)
     return ret
 
-def adapt_output_rec(received, ret):
-    """
-    Recursion called by adapt_output.
-    """
-
+def _adapt_output_rec(received, ret):
     if isinstance(received, list):
         ret.append(hex(len(received)))
     try:
         for element in received:
-            adapt_output_rec(element, ret)
+            _adapt_output_rec(element, ret)
     except TypeError:
         ret.append(hex(received))
 
-def generate_complex(calldata, calldata_i: int, input_type: str, types):
+def _generate_complex(calldata, calldata_i: int, input_type: str, types):
     """
     Converts members of `calldata` to a more complex type specified by `input_type`:
     - puts members of a struct into a tuple
@@ -115,7 +111,7 @@ def generate_complex(calldata, calldata_i: int, input_type: str, types):
         members = [entry["type"] for entry in struct["members"]]
 
     for member in members:
-        generated_complex, calldata_i = generate_complex(calldata, calldata_i, member, types)
+        generated_complex, calldata_i = _generate_complex(calldata, calldata_i, member, types)
         arr.append(generated_complex)
 
     return tuple(arr), calldata_i

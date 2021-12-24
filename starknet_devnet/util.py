@@ -2,6 +2,7 @@
 Utility functions used across the project.
 """
 
+from dataclasses import dataclass
 from enum import Enum, auto
 import argparse
 
@@ -87,3 +88,18 @@ class StarknetDevnetException(StarkException):
     """
     def __init__(self, code=500, message=None):
         super().__init__(code=code, message=message)
+
+@dataclass
+class DummyCallInfo:
+    """Used temporarily until contracts received from starknet.deploy include their own execution_info.call_info"""
+    def __init__(self):
+        self.cairo_usage = {}
+
+@dataclass
+class DummyExecutionInfo:
+    """Used temporarily until contracts received from starknet.deploy include their own execution_info."""
+    def __init__(self):
+        self.call_info = DummyCallInfo()
+        self.retdata = []
+        self.internal_calls = []
+        self.l2_to_l1_messages = []
