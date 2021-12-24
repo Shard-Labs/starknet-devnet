@@ -1,9 +1,0 @@
-{
-    "block_hash": "0x0",
-    "block_number": 0,
-    "execution_resources": {},
-    "l2_to_l1_messages": [],
-    "status": "ACCEPTED_ON_L2",
-    "transaction_hash": "0x0",
-    "transaction_index": 0
-}
