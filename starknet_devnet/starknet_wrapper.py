@@ -37,7 +37,7 @@ def _generate_transaction_receipt_basis(status: TxStatus, transaction_hash: str,
         "l2_to_l1_messages": execution_info.l2_to_l1_messages,
         "status": status.name,
         "transaction_hash": transaction_hash,
-        "transcation_index": 0 # always the first (and only) tx in the block
+        "transaction_index": 0 # always the first (and only) tx in the block
     }
 
 class StarknetWrapper:
@@ -218,7 +218,6 @@ class StarknetWrapper:
         """
         Generates a block and stores it to blocks and hash2block. The block contains just the passed transaction.
         The `transaction` dict should also contain a key `transaction`.
-        Returns (block_hash, block_number).
         """
 
         block_number = len(self.__blocks)
@@ -241,7 +240,6 @@ class StarknetWrapper:
 
         self.__blocks.append(block)
         self.__hash2block[int(block_hash, 16)] = block
-        return block_hash, block_number
 
     def get_block(self, block_hash: str=None, block_number: int=None):
         """Returns the block identified either by its `block_hash` or `block_number`."""

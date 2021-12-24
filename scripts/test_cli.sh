@@ -46,8 +46,9 @@ fi
 balance_key=916907772491729262376534102982219947830828984996257231353398618781993312401
 scripts/test_storage.sh "$address" "$balance_key" 0x0
 
-# check block after deployment
+# check block and receipt after deployment
 scripts/test_block.sh 0 "$deploy_tx_hash"
+scripts/test_receipt.sh 0 "$deploy_tx_hash"
 
 # check code
 scripts/test_code.sh "$address"
@@ -71,5 +72,6 @@ fi
 # check storage after increase
 scripts/test_storage.sh "$address" "$balance_key" 0x1e
 
-# check block after increase
+# check block and receipt after increase
 scripts/test_block.sh 1 "$invoke_tx_hash"
+scripts/test_receipt.sh 1 "$invoke_tx_hash"
