@@ -5,7 +5,7 @@ starkware.starknet.testing.starknet.Starknet.
 
 import time
 from copy import deepcopy
-from typing import Dict
+from typing import Dict, List
 from starkware.starknet.business_logic.internal_transaction import InternalDeploy
 
 from starkware.starknet.business_logic.state import CarriedState
@@ -19,7 +19,7 @@ from starkware.starkware_utils.error_handling import StarkException
 from .origin import Origin
 from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo
 from .contract_wrapper import ContractWrapper
-
+from .transaction_wrapper import TransactionWrapper
 
 def _generate_transaction_basis(contract_address: str, status: TxStatus, transaction_hash: str, **transaction_details: dict):
     return {
@@ -53,11 +53,8 @@ class StarknetWrapper:
         self.__address2contract_wrapper: Dict[int, ContractWrapper] = {}
         """Maps contract address to contract wrapper."""
 
-        self.__transactions = []
-        """A chronological list of transactions."""
-
-        self.__transaction_receipts = []
-        """A chronological list of transaction receipts."""
+        self.__transaction_wrappers: List[TransactionWrapper] = []
+        """A chronological list of transaction_wrappers."""
 
         self.__hash2block = {}
         """Maps block hash to block."""
@@ -169,7 +166,7 @@ class StarknetWrapper:
         return { "result": adapted_result }, execution_info
 
     def __is_transaction_hash_legal(self, transaction_hash_int: int) -> bool:
-        return 0 <= transaction_hash_int < len(self.__transactions)
+        return 0 <= transaction_hash_int < len(self.__transaction_wrappers)
 
     def get_transaction_status(self, transaction_hash: str):
         """Returns the status of the transaction identified by `transaction_hash`."""
@@ -177,7 +174,7 @@ class StarknetWrapper:
         transaction_hash_int = int(transaction_hash, 16)
 
         if self.__is_transaction_hash_legal(transaction_hash_int):
-            transaction = self.__transactions[transaction_hash_int]
+            transaction = self.__transaction_wrappers[transaction_hash_int].transaction
             ret = {
                 "tx_status": transaction["status"]
             }
@@ -198,7 +195,7 @@ class StarknetWrapper:
 
         transaction_hash_int = int(transaction_hash, 16)
         if self.__is_transaction_hash_legal(transaction_hash_int):
-            return self.__transactions[transaction_hash_int]
+            return self.__transaction_wrappers[transaction_hash_int].transaction
         return self.origin.get_transaction(transaction_hash)
 
     def get_transaction_receipt(self, transaction_hash: str):
@@ -206,7 +203,7 @@ class StarknetWrapper:
 
         transaction_hash_int = int(transaction_hash, 16)
         if self.__is_transaction_hash_legal(transaction_hash_int):
-            return self.__transaction_receipts[transaction_hash_int]
+            return self.__transaction_wrappers[transaction_hash_int].receipt
         return {
             "l2_to_l1_messages": [],
             "status": TxStatus.NOT_RECEIVED.name,
@@ -280,7 +277,7 @@ class StarknetWrapper:
     async def __store_transaction(self, contract_address: str, status: TxStatus,
         execution_info: StarknetTransactionExecutionInfo, error_message: str=None, **transaction_details: dict
     ):
-        new_id = len(self.__transactions)
+        new_id = len(self.__transaction_wrappers)
         hex_new_id = hex(new_id)
 
         transaction = _generate_transaction_basis(contract_address, status, hex_new_id, **transaction_details)
@@ -296,8 +293,7 @@ class StarknetWrapper:
         else:
             await self.__generate_block(transaction, receipt)
 
-        self.__transactions.append(transaction)
-        self.__transaction_receipts.append(receipt)
+        self.__transaction_wrappers.append(TransactionWrapper(transaction, receipt))
         return hex_new_id
 
     async def __store_deploy_transaction(self, transaction: InternalDeploy, status: TxStatus,
