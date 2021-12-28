@@ -15,7 +15,7 @@ from werkzeug.datastructures import MultiDict
 
 from .util import DummyExecutionInfo, TxStatus, custom_int, fixed_length_hex, parse_args
 from .starknet_wrapper import Choice, StarknetWrapper
-from .origin import Origin, NullOrigin
+from .origin import NullOrigin
 
 app = Flask(__name__)
 CORS(app)
@@ -181,7 +181,9 @@ def get_transaction_receipt():
     return jsonify(ret)
 
 args = parse_args()
-origin = Origin(args.fork) if args.fork else NullOrigin()
+# Uncomment this once fork support is added
+# origin = Origin(args.fork) if args.fork else NullOrigin()
+origin = NullOrigin()
 starknet_wrapper = StarknetWrapper(origin)
 
 def main():
