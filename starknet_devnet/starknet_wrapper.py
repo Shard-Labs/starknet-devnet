@@ -4,13 +4,20 @@ starkware.starknet.testing.starknet.Starknet.
 """
 
 import time
+
+import builtins
+
 from copy import deepcopy
 from typing import Dict, List
 from starkware.starknet.business_logic.internal_transaction import InternalDeploy
+from starkware.starknet.business_logic.internal_transaction import InternalDeploy
 
 from starkware.starknet.business_logic.state import CarriedState
+from starkware.starknet.public.abi import get_selector_from_name
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction
+from starkware.starknet.services.api.gateway.transaction_hash import calculate_transaction_hash
 from starkware.starknet.testing.starknet import Starknet
+from starkware.starknet.definitions.general_config import StarknetGeneralConfig
 from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.transaction_type import TransactionType
@@ -21,12 +28,13 @@ from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, D
 from .contract_wrapper import ContractWrapper
 from .transaction_wrapper import TransactionWrapper
 
-def _generate_transaction_basis(contract_address: str, status: TxStatus, transaction_hash: str, **transaction_details: dict):
+def _generate_transaction_basis(contract_address: str, status: TxStatus, transaction_hash: str, type: TransactionType, **transaction_details: dict):
     return {
         "status": status.name,
         "transaction": {
             "contract_address": fixed_length_hex(contract_address),
             "transaction_hash": transaction_hash,
+            "type": type.name,
             **transaction_details
         },
         "transaction_index": 0 # always the first (and only) tx in the block
@@ -65,6 +73,8 @@ class StarknetWrapper:
         self.__starknet = None
 
         self.__current_carried_state = None
+
+        self.__general_config = StarknetGeneralConfig()
 
     async def __preserve_current_state(self, state: CarriedState):
         self.__current_carried_state = deepcopy(state)
@@ -165,16 +175,14 @@ class StarknetWrapper:
 
         return { "result": adapted_result }, execution_info
 
-    def __is_transaction_hash_legal(self, transaction_hash_int: int) -> bool:
-        return 0 <= transaction_hash_int < len(self.__transaction_wrappers)
-
     def get_transaction_status(self, transaction_hash: str):
         """Returns the status of the transaction identified by `transaction_hash`."""
 
-        transaction_hash_int = int(transaction_hash, 16)
+        transaction = [tx for tx in self.__transaction_wrappers if tx.transaction["transaction"]["transaction_hash"] == transaction_hash]
+        
+        if len(transaction) > 0:
+            transaction = transaction[0].transaction
 
-        if self.__is_transaction_hash_legal(transaction_hash_int):
-            transaction = self.__transaction_wrappers[transaction_hash_int].transaction
             ret = {
                 "tx_status": transaction["status"]
             }
@@ -193,22 +201,30 @@ class StarknetWrapper:
     def get_transaction(self, transaction_hash: str):
         """Returns the transaction identified by `transaction_hash`."""
 
-        transaction_hash_int = int(transaction_hash, 16)
-        if self.__is_transaction_hash_legal(transaction_hash_int):
-            return self.__transaction_wrappers[transaction_hash_int].transaction
+        
+        transaction = [tx for tx in self.__transaction_wrappers if tx.transaction["transaction"]["transaction_hash"] == transaction_hash]
+
+        if len(transaction) > 0:
+            return transaction[0].transaction
+
         return self.origin.get_transaction(transaction_hash)
+
 
     def get_transaction_receipt(self, transaction_hash: str):
         """Returns the transaction receipt of the transaction identified by `transaction_hash`."""
 
-        transaction_hash_int = int(transaction_hash, 16)
-        if self.__is_transaction_hash_legal(transaction_hash_int):
-            return self.__transaction_wrappers[transaction_hash_int].receipt
+        transaction = [tx for tx in self.__transaction_wrappers if tx.transaction["transaction"]["transaction_hash"] == transaction_hash]
+
+        if len(transaction) > 0:
+            return transaction[0].receipt
+
         return {
             "l2_to_l1_messages": [],
             "status": TxStatus.NOT_RECEIVED.name,
             "transaction_hash": transaction_hash
         }
+
+        
 
     def get_number_of_blocks(self):
         """Returns the number of blocks stored so far."""
@@ -275,26 +291,39 @@ class StarknetWrapper:
         return self.origin.get_block_by_number(block_number)
 
     async def __store_transaction(self, contract_address: str, status: TxStatus,
-        execution_info: StarknetTransactionExecutionInfo, error_message: str=None, **transaction_details: dict
+         type: TransactionType, execution_info: StarknetTransactionExecutionInfo, error_message: str=None, **transaction_details: dict
     ):
-        new_id = len(self.__transaction_wrappers)
-        hex_new_id = hex(new_id)
+       
+        calldata_key=[key for key,value in transaction_details.items() if "calldata" in key][0]
+        calldata_values=[int(arg) for arg in transaction_details[calldata_key]]
+        entry_point_sel=int(transaction_details["entry_point_selector"]) if "entry_point_selector" in transaction_details else get_selector_from_name("constructor")
+        
+        tx_hash = calculate_transaction_hash(
+            tx_type=type,
+            contract_address=int(contract_address),
+            entry_point_selector=entry_point_sel,
+            calldata=calldata_values,
+            chain_id=self.__general_config.chain_id.value,
+        )
 
-        transaction = _generate_transaction_basis(contract_address, status, hex_new_id, **transaction_details)
-        receipt = _generate_transaction_receipt_basis(status, hex_new_id, execution_info)
+        hex_hash = hex(tx_hash)
 
+        transaction = _generate_transaction_basis(contract_address, status, hex_hash, type, **transaction_details)
+        receipt = _generate_transaction_receipt_basis(status, hex_hash, execution_info)
+        
         if status == TxStatus.REJECTED:
             failure_key = "transaction_failure_reason"
             transaction[failure_key] = receipt[failure_key] = {
                 "code": StarknetErrorCode.TRANSACTION_FAILED.name,
                 "error_message": error_message,
-                "tx_id": new_id
+                "tx_id": hex_hash
             }
         else:
             await self.__generate_block(transaction, receipt)
 
         self.__transaction_wrappers.append(TransactionWrapper(transaction, receipt))
-        return hex_new_id
+
+        return hex_hash
 
     async def __store_deploy_transaction(self, transaction: InternalDeploy, status: TxStatus,
         execution_info: StarknetTransactionExecutionInfo, error_message: str=None
@@ -303,9 +332,9 @@ class StarknetWrapper:
         return await self.__store_transaction(
             transaction.contract_address,
             status,
+            TransactionType.DEPLOY,
             execution_info,
             error_message,
-            type=TransactionType.DEPLOY.name,
             constructor_calldata=[str(arg) for arg in transaction.constructor_calldata],
             contract_address_salt=hex(transaction.contract_address_salt)
         )
@@ -317,9 +346,9 @@ class StarknetWrapper:
         return await self.__store_transaction(
             transaction.contract_address,
             status,
+            TransactionType.INVOKE_FUNCTION,
             execution_info,
             error_message,
-            type=TransactionType.INVOKE_FUNCTION.name,
             calldata=[str(arg) for arg in transaction.calldata],
             entry_point_selector=str(transaction.entry_point_selector),
             # entry_point_type
@@ -344,3 +373,4 @@ class StarknetWrapper:
         if key in state.storage_updates:
             return hex(state.storage_updates[key].value)
         return self.origin.get_storage_at(self, contract_address, key)
+
