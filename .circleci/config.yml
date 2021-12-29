@@ -24,6 +24,9 @@ jobs:
           name: Install dependencies
           command: poetry install
       - run:
+          name: Lint
+          command: poetry run pylint starknet_devnet
+      - run:
           name: Setup example
           command: ./scripts/setup_example.sh
       - run:

@@ -75,7 +75,6 @@ If you don't specify the `HOST` part, the server will indeed be available on all
     - returns complete data for invoke transactions
     - returns partial data for deploy transactions
 - The following Starknet CLI commands are **not** supported:
-  - `get_block` - transactions are not organized into blocks
   - `get_contract_addresses` - L1-L2 interaction is currently not supported
 
 ## Hardhat integration
