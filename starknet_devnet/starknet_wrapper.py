@@ -146,9 +146,9 @@ class StarknetWrapper:
     def get_transaction_status(self, transaction_hash: str):
         """Returns the status of the transaction identified by `transaction_hash`."""
 
-        transaction_wrapper = self.__transaction_wrappers[transaction_hash]
+        if transaction_hash in self.__transaction_wrappers:
 
-        if transaction_wrapper:
+            transaction_wrapper = self.__transaction_wrappers[transaction_hash]
 
             transaction = transaction_wrapper.transaction
 
@@ -170,20 +170,18 @@ class StarknetWrapper:
     def get_transaction(self, transaction_hash: str):
         """Returns the transaction identified by `transaction_hash`."""
 
-        transaction_wrapper = self.__transaction_wrappers[transaction_hash]
+        if transaction_hash in self.__transaction_wrappers:
 
-        if transaction_wrapper:
-            return transaction_wrapper.transaction
+            return self.__transaction_wrappers[transaction_hash].transaction
 
         return self.origin.get_transaction(transaction_hash)
 
     def get_transaction_receipt(self, transaction_hash: str):
         """Returns the transaction receipt of the transaction identified by `transaction_hash`."""
 
-        transaction_wrapper = self.__transaction_wrappers[transaction_hash]
+        if transaction_hash in self.__transaction_wrappers:
 
-        if transaction_wrapper:
-            return transaction_wrapper.receipt
+            return self.__transaction_wrappers[transaction_hash].receipt
 
         return {
             "l2_to_l1_messages": [],
