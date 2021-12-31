@@ -6,8 +6,6 @@ from abc import ABC, abstractmethod
 
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.transaction_type import TransactionType
-from starkware.starknet.public.abi import get_selector_from_name
-from starkware.starknet.services.api.gateway.transaction_hash import calculate_transaction_hash
 
 from .util import fixed_length_hex
 
@@ -45,54 +43,43 @@ class TransactionWrapper(ABC):
             "transaction_index": 0 # always the first (and only) tx in the block
         }
 
-    def set_transaction_failure(self, failure_key: str, error_message: str):
+    def set_transaction_failure(self, error_message: str):
         """Creates a new entry `failure_key` in the transaction object with the transaction failure reason data."""
 
+        failure_key = "transaction_failure_reason"
         self.transaction[failure_key] = self.receipt[failure_key] = {
                 "code": StarknetErrorCode.TRANSACTION_FAILED.name,
                 "error_message": error_message,
-                "tx_id": self.transaction["transaction"]["transaction_hash"]
+                "tx_id": self.transaction_hash
         }
 
 
-class DeployTransaction(TransactionWrapper):
+class DeployTransactionWrapper(TransactionWrapper):
     """Class for Deploy Transaction."""
 
-    def __init__(self, internal_transaction, status, starknet):
+    def __init__(self, internal_deploy, status, starknet):
 
         super().__init__()
 
-        self.transaction_hash = hex(calculate_transaction_hash(
-            tx_type=TransactionType.DEPLOY,
-            contract_address=internal_transaction.contract_address,
-            entry_point_selector=get_selector_from_name("constructor"),
-            calldata=internal_transaction.constructor_calldata,
-            chain_id=starknet.state.general_config.chain_id.value,
-        ))
+        self.transaction_hash = hex(internal_deploy.to_external().calculate_hash(starknet.state.general_config))
 
         self.generate_transaction(
-            internal_transaction,
+            internal_deploy,
             status,
             TransactionType.DEPLOY,
-            constructor_calldata=[str(arg) for arg in internal_transaction.constructor_calldata],
-            contract_address_salt=hex(internal_transaction.contract_address_salt)
+            constructor_calldata=[str(arg) for arg in internal_deploy.constructor_calldata],
+            contract_address_salt=hex(internal_deploy.contract_address_salt)
         )
 
 
-class InvokeTransaction(TransactionWrapper):
+class InvokeTransactionWrapper(TransactionWrapper):
     """Class for Invoke Transaction."""
 
     def __init__(self, internal_transaction, status, starknet):
 
         super().__init__()
 
-        self.transaction_hash = hex(calculate_transaction_hash(
-            TransactionType.INVOKE_FUNCTION,
-            contract_address=internal_transaction.contract_address,
-            entry_point_selector=internal_transaction.entry_point_selector,
-            calldata=internal_transaction.calldata,
-            chain_id=starknet.state.general_config.chain_id.value,
-        ))
+        self.transaction_hash = hex(internal_transaction.calculate_hash(starknet.state.general_config))
 
         self.generate_transaction(
             internal_transaction,

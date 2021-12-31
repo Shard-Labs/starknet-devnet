@@ -63,7 +63,7 @@ async def add_transaction():
             error_message = err.message
             status = TxStatus.REJECTED
 
-        transaction_hash = await starknet_wrapper.store_invoke_transaction(
+        transaction_hash = await starknet_wrapper.store_wrapper_transaction(
             transaction=transaction,
             status=status,
             execution_info=execution_info,
