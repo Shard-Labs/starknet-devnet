@@ -187,7 +187,6 @@ class StarknetWrapper:
 
         tx_hash_int = int(transaction_hash,16)
         if tx_hash_int in self.__transaction_wrappers:
-
             return self.__transaction_wrappers[tx_hash_int].receipt
 
         return {
@@ -203,6 +202,7 @@ class StarknetWrapper:
     async def __generate_block(self, transaction: dict, receipt: dict):
         """
         Generates a block and stores it to blocks and hash2block. The block contains just the passed transaction.
+        Also modifies the `transaction` and `receipt` objects received.
         The `transaction` dict should also contain a key `transaction`.
         """
 
@@ -280,9 +280,11 @@ class StarknetWrapper:
         starknet = await self.get_starknet()
 
         if transaction.tx_type == TransactionType.DEPLOY:
-            tx_wrapper = DeployTransactionWrapper(transaction,status,starknet)
+            tx_wrapper = DeployTransactionWrapper(transaction, status, starknet)
+        elif transaction.tx_type == TransactionType.INVOKE_FUNCTION:
+            tx_wrapper = InvokeTransactionWrapper(transaction, status, starknet)
         else:
-            tx_wrapper = InvokeTransactionWrapper(transaction,status,starknet)
+            raise StarknetDevnetException(message=f"Illegal tx_type: {transaction.tx_type}")
 
         tx_wrapper.generate_receipt(execution_info)
 
