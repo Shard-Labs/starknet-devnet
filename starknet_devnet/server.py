@@ -7,7 +7,6 @@ import os
 from flask import Flask, request, jsonify, abort
 from flask.wrappers import Response
 from flask_cors import CORS
-from starkware.starknet.business_logic.internal_transaction import InternalDeploy
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Transaction
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
@@ -43,19 +42,17 @@ async def add_transaction():
     tx_type = transaction.tx_type.name
     status = TxStatus.ACCEPTED_ON_L2
     error_message = None
+    result_dict = {}
 
     if tx_type == TransactionType.DEPLOY.name:
-        state = await starknet_wrapper.get_state()
-        deploy_transaction: InternalDeploy = InternalDeploy.from_external(transaction, state.general_config)
-        contract_address = deploy_transaction.contract_address
-        transaction_hash = await starknet_wrapper.deploy(deploy_transaction)
+        contract_address, transaction_hash = await starknet_wrapper.deploy(transaction)
 
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:
         transaction: InvokeFunction = transaction
         contract_address = transaction.contract_address
         execution_info = DummyExecutionInfo()
         try:
-            _, execution_info = await starknet_wrapper.call_or_invoke(
+            result_dict, execution_info = await starknet_wrapper.call_or_invoke(
                 Choice.INVOKE,
                 transaction
             )
@@ -75,8 +72,9 @@ async def add_transaction():
 
     return jsonify({
         "code": StarkErrorCode.TRANSACTION_RECEIVED.name,
-        "transaction_hash": transaction_hash,
-        "address": fixed_length_hex(contract_address)
+        "transaction_hash": fixed_length_hex(transaction_hash),
+        "address": fixed_length_hex(contract_address),
+        **result_dict
     })
 
 @app.route("/feeder_gateway/get_contract_addresses", methods=["GET"])
