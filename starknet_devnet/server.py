@@ -44,10 +44,8 @@ async def add_transaction():
     if tx_type == TransactionType.DEPLOY.name:
         contract_address, transaction_hash = await starknet_wrapper.deploy(transaction)
         result_dict = {}
-
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:
         contract_address, transaction_hash, result_dict = await starknet_wrapper.invoke(transaction)
-
     else:
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
 

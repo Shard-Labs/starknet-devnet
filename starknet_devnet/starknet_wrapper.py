@@ -175,9 +175,8 @@ class StarknetWrapper:
     def get_transaction_status(self, transaction_hash: str):
         """Returns the status of the transaction identified by `transaction_hash`."""
 
-        tx_hash_int = int(transaction_hash,16)
+        tx_hash_int = int(transaction_hash, 16)
         if tx_hash_int in self.__transaction_wrappers:
-
             transaction_wrapper = self.__transaction_wrappers[tx_hash_int]
 
             transaction = transaction_wrapper.transaction
@@ -202,7 +201,6 @@ class StarknetWrapper:
 
         tx_hash_int = int(transaction_hash,16)
         if tx_hash_int in self.__transaction_wrappers:
-
             return self.__transaction_wrappers[tx_hash_int].transaction
 
         return self.origin.get_transaction(transaction_hash)

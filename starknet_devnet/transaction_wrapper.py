@@ -87,7 +87,7 @@ class DeployTransactionWrapper(TransactionWrapper):
             status,
             execution_info,
             DeployTransactionDetails(
-                TransactionType.DEPLOY,
+                TransactionType.DEPLOY.name,
                 contract_address=fixed_length_hex(internal_tx.contract_address),
                 transaction_hash=fixed_length_hex(internal_tx.hash_value),
                 constructor_calldata=[str(arg) for arg in internal_tx.constructor_calldata],
@@ -104,7 +104,7 @@ class InvokeTransactionWrapper(TransactionWrapper):
             status,
             execution_info,
             InvokeTransactionDetails(
-                TransactionType.INVOKE_FUNCTION,
+                TransactionType.INVOKE_FUNCTION.name,
                 contract_address=fixed_length_hex(internal_tx.contract_address),
                 transaction_hash=fixed_length_hex(internal_tx.hash_value),
                 calldata=[str(arg) for arg in internal_tx.calldata],
