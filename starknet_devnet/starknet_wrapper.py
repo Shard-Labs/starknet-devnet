@@ -298,7 +298,8 @@ class StarknetWrapper:
             assert error_message, "error_message must be present if tx rejected"
             tx_wrapper.set_failure_reason(error_message)
         else:
-            await self.__generate_block(tx_wrapper.transaction, tx_wrapper.receipt)
+            block_hash, block_number = await self.__generate_block(tx_wrapper.transaction, tx_wrapper.receipt)
+            tx_wrapper.set_block_data(block_hash, block_number)
 
         numeric_hash = int(tx_wrapper.transaction_hash, 16)
         self.__transaction_wrappers[numeric_hash] = tx_wrapper

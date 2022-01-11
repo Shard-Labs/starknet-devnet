@@ -61,7 +61,7 @@ class TransactionWrapper(ABC):
             "transaction_index": 0 # always the first (and only) tx in the block
         }
 
-    def set_block_data(self, block_number: int, block_hash: str):
+    def set_block_data(self, block_hash: str, block_number: int):
         """Sets `block_hash` and `block_number` to the wrapped transaction and receipt."""
         self.transaction["block_hash"] = self.receipt["block_hash"] = block_hash
         self.transaction["block_number"] = self.receipt["block_number"] = block_number
