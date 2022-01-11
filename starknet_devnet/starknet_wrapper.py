@@ -7,7 +7,7 @@ import time
 from copy import deepcopy
 from typing import Dict
 
-from starkware.starknet.business_logic.internal_transaction import InternalDeploy, InternalInvokeFunction
+from starkware.starknet.business_logic.internal_transaction import InternalDeploy, InternalInvokeFunction, InternalTransaction
 from starkware.starknet.business_logic.state import CarriedState
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Transaction
@@ -121,7 +121,7 @@ class StarknetWrapper:
             execution_info = DummyExecutionInfo()
 
         await self.__store_transaction(
-            deploy_transaction,
+            internal_tx=deploy_transaction,
             status=status,
             execution_info=execution_info,
             error_message=error_message
@@ -133,7 +133,8 @@ class StarknetWrapper:
     async def invoke(self, transaction: InvokeFunction):
         """Perform invoke according to specifications in `transaction`."""
         state = await self.__get_state()
-        invoke_transaction: InternalInvokeFunction = InternalInvokeFunction.from_external(transaction, state)
+        invoke_transaction: InternalInvokeFunction = InternalInvokeFunction.from_external(transaction, state.general_config)
+
         try:
             contract_wrapper = self.__get_contract_wrapper(invoke_transaction.contract_address)
             adapted_result, execution_info = await contract_wrapper.call_or_invoke(
@@ -152,7 +153,7 @@ class StarknetWrapper:
             adapted_result = {}
 
         await self.__store_transaction(
-            transaction=transaction,
+            internal_tx=invoke_transaction,
             status=status,
             execution_info=execution_info,
             error_message=error_message
@@ -283,16 +284,16 @@ class StarknetWrapper:
 
         return self.origin.get_block_by_number(block_number)
 
-    async def __store_transaction(self, transaction: Transaction, status: TxStatus,
+    async def __store_transaction(self, internal_tx: InternalTransaction, status: TxStatus,
         execution_info: StarknetTransactionExecutionInfo, error_message: str=None
     ):
         """Stores the provided data as a deploy transaction in `self.transactions`."""
-        if transaction.tx_type == TransactionType.DEPLOY:
-            tx_wrapper = DeployTransactionWrapper(transaction, status, execution_info)
-        elif transaction.tx_type == TransactionType.INVOKE_FUNCTION:
-            tx_wrapper = InvokeTransactionWrapper(transaction, status, execution_info)
+        if internal_tx.tx_type == TransactionType.DEPLOY:
+            tx_wrapper = DeployTransactionWrapper(internal_tx, status, execution_info)
+        elif internal_tx.tx_type == TransactionType.INVOKE_FUNCTION:
+            tx_wrapper = InvokeTransactionWrapper(internal_tx, status, execution_info)
         else:
-            raise StarknetDevnetException(message=f"Illegal tx_type: {transaction.tx_type}")
+            raise StarknetDevnetException(message=f"Illegal tx_type: {internal_tx.tx_type}")
 
         if status == TxStatus.REJECTED:
             assert error_message, "error_message must be present if tx rejected"
