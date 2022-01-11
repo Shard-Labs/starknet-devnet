@@ -12,8 +12,8 @@ from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
 from werkzeug.datastructures import MultiDict
 
-from .util import DummyExecutionInfo, TxStatus, custom_int, fixed_length_hex, parse_args
-from .starknet_wrapper import Choice, StarknetWrapper
+from .util import custom_int, fixed_length_hex, parse_args
+from .starknet_wrapper import StarknetWrapper
 from .origin import NullOrigin
 
 app = Flask(__name__)
@@ -40,32 +40,13 @@ async def add_transaction():
         abort(Response(msg, 400))
 
     tx_type = transaction.tx_type.name
-    status = TxStatus.ACCEPTED_ON_L2
-    error_message = None
-    result_dict = {}
 
     if tx_type == TransactionType.DEPLOY.name:
         contract_address, transaction_hash = await starknet_wrapper.deploy(transaction)
+        result_dict = {}
 
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:
-        transaction: InvokeFunction = transaction
-        contract_address = transaction.contract_address
-        execution_info = DummyExecutionInfo()
-        try:
-            result_dict, execution_info = await starknet_wrapper.call_or_invoke(
-                Choice.INVOKE,
-                transaction
-            )
-        except StarkException as err:
-            error_message = err.message
-            status = TxStatus.REJECTED
-
-        transaction_hash = await starknet_wrapper.store_wrapper_transaction(
-            transaction=transaction,
-            status=status,
-            execution_info=execution_info,
-            error_message=error_message
-        )
+        contract_address, transaction_hash, result_dict = await starknet_wrapper.invoke(transaction)
 
     else:
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
@@ -91,10 +72,7 @@ async def call_contract():
     raw_data = request.get_data()
     try:
         call_specifications = InvokeFunction.loads(raw_data)
-        result_dict, _ = await starknet_wrapper.call_or_invoke(
-            Choice.CALL,
-            call_specifications
-        )
+        result_dict = await starknet_wrapper.call(call_specifications)
     except StarkException as err:
         # code 400 would make more sense, but alpha returns 500
         abort(Response(err.message, 500))
