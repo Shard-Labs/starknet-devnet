@@ -103,31 +103,33 @@ class StarknetWrapper:
 
         starknet = await self.get_starknet()
 
-        try:
-            contract = await starknet.deploy(
-                contract_def=deploy_transaction.contract_definition,
-                constructor_calldata=deploy_transaction.constructor_calldata,
-                contract_address_salt=deploy_transaction.contract_address_salt
+        if deploy_transaction.contract_address not in self.__address2contract_wrapper:
+            try:
+                contract = await starknet.deploy(
+                    contract_def=deploy_transaction.contract_definition,
+                    constructor_calldata=deploy_transaction.constructor_calldata,
+                    contract_address_salt=deploy_transaction.contract_address_salt
+                )
+                # Uncomment this once contract has execution_info
+                # execution_info = contract.execution_info
+                error_message = None
+                status = TxStatus.ACCEPTED_ON_L2
+                execution_info = DummyExecutionInfo()
+
+                self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, deploy_transaction.contract_definition)
+                await self.__update_state()
+            except StarkException as err:
+                error_message = err.message
+                status = TxStatus.REJECTED
+                execution_info = DummyExecutionInfo()
+
+            await self.__store_transaction(
+                internal_tx=deploy_transaction,
+                status=status,
+                execution_info=execution_info,
+                error_message=error_message
             )
-            # Uncomment this once contract has execution_info
-            # execution_info = contract.execution_info
-            execution_info = DummyExecutionInfo()
-            status = TxStatus.ACCEPTED_ON_L2
-            error_message = None
-            await self.__update_state()
-        except StarkException as err:
-            error_message = err.message
-            status = TxStatus.REJECTED
-            execution_info = DummyExecutionInfo()
 
-        await self.__store_transaction(
-            internal_tx=deploy_transaction,
-            status=status,
-            execution_info=execution_info,
-            error_message=error_message
-        )
-
-        self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, deploy_transaction.contract_definition)
         return deploy_transaction.contract_address, deploy_transaction.hash_value
 
     async def invoke(self, transaction: InvokeFunction):
