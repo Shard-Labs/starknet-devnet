@@ -45,3 +45,5 @@ function compare_json() {
 compare_json block_number "$BLOCK_NUMBER"
 compare_json transaction_hash "\"$TX_HASH\""
 compare_json transaction_index 0
+
+rm "$RECEIPT_FILE"

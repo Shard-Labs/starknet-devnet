@@ -14,8 +14,10 @@ function extract_tx_hash() {
 poetry run starknet-devnet --host="$host" --port="$port" &
 sleep 1 # give the server some time to get up
 
-CONTRACT_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract.json
-ABI_PATH=starknet-hardhat-example/starknet-artifacts/contracts/contract.cairo/contract_abi.json
+ARTIFACTS_PATH=starknet-hardhat-example/starknet-artifacts/contracts
+export CONTRACT_PATH="$ARTIFACTS_PATH/contract.cairo/contract.json"
+export ABI_PATH="$ARTIFACTS_PATH/contract.cairo/contract_abi.json"
+export FAILING_CONTRACT="$ARTIFACTS_PATH/always_fail.cairo/always_fail.json"
 
 # deploy the contract
 output=$(starknet deploy \
@@ -29,11 +31,7 @@ echo "Address: $address"
 echo "tx_hash: $deploy_tx_hash"
 
 # inspects status from tx_status object
-deploy_tx_status=$(starknet tx_status --hash $deploy_tx_hash --feeder_gateway_url $FEEDER_GATEWAY_URL | jq ".tx_status" -r)
-if [ "$deploy_tx_status" != "ACCEPTED_ON_L2" ]; then
-    echo "Wrong tx_status: $deploy_tx_status"
-    exit 2
-fi
+scripts/assert_tx_status.sh "$deploy_tx_hash" "ACCEPTED_ON_L2"
 
 # inspects status from tx object
 deploy_tx_status2=$(starknet get_transaction --hash $deploy_tx_hash --feeder_gateway_url $FEEDER_GATEWAY_URL | jq ".status" -r)
@@ -75,3 +73,6 @@ scripts/test_storage.sh "$address" "$balance_key" 0x1e
 # check block and receipt after increase
 scripts/test_block.sh 1 "$invoke_tx_hash"
 scripts/test_receipt.sh 1 "$invoke_tx_hash"
+
+# test deployment cases
+scripts/test_deploy.sh

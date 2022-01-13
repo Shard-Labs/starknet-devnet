@@ -43,7 +43,7 @@ npx hardhat starknet-deploy \
 | result_assertion
 echo "Finished deploy-call procedure"
 
-if [ -f "TEST_FILE" ]; then
+if [ ! -f "$TEST_FILE" ]; then
     echo "Invalid TEST_FILE provided"
     exit 1
 fi
