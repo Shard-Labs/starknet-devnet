@@ -25,29 +25,29 @@ jobs:
           command: poetry install
       - run:
           name: Lint
-          command: poetry run pylint starknet_devnet
+          command: poetry run pylint starknet_devnet test
       - run:
           name: Setup example
           command: ./scripts/setup_example.sh
       - run:
-          name: Test CLI
-          command: ./scripts/test_cli.sh
+          name: Test interaction with Starknet CLI
+          command: python3 -m test.test_cli
       - run:
-          name: Test CLI with authentication
-          command: ./scripts/test_cli_auth.sh
+          name: Test interaction with Starknet CLI (with authentication)
+          command: python3 -m test.test_cli_auth
       - run:
           name: Test plugin - dockerized
-          command: ./scripts/test_plugin.sh
+          command: python3 -m test.test_plugin
           no_output_timeout: 1m
           environment:
-            HARDHAT_CONFIG_FILE: ../scripts/hardhat.config.dockerized.ts
+            HARDHAT_CONFIG_FILE: ../test/hardhat.config.dockerized.ts
             TEST_FILE: test/quick-test.ts
       - run:
           name: Test plugin - venv
-          command: ./scripts/test_plugin.sh
+          command: python3 -m test.test_plugin
           no_output_timeout: 1m
           environment:
-            HARDHAT_CONFIG_FILE: ../scripts/hardhat.config.venv.ts
+            HARDHAT_CONFIG_FILE: ../test/hardhat.config.venv.ts
             TEST_FILE: test/sample-test.ts
   package_build_and_publish:
     docker:
