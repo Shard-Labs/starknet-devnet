@@ -31,10 +31,15 @@ jobs:
           command: ./scripts/setup_example.sh
       - run:
           name: Test interaction with Starknet CLI
-          command: python3 -m test.test_cli
+          # command: python3 -m test.test_cli
+          command: echo Temporarily disabled
       - run:
           name: Test interaction with Starknet CLI (with authentication)
-          command: python3 -m test.test_cli_auth
+          # command: python3 -m test.test_cli_auth
+          command: echo Temporarily disabled
+      - run:
+          name: Check file structure
+          command: tree starknet-hardhat-example
       - run:
           name: Test plugin - dockerized
           command: python3 -m test.test_plugin
