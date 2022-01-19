@@ -43,13 +43,16 @@ def extract_address(stdout):
     """Extract address from stdout."""
     return extract(r"Contract address: (\w*)", stdout)
 
-def my_run(args, raise_on_nonzero=True):
+def my_run(args, raise_on_nonzero=True, add_gateway_urls=True):
     """Wrapper around subprocess.run"""
     my_args = [
-        *args,
-        "--gateway_url", GATEWAY_URL,
-        "--feeder_gateway_url", FEEDER_GATEWAY_URL
+        *args
     ]
+    if add_gateway_urls:
+        my_args.extend([
+            "--gateway_url", GATEWAY_URL,
+            "--feeder_gateway_url", FEEDER_GATEWAY_URL
+        ])
     output = subprocess.run(my_args, encoding="utf-8", check=False, capture_output=True)
     if output.returncode != 0 and raise_on_nonzero:
         raise ReturnCodeAssertionError(output.stderr)
