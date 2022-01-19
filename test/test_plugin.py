@@ -29,7 +29,7 @@ balance = my_run([
 assert_equal(balance, "10")
 print("Finished deploy-call procedure")
 
-if os.path.isfile(os.environ["TEST_FILE"]):
+if not os.path.isfile(os.environ["TEST_FILE"]):
     print("Invalid TEST_FILE provided")
     sys.exit(1)
 
