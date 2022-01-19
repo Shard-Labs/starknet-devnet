@@ -98,13 +98,13 @@ Setup an example project by running:
 
 To see if Devnet can interact with starknet CLI commands, run:
 ```text
-python3 -m test/test_cli.sh
-python3 -m test/test_cli_auth.sh
+python3 -m test.test_cli
+python3 -m test.test_cli_auth
 ```
 
 To see if Devnet can interact with the Hardhat plugin, run:
 ```text
-python3 -m scripts/test_plugin.sh
+python3 -m test.test_plugin
 ```
 
 ## Development - Build
