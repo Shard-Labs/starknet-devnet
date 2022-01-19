@@ -18,6 +18,10 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Setup environment variables
+          command: |
+            echo 'export CAIRO_LANG_VERSION=$(scripts/get_version.sh cairo-lang)' >> $BASH_ENV
+      - run:
           name: Install development tools
           command: ./scripts/install_dev_tools.sh
       - run:
@@ -31,15 +35,10 @@ jobs:
           command: ./scripts/setup_example.sh
       - run:
           name: Test interaction with Starknet CLI
-          # command: python3 -m test.test_cli
-          command: echo Temporarily disabled
+          command: python3 -m test.test_cli
       - run:
           name: Test interaction with Starknet CLI (with authentication)
-          # command: python3 -m test.test_cli_auth
-          command: echo Temporarily disabled
-      - run:
-          name: Check file structure
-          command: tree starknet-hardhat-example
+          command: python3 -m test.test_cli_auth
       - run:
           name: Test plugin - dockerized
           command: python3 -m test.test_plugin
