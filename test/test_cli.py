@@ -41,13 +41,11 @@ invoke_tx_hash = invoke(
     abi_path=ABI_PATH,
     inputs=["10", "20"]
 )
-print("Invoke successful!")
 value = call(
     function="get_balance",
     address=deploy_info["address"],
     abi_path=ABI_PATH
 )
-print("Call successful")
 assert_equal(value, "30", "Invoke+call failed!")
 
 # check storage, block and receipt after increase

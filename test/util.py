@@ -80,15 +80,20 @@ def assert_transaction(tx_hash, expected_status):
     transaction = json.loads(output.stdout)
     assert_equal(transaction["status"], expected_status)
 
-def invoke(function, inputs, address, abi_path):
+def invoke(function, inputs, address, abi_path, signature=None):
     """Wrapper around starknet invoke"""
-    output = my_run([
+    args = [
         "starknet", "invoke",
         "--function", function,
         "--inputs", *inputs,
         "--address", address,
         "--abi", abi_path,
-    ])
+    ]
+    if signature:
+        args.extend(["--signature", *signature])
+    output = my_run(args)
+
+    print("Invoke successful!")
     return extract_hash(output.stdout)
 
 def call(function, address, abi_path, inputs=None):
@@ -102,6 +107,8 @@ def call(function, address, abi_path, inputs=None):
     if inputs:
         args.extend(["--inputs", *inputs])
     output = my_run(args)
+
+    print("Call successful!")
     return output.stdout.rstrip()
 
 def assert_tx_status(tx_hash, expected_tx_status):
