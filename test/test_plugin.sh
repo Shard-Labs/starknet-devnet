@@ -17,8 +17,8 @@ function call_wrapper() {
     read ADDRESS
     starknet call \
         --abi starknet-artifacts/contracts/contract.cairo/contract_abi.json \
-        --address $ADDRESS \
-        --feeder_gateway_url $GATEWAY_URL \
+        --address "$ADDRESS" \
+        --feeder_gateway_url "$GATEWAY_URL" \
         --func get_balance
 }
 
