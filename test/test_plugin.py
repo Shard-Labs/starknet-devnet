@@ -2,7 +2,7 @@
 
 import os
 import sys
-from .util import assert_equal, call, extract_address, my_run, run_devnet_in_background
+from .util import assert_equal, extract_address, my_run, run_devnet_in_background
 
 run_devnet_in_background(sleep_seconds=1)
 
@@ -19,11 +19,13 @@ deploy_output = my_run([
 ], add_gateway_urls=False).stdout
 address = extract_address(deploy_output)
 
-balance = call(
-    abi_path="starknet-artifacts/contracts/contract.cairo/contract_abi.json",
-    address=address,
-    function="get_balance"
-)
+balance = my_run([
+    "npx", "hardhat", "starknet-call",
+    "--contract", "contract",
+    "--starknet-network", "devnet",
+    "--function", "get_balance",
+    "--address", address
+]).stdout.rstrip()
 assert_equal(balance, "10")
 print("Finished deploy-call procedure")
 
