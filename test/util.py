@@ -45,9 +45,7 @@ def extract_address(stdout):
 
 def my_run(args, raise_on_nonzero=True, add_gateway_urls=True):
     """Wrapper around subprocess.run"""
-    my_args = [
-        *args
-    ]
+    my_args = [*args]
     if add_gateway_urls:
         my_args.extend([
             "--gateway_url", GATEWAY_URL,

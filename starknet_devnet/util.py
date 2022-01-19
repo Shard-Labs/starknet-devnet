@@ -72,7 +72,7 @@ def parse_args():
     """
     Parses CLI arguments.
     """
-    parser = argparse.ArgumentParser(description="Run a local instance of Starknet devnet")
+    parser = argparse.ArgumentParser(description="Run a local instance of Starknet Devnet")
     parser.add_argument(
         "-v", "--version",
         help="Print the version",

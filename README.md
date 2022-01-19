@@ -22,7 +22,7 @@ brew install gmp
 ```
 
 ## Disclaimer
-- This devnet should not be used as a replacement for Alpha testnet. After testing on devnet, be sure to test on testnet!
+- Devnet should not be used as a replacement for Alpha testnet. After testing on Devnet, be sure to test on testnet!
 - Hash calculation of transactions and blocks differs from the one used in Alpha testnet.
 - Specifying a block by its hash/number is not supported. All interaction is done with the latest block.
 - Read more in [interaction](#interaction-api).
@@ -32,7 +32,7 @@ Installing the package adds the `starknet-devnet` command.
 ```text
 usage: starknet-devnet [-h] [-v] [--host HOST] [--port PORT]
 
-Run a local instance of Starknet devnet
+Run a local instance of Starknet Devnet
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -42,7 +42,7 @@ optional arguments:
 ```
 
 ## Run - Docker
-This devnet is available as a Docker container ([shardlabs/starknet-devnet](https://hub.docker.com/repository/docker/shardlabs/starknet-devnet)):
+Devnet is available as a Docker container ([shardlabs/starknet-devnet](https://hub.docker.com/repository/docker/shardlabs/starknet-devnet)):
 ```text
 docker pull shardlabs/starknet-devnet
 ```
@@ -57,10 +57,10 @@ docker run -it -p 127.0.0.1:5000:5000 shardlabs/starknet-devnet
 ```
 You may ignore any address-related output logged on container startup (e.g. `Running on all addresses` or `Running on http://172.17.0.2:5000`). What you will use is what you specified with the `-p` argument.
 
-If you don't specify the `HOST` part, the server will indeed be available on all of your host machine's addresses (localhost, local network IP, etc.), which may present a security issue if you don't want anyone from the local network to access your devnet.
+If you don't specify the `HOST` part, the server will indeed be available on all of your host machine's addresses (localhost, local network IP, etc.), which may present a security issue if you don't want anyone from the local network to access your Devnet instance.
 
 ## Interaction
-- Interact with this devnet as you would with the official Starknet [Alpha testnet](https://www.cairo-lang.org/docs/hello_starknet/amm.html?highlight=alpha#interaction-examples).
+- Interact with Devnet as you would with the official Starknet [Alpha testnet](https://www.cairo-lang.org/docs/hello_starknet/amm.html?highlight=alpha#interaction-examples).
 - The exact underlying API is not exposed for the same reason Alpha testnet does not expose it.
 - The following Starknet CLI commands are supported:
   - `call`
@@ -78,7 +78,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `get_contract_addresses` - L1-L2 interaction is currently not supported
 
 ## Hardhat integration
-- If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate this devnet.
+- If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate Devnet.
 
 ## Development - Prerequisite
 If you're a developer willing to contribute, be sure to have installed [Poetry](https://pypi.org/project/poetry/).
@@ -96,14 +96,15 @@ Setup an example project by running:
 ./scripts/setup_example.sh
 ```
 
-To see if the devnet can interact with starknet CLI commands, run:
+To see if Devnet can interact with starknet CLI commands, run:
 ```text
-./scripts/test_cli.sh
+python3 -m test/test_cli.sh
+python3 -m test/test_cli_auth.sh
 ```
 
-To see if the devnet can interact with the plugin, run:
+To see if Devnet can interact with the Hardhat plugin, run:
 ```text
-./scripts/test_plugin.sh
+python3 -m scripts/test_plugin.sh
 ```
 
 ## Development - Build
