@@ -25,7 +25,7 @@ balance = my_run([
     "--starknet-network", "devnet",
     "--function", "get_balance",
     "--address", address
-]).stdout.split("\n")[1]
+], add_gateway_urls=False).stdout.split("\n")[1]
 assert_equal(balance, "10")
 print("Finished deploy-call procedure")
 
