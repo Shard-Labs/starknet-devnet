@@ -1,13 +1,16 @@
 import "@shardlabs/starknet-hardhat-plugin";
+import { spawnSync } from "child_process";
 
-if (!process.env.CAIRO_LANG_VERSION) {
-    console.log("CAIRO_LANG_VERSION is undefined.")
-    process.exit(1);
-}
+// position to project root because that's where get_version.sh should be called from
+const originalCwd = process.cwd();
+process.chdir("..");
+const executed = spawnSync("scripts/get_version.sh", ["cairo-lang"]);
+const cairoLangVersion = executed.stdout.toString().trim();
+process.chdir(originalCwd);
 
 module.exports = {
     cairo: {
-        version: process.env.CAIRO_LANG_VERSION
+        version: cairoLangVersion
     },
     networks: {
         devnet: {

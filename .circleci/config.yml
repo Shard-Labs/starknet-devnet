@@ -18,10 +18,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Setup environment variables
-          command: |
-            echo 'export CAIRO_LANG_VERSION="$(scripts/get_version.sh cairo-lang)"' >> $BASH_ENV
-      - run:
           name: Install development tools
           command: ./scripts/install_dev_tools.sh
       - run:
