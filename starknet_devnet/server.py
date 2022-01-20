@@ -3,7 +3,6 @@ A server exposing Starknet functionalities as API endpoints.
 """
 
 import os
-from importlib_metadata import version
 
 from flask import Flask, request, jsonify, abort
 from flask.wrappers import Response
@@ -14,13 +13,13 @@ from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
 from werkzeug.datastructures import MultiDict
 
-from .util import custom_int, fixed_length_hex, parse_args
+from .constants import CAIRO_LANG_VERSION
 from .starknet_wrapper import StarknetWrapper
 from .origin import NullOrigin
+from .util import custom_int, fixed_length_hex, parse_args
 
 app = Flask(__name__)
 CORS(app)
-CAIRO_LANG_VERSION = version("cairo-lang")
 
 @app.route("/is_alive", methods=["GET"])
 @app.route("/gateway/is_alive", methods=["GET"])
@@ -37,7 +36,7 @@ async def add_transaction():
     try:
         transaction = Transaction.loads(raw_data)
     except (TypeError, ValidationError):
-        msg = "Invalid tx. Be sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
+        msg = f"Invalid tx. Be sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
         abort(Response(msg, 400))
 
     tx_type = transaction.tx_type.name
