@@ -35,8 +35,8 @@ class DeployTransactionDetails(TransactionDetails):
 class InvokeTransactionDetails(TransactionDetails):
     """Transcation details of `InvokeTransaction`."""
     calldata: List[str]
+    signature: List[str]
     entry_point_selector: str
-
 
 class TransactionWrapper(ABC):
     """Transaction Wrapper base class."""
@@ -108,6 +108,7 @@ class InvokeTransactionWrapper(TransactionWrapper):
                 contract_address=fixed_length_hex(internal_tx.contract_address),
                 transaction_hash=fixed_length_hex(internal_tx.hash_value),
                 calldata=[str(arg) for arg in internal_tx.calldata],
-                entry_point_selector=str(internal_tx.entry_point_selector)
+                entry_point_selector=str(internal_tx.entry_point_selector),
+                signature=[str(sig_part) for sig_part in internal_tx.signature]
             )
         )

@@ -72,7 +72,7 @@ def deploy(contract, inputs=None, salt=None):
         "address": extract_address(output.stdout)
     }
 
-def assert_transaction(tx_hash, expected_status):
+def assert_transaction(tx_hash, expected_status, expected_signature=None):
     """Wrapper around starknet get_transaction"""
     output = my_run([
         "starknet", "get_transaction",
@@ -80,6 +80,8 @@ def assert_transaction(tx_hash, expected_status):
     ])
     transaction = json.loads(output.stdout)
     assert_equal(transaction["status"], expected_status)
+    if expected_signature:
+        assert_equal(transaction["transaction"]["signature"], expected_signature)
 
 def invoke(function, inputs, address, abi_path, signature=None):
     """Wrapper around starknet invoke"""
@@ -121,14 +123,15 @@ def assert_tx_status(tx_hash, expected_tx_status):
     tx_status = json.loads(output.stdout)["tx_status"]
     assert_equal(tx_status, expected_tx_status)
 
-def assert_contract_code(address, expected_path):
+def assert_contract_code(address):
     """Asserts the content of the code of a contract at address."""
     output = my_run([
         "starknet", "get_code",
         "--contract_address", address
     ])
-    with open(expected_path, encoding="utf-8") as expected_file:
-        assert_equal(output.stdout, expected_file.read())
+    code = json.loads(output.stdout)
+    # just checking key equality
+    assert_equal(sorted(code.keys()), ["abi", "bytecode"])
 
 def assert_storage(address, key, expected_value):
     """Asserts the storage value stored at (address, key)."""
@@ -139,24 +142,26 @@ def assert_storage(address, key, expected_value):
     ])
     assert_equal(output.stdout.rstrip(), expected_value)
 
-EXPECTED_RECEIPT_PROPS = [
-    "block_hash", "block_number", "execution_resources", "l2_to_l1_messages", "status", "transaction_hash", "transaction_index"
-]
-def assert_receipt(block_number, tx_hash):
+def load_json_from_path(path):
+    """Loads a json file from `path`."""
+    with open(path, encoding="utf-8") as expected_file:
+        return json.load(expected_file)
+
+def assert_receipt(tx_hash, expected_path):
     """Asserts the content of the receipt of tx with tx_hash."""
     output = my_run([
         "starknet", "get_transaction_receipt",
         "--hash", tx_hash
     ])
     receipt = json.loads(output.stdout)
+    expected_receipt = load_json_from_path(expected_path)
 
-    props_not_found = [prop for prop in EXPECTED_RECEIPT_PROPS if prop not in receipt]
-    if props_not_found:
-        raise RuntimeError(f"Receipt props not found:, {props_not_found}")
-
-    assert_equal(receipt["block_number"], block_number)
     assert_equal(receipt["transaction_hash"], tx_hash)
-    assert_equal(receipt["transaction_index"], 0)
+
+    for ignorable_key in ["block_hash", "transaction_hash"]:
+        receipt.pop(ignorable_key)
+        expected_receipt.pop(ignorable_key)
+    assert_equal(receipt, expected_receipt)
 
 def get_block(block_number=None, parse=False):
     """Get the block with block_number. If no number provided, return the last."""
@@ -199,7 +204,7 @@ def assert_block(latest_block_number, latest_tx_hash):
 def assert_salty_deploy(contract_path, inputs, salt, expected_address, expected_tx_hash):
     """Run twice deployment with salt. Expect the same output."""
     for i in range(2):
-        print(f"Running deployment {i})")
+        print(f"Running deployment {i + 1})")
         deploy_info = deploy(contract_path, inputs, salt=salt)
         assert_tx_status(deploy_info["tx_hash"], "ACCEPTED_ON_L2")
         assert_equal(deploy_info["address"], expected_address)

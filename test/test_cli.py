@@ -29,10 +29,10 @@ assert_storage(deploy_info["address"], BALANCE_KEY, "0x0")
 # check block and receipt after deployment
 assert_negative_block_input()
 assert_block(0, deploy_info["tx_hash"])
-assert_receipt(0, deploy_info["tx_hash"])
+assert_receipt(deploy_info["tx_hash"], "test/expected/deploy_receipt.json")
 
 # check code
-assert_contract_code(deploy_info["address"], "test/code.expected.json")
+assert_contract_code(deploy_info["address"])
 
 # increase and assert balance
 invoke_tx_hash = invoke(
@@ -51,16 +51,14 @@ assert_equal(value, "30", "Invoke+call failed!")
 # check storage, block and receipt after increase
 assert_storage(deploy_info["address"], BALANCE_KEY, "0x1e")
 assert_block(1, invoke_tx_hash)
-assert_receipt(1, invoke_tx_hash)
+assert_receipt(invoke_tx_hash, "test/expected/invoke_receipt.json")
 
 assert_salty_deploy(
     contract_path=CONTRACT_PATH,
     inputs=["10"],
     salt="0x99",
-    expected_address="0x06a9555c51c45990d479a0322c0e438c465a988151423049645773162dd7b1c9",
-    expected_tx_hash="0x02d3c5827c7067c485e14943c8893f52873680d72f88396a5d02ddb743dc4598"
+    expected_address="0x049825bc705470f1e36b203383f54c84b1d9074f76cdcc1d7061047dfb4ff595",
+    expected_tx_hash="0x073d0799e900c1a906970c2f10c70efeb0c4a7e6e7faac9306616bd6369e948c"
 )
 
-assert_failing_deploy(
-    contract_path=FAILING_CONTRACT_PATH,
-)
+assert_failing_deploy(contract_path=FAILING_CONTRACT_PATH)
