@@ -14,6 +14,7 @@ from starkware.starknet.services.api.gateway.transaction import InvokeFunction, 
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 from starkware.starkware_utils.error_handling import StarkException
+from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
 
 from .origin import Origin
 from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo
@@ -230,8 +231,21 @@ class StarknetWrapper:
         Returns (block_hash, block_number).
         """
 
+        state = await self.__get_state()
         block_number = self.get_number_of_blocks()
-        block_hash = hex(block_number)
+        timestamp = int(time.time())
+        block_hash = calculate_block_hash(
+            general_config=state.general_config,
+            parent_hash=parent_hash,
+            block_number=block_number,
+            global_state_root=self.__get_state_root(),
+            block_timestamp=timestamp,
+            tx_hashes=transaction["transaction"]["hash"], # TODO
+            tx_signatures=transaction["transaction"]["signature"], # TODO
+            event_hashes=[], # TODO
+        )
+        state = await self.__get_state()
+        block_hash = calculate_block_hash(state.general_config, )
         state_root = await self.__get_state_root()
 
         block = {
@@ -240,13 +254,12 @@ class StarknetWrapper:
             "parent_block_hash": self.__get_last_block()["block_hash"] if self.__num2block else "0x0",
             "state_root": state_root,
             "status": TxStatus.ACCEPTED_ON_L2.name,
-            "timestamp": int(time.time()),
+            "timestamp": timestamp,
             "transaction_receipts": [receipt],
             "transactions": [transaction["transaction"]],
         }
 
-        number_of_blocks = self.get_number_of_blocks()
-        self.__num2block[number_of_blocks] = block
+        self.__num2block[block_number] = block
         self.__hash2block[int(block_hash, 16)] = block
 
         return block_hash, block_number
