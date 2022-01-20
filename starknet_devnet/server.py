@@ -3,10 +3,12 @@ A server exposing Starknet functionalities as API endpoints.
 """
 
 import os
+from importlib_metadata import version
 
 from flask import Flask, request, jsonify, abort
 from flask.wrappers import Response
 from flask_cors import CORS
+from marshmallow import ValidationError
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Transaction
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode, StarkException
@@ -18,6 +20,7 @@ from .origin import NullOrigin
 
 app = Flask(__name__)
 CORS(app)
+CAIRO_LANG_VERSION = version("cairo-lang")
 
 @app.route("/is_alive", methods=["GET"])
 @app.route("/gateway/is_alive", methods=["GET"])
@@ -28,15 +31,13 @@ def is_alive():
 
 @app.route("/gateway/add_transaction", methods=["POST"])
 async def add_transaction():
-    """
-    Endpoint for accepting DEPLOY and INVOKE_FUNCTION transactions.
-    """
+    """Endpoint for accepting DEPLOY and INVOKE_FUNCTION transactions."""
 
     raw_data = request.get_data()
     try:
         transaction = Transaction.loads(raw_data)
-    except TypeError:
-        msg = "Invalid transaction format. Try recompiling your contract with a newer version."
+    except (TypeError, ValidationError):
+        msg = "Invalid tx. Be sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
         abort(Response(msg, 400))
 
     tx_type = transaction.tx_type.name
