@@ -110,11 +110,9 @@ class StarknetWrapper:
                     constructor_calldata=deploy_transaction.constructor_calldata,
                     contract_address_salt=deploy_transaction.contract_address_salt
                 )
-                # Uncomment this once contract has execution_info
-                # execution_info = contract.execution_info
+                execution_info = contract.deploy_execution_info
                 error_message = None
                 status = TxStatus.ACCEPTED_ON_L2
-                execution_info = DummyExecutionInfo()
 
                 self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, deploy_transaction.contract_definition)
                 await self.__update_state()
@@ -181,7 +179,6 @@ class StarknetWrapper:
         tx_hash_int = int(transaction_hash, 16)
         if tx_hash_int in self.__transaction_wrappers:
             transaction_wrapper = self.__transaction_wrappers[tx_hash_int]
-
             transaction = transaction_wrapper.transaction
 
             ret = {
