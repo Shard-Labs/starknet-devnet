@@ -23,7 +23,7 @@ def adapt_calldata(calldata, expected_inputs, types):
         input_name = input_entry["name"]
         input_type = input_entry["type"]
         if calldata_i >= len(calldata):
-            if input_type == "felt*" and last_name == f"{input_name}_len" and last_value == 0:
+            if input_type.endswith("*") and last_name == f"{input_name}_len" and last_value == 0:
                 # This means that an empty array is provided.
                 # Last element was array length (0), it's replaced with the array itself
                 adapted_calldata[-1] = []
@@ -32,19 +32,14 @@ def adapt_calldata(calldata, expected_inputs, types):
             raise StarknetDevnetException(message=message)
         input_value = calldata[calldata_i]
 
-        if input_type == "felt*":
+        if input_type.endswith("*"):
             if last_name != f"{input_name}_len":
                 raise StarknetDevnetException(f"Array size argument {last_name} must appear right before {input_name}.")
 
+            arr_element_type = input_type[:-1]
             arr_length = int(last_value)
-            arr = calldata[calldata_i : calldata_i + arr_length]
-            if len(arr) < arr_length:
-                message = f"Too few function arguments provided: {len(calldata)}."
-                raise StarknetDevnetException(message=message)
-
             # last element was array length, it's replaced with the array itself
-            adapted_calldata[-1] = arr
-            calldata_i += arr_length
+            adapted_calldata[-1], calldata_i = _adapt_calldata_array(arr_element_type, arr_length, calldata, calldata_i, types)
 
         elif input_type == "felt":
             adapted_calldata.append(input_value)
@@ -62,8 +57,8 @@ def adapt_calldata(calldata, expected_inputs, types):
 def adapt_output(received):
     """
     Adapts the `received` object to format expected by client (list of hex strings).
-    If `received` is an instance of `list`, it is understood that it corresponds to a felt*, so first its length is appended.
-    If `received` is iterable, it is either a struct, a tuple or a felt*.
+    If `received` is an instance of `list`, it is understood that it corresponds to an array, so first its length is appended.
+    If `received` is iterable, it is either a struct, a tuple or an array (felt* or struct*)
     Otherwise it is a `felt`.
     `ret` is recursively populated (and should probably be empty on first call).
 
@@ -84,6 +79,17 @@ def _adapt_output_rec(received, ret):
             _adapt_output_rec(element, ret)
     except TypeError:
         ret.append(hex(received))
+
+def _adapt_calldata_array(arr_element_type: str, arr_length: int, calldata: list, calldata_i: int, types):
+    arr = []
+    for _ in range(arr_length):
+        arr_element, calldata_i = _generate_complex(calldata, calldata_i, arr_element_type, types)
+        arr.append(arr_element)
+
+    if len(arr) < arr_length:
+        message = f"Too few function arguments provided: {len(calldata)}."
+        raise StarknetDevnetException(message=message)
+    return arr, calldata_i
 
 def _generate_complex(calldata, calldata_i: int, input_type: str, types):
     """
