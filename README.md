@@ -71,9 +71,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `get_transaction`
   - `invoke`
   - `tx_status`
-  - `get_transaction_receipt`:
-    - returns complete data for invoke transactions
-    - returns partial data for deploy transactions
+  - `get_transaction_receipt`
 - The following Starknet CLI commands are **not** supported:
   - `get_contract_addresses` - L1-L2 interaction is currently not supported
 
