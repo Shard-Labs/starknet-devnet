@@ -236,7 +236,7 @@ class StarknetWrapper:
         timestamp = int(time.time())
         signature = []
         if "signature" in tx_wrapper.transaction["transaction"]:
-            signature = [int(sig_part, 16) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
+            signature = [int(sig_part) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
 
         parent_block_hash = self.__get_last_block()["block_hash"] if block_number else "0x0"
 

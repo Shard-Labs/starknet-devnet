@@ -16,7 +16,8 @@ ABI_PATH = f"{ARTIFACTS_PATH}/auth_contract.cairo/auth_contract_abi.json"
 run_devnet_in_background(sleep_seconds=1)
 # PRIVATE_KEY = "12345"
 PUBLIC_KEY = "1628448741648245036800002906075225705100596136133912895015035902954123957052"
-INITIAL_BALANCE="1000"
+INITIAL_BALANCE = "1000"
+
 deploy_info = deploy(CONTRACT_PATH, [PUBLIC_KEY, INITIAL_BALANCE])
 print("Deployment:", deploy_info)
 
