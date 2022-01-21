@@ -81,7 +81,7 @@ class StarknetWrapper:
 
     async def __get_state_root(self):
         state = await self.__get_state()
-        return state.state.shared_state.contract_states.root.hex()
+        return state.state.shared_state.contract_states.root
 
     def __is_contract_deployed(self, address: int) -> bool:
         return address in self.__address2contract_wrapper
@@ -219,50 +219,54 @@ class StarknetWrapper:
             "transaction_hash": transaction_hash
         }
 
-    def get_number_of_blocks(self):
+    def get_number_of_blocks(self) -> int:
         """Returns the number of blocks stored so far."""
         return len(self.__num2block) + self.origin.get_number_of_blocks()
 
-    async def __generate_block(self, transaction: dict, receipt: dict):
+    async def __generate_block(self, tx_wrapper: TransactionWrapper):
         """
         Generates a block and stores it to blocks and hash2block. The block contains just the passed transaction.
-        Also modifies the `transaction` and `receipt` objects received.
-        The `transaction` dict should also contain a key `transaction`.
+        The `tx_wrapper.transaction` dict should contain a key `transaction`.
         Returns (block_hash, block_number).
         """
 
         state = await self.__get_state()
+        state_root = await self.__get_state_root()
         block_number = self.get_number_of_blocks()
         timestamp = int(time.time())
-        block_hash = calculate_block_hash(
-            general_config=state.general_config,
-            parent_hash=parent_hash,
-            block_number=block_number,
-            global_state_root=self.__get_state_root(),
-            block_timestamp=timestamp,
-            tx_hashes=transaction["transaction"]["hash"], # TODO
-            tx_signatures=transaction["transaction"]["signature"], # TODO
-            event_hashes=[], # TODO
-        )
-        state = await self.__get_state()
-        block_hash = calculate_block_hash(state.general_config, )
-        state_root = await self.__get_state_root()
+        signature = []
+        if "signature" in tx_wrapper.transaction["transaction"]:
+            signature = [int(sig_part, 16) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
 
+        parent_block_hash = self.__get_last_block()["block_hash"] if block_number else "0x0"
+
+        block_hash = await calculate_block_hash(
+            general_config=state.general_config,
+            parent_hash=int(parent_block_hash, 16),
+            block_number=block_number,
+            global_state_root=state_root,
+            block_timestamp=timestamp,
+            tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
+            tx_signatures=[signature],
+            event_hashes=[]
+        )
+
+        block_hash_hexed = fixed_length_hex(block_hash)
         block = {
-            "block_hash": block_hash,
+            "block_hash": block_hash_hexed,
             "block_number": block_number,
-            "parent_block_hash": self.__get_last_block()["block_hash"] if self.__num2block else "0x0",
-            "state_root": state_root,
+            "parent_block_hash": parent_block_hash,
+            "state_root": state_root.hex(),
             "status": TxStatus.ACCEPTED_ON_L2.name,
             "timestamp": timestamp,
-            "transaction_receipts": [receipt],
-            "transactions": [transaction["transaction"]],
+            "transaction_receipts": [tx_wrapper.receipt],
+            "transactions": [tx_wrapper.transaction["transaction"]],
         }
 
         self.__num2block[block_number] = block
-        self.__hash2block[int(block_hash, 16)] = block
+        self.__hash2block[block_hash] = block
 
-        return block_hash, block_number
+        return block_hash_hexed, block_number
 
     def __get_last_block(self):
         number_of_blocks = self.get_number_of_blocks()
@@ -311,7 +315,7 @@ class StarknetWrapper:
             assert error_message, "error_message must be present if tx rejected"
             tx_wrapper.set_failure_reason(error_message)
         else:
-            block_hash, block_number = await self.__generate_block(tx_wrapper.transaction, tx_wrapper.receipt)
+            block_hash, block_number = await self.__generate_block(tx_wrapper)
             tx_wrapper.set_block_data(block_hash, block_number)
 
         numeric_hash = int(tx_wrapper.transaction_hash, 16)
