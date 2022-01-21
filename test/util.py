@@ -53,7 +53,9 @@ def my_run(args, raise_on_nonzero=True, add_gateway_urls=True):
         ])
     output = subprocess.run(my_args, encoding="utf-8", check=False, capture_output=True)
     if output.returncode != 0 and raise_on_nonzero:
-        raise ReturnCodeAssertionError(output.stderr)
+        if output.stderr:
+            raise ReturnCodeAssertionError(output.stderr)
+        raise ReturnCodeAssertionError(output.stdout)
     return output
 
 def deploy(contract, inputs=None, salt=None):
