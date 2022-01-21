@@ -238,7 +238,7 @@ class StarknetWrapper:
         if "signature" in tx_wrapper.transaction["transaction"]:
             signature = [int(sig_part) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
 
-        parent_block_hash = self.__get_last_block()["block_hash"] if block_number else "0x0"
+        parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
 
         block_hash = await calculate_block_hash(
             general_config=state.general_config,

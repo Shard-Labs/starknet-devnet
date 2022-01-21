@@ -55,10 +55,10 @@ assert_receipt(invoke_tx_hash, "test/expected/invoke_receipt.json")
 
 assert_salty_deploy(
     contract_path=CONTRACT_PATH,
-    inputs=["10"],
+    inputs=["0"],
     salt="0x99",
-    expected_address="0x049825bc705470f1e36b203383f54c84b1d9074f76cdcc1d7061047dfb4ff595",
-    expected_tx_hash="0x073d0799e900c1a906970c2f10c70efeb0c4a7e6e7faac9306616bd6369e948c"
+    expected_address="0x0116c1e1281f88c68d7ef61dc7b49bd1d7c4a3dcbe821b1c868735fd712947f0",
+    expected_tx_hash="0x073a803440143419cbabaf7484c6654dfb0deb4b0f6861190cb6c10c77a959bf"
 )
 
 assert_failing_deploy(contract_path=FAILING_CONTRACT_PATH)
