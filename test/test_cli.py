@@ -53,6 +53,15 @@ assert_storage(deploy_info["address"], BALANCE_KEY, "0x1e")
 assert_block(1, invoke_tx_hash)
 assert_receipt(invoke_tx_hash, "test/expected/invoke_receipt.json")
 
+# check handling complex input
+value = call(
+    function="sum_point_array",
+    address=deploy_info["address"],
+    abi_path=ABI_PATH,
+    inputs=["2", "10", "20", "30", "40"]
+)
+assert_equal(value, "40 60", "Checking complex input failed!")
+
 assert_salty_deploy(
     contract_path=CONTRACT_PATH,
     inputs=["0"],
