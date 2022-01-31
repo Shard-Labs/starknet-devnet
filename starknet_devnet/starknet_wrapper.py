@@ -7,6 +7,7 @@ import time
 from copy import deepcopy
 from typing import Dict
 
+import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
 from starkware.starknet.business_logic.state import CarriedState
 from starkware.starknet.definitions.transaction_type import TransactionType
@@ -18,13 +19,16 @@ from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
 
 from .origin import NullOrigin, Origin
-from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo
+from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo, enable_pickling
 from .contract_wrapper import ContractWrapper
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
 from .postman_wrapper import GanachePostmanWrapper
 from .constants import FAILURE_REASON_KEY
 
-class StarknetWrapper: # pylint: disable=too-many-instance-attributes
+enable_pickling()
+
+#pylint: disable=too-many-instance-attributes
+class StarknetWrapper:
     """
     Wraps a Starknet instance and stores data to be returned by the server:
     contract states, transactions, blocks, storages.
@@ -54,6 +58,12 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
 
         self.__l1_provider = None
         """Saves the L1 URL being used for L1 <> L2 communication."""
+
+    @classmethod
+    def load(cls, path: str) -> "StarknetWrapper":
+        """Load a serialized instance of this class from `path`."""
+        with open(path, "rb") as file:
+            return pickle.load(file)
 
     async def __preserve_current_state(self, state: CarriedState):
         self.__current_carried_state = deepcopy(state)

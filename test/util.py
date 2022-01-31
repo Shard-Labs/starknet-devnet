@@ -14,13 +14,19 @@ from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT
 class ReturnCodeAssertionError(AssertionError):
     """Error to be raised when the return code of an executed process is not as expected."""
 
-def run_devnet_in_background(sleep_seconds=0):
-    """Run starknet-devnet in background. Return the process handle. Optionally sleep."""
-    command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT]
+def run_devnet_in_background(*args, sleep_seconds=3):
+    """
+    Runs starknet-devnet in background.
+    By default sleeps 1 second after spawning devnet.
+    Accepts extra args to pass to `starknet-devnet` command.
+    Returns the process handle.
+    """
+    command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT, *args]
     # pylint: disable=consider-using-with
     proc = subprocess.Popen(command, close_fds=True)
     time.sleep(sleep_seconds)
     atexit.register(proc.kill)
+    return proc
 
 def assert_equal(actual, expected, explanation=None):
     """Assert that the two values are equal. Optionally provide explanation."""

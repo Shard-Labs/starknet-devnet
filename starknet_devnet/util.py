@@ -5,8 +5,11 @@ Utility functions used across the project.
 from dataclasses import dataclass
 from enum import Enum, auto
 import argparse
+import sys
 
 from starkware.starkware_utils.error_handling import StarkException
+from starkware.starknet.testing.contract import StarknetContract
+
 from . import __version__
 
 class TxStatus(Enum):
@@ -66,6 +69,20 @@ def fixed_length_hex(arg: int) -> str:
 #     # otherwise a URL; perhaps check validity
 #     return name
 
+class DumpOn(Enum):
+    """Enumerate possible dumping frequencies."""
+    EXIT = auto()
+    TRANSACTION = auto()
+
+DUMP_ON_OPTIONS = [e.name.lower() for e in DumpOn]
+DUMP_ON_OPTIONS_STRINGIFIED = ", ".join(DUMP_ON_OPTIONS)
+
+def parse_dump_on(option: str):
+    """Parse dumping frequency option."""
+    if option in DUMP_ON_OPTIONS:
+        return DumpOn[option.upper()]
+    sys.exit("Invalid dump_on option: {}. Valid options: {DUMP_ON_OPTIONS_STRINGIFIED}")
+
 DEFAULT_HOST = "localhost"
 DEFAULT_PORT = 5000
 def parse_args():
@@ -91,6 +108,19 @@ def parse_args():
         help=f"Specify the port to listen at; defaults to {DEFAULT_PORT}",
         default=DEFAULT_PORT
     )
+    parser.add_argument(
+        "--load-path",
+        help="Specify the path from which the state is loaded on startup"
+    )
+    parser.add_argument(
+        "--dump-path",
+        help="Specify the path to dump to"
+    )
+    parser.add_argument(
+        "--dump-on",
+        help=f"Specify when to dump; can dump on: {DUMP_ON_OPTIONS_STRINGIFIED}",
+        type=parse_dump_on
+    )
     # Uncomment this once fork support is added
     # parser.add_argument(
     #     "--fork", "-f",
@@ -99,7 +129,11 @@ def parse_args():
     #          "or network name (alpha or alpha-mainnet)",
     # )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.dump_on and not args.dump_path:
+        sys.exit("--dump-path required if --dump-on present")
+
+    return args
 
 class StarknetDevnetException(StarkException):
     """
@@ -123,3 +157,16 @@ class DummyExecutionInfo:
         self.retdata = []
         self.internal_calls = []
         self.l2_to_l1_messages = []
+
+def enable_pickling():
+    """
+    Extends the `StarknetContract` class to enable pickling.
+    """
+    def contract_getstate(self):
+        return self.__dict__
+
+    def contract_setstate(self, state):
+        self.__dict__ = state
+
+    StarknetContract.__getstate__ = contract_getstate
+    StarknetContract.__setstate__ = contract_setstate

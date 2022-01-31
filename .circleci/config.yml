@@ -42,6 +42,9 @@ jobs:
           name: Test postman
           command: poetry run pytest test/test_postman.py
       - run:
+          name: Test dumping/loading
+          command: poetry run pytest test/test_dump.py
+      - run:
           name: Test plugin - dockerized
           command: ./test/test_plugin.sh
           no_output_timeout: 1m
