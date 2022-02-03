@@ -16,7 +16,7 @@ from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
 
-from .origin import Origin
+from .origin import NullOrigin, Origin
 from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo
 from .contract_wrapper import ContractWrapper
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
@@ -27,8 +27,9 @@ class StarknetWrapper:
     Wraps a Starknet instance and stores data to be returned by the server:
     contract states, transactions, blocks, storages.
     """
-    def __init__(self, origin):
-        self.origin: Origin = origin
+
+    def __init__(self):
+        self.__origin: Origin = NullOrigin()
         """Origin chain that this devnet was forked from."""
 
         self.__address2contract_wrapper: Dict[int, ContractWrapper] = {}
@@ -37,7 +38,7 @@ class StarknetWrapper:
         self.__transaction_wrappers: Dict[int, TransactionWrapper] = {}
         """Maps transaction hash to transaction wrapper."""
 
-        self.__hash2block = {}
+        self.__hash2block: Dict[int, dict] = {}
         """Maps block hash to block."""
 
         self.__num2block: Dict[int, Dict] = {}
@@ -93,6 +94,10 @@ class StarknetWrapper:
             raise StarknetDevnetException(message=message)
 
         return self.__address2contract_wrapper[address]
+
+    def set_origin(self, origin: Origin):
+        """Set the origin chain."""
+        self.__origin = origin
 
     async def deploy(self, transaction: Transaction):
         """
@@ -152,7 +157,7 @@ class StarknetWrapper:
             error_message = err.message
             status = TxStatus.REJECTED
             execution_info = DummyExecutionInfo()
-            adapted_result = {}
+            adapted_result = []
 
         await self.__store_transaction(
             internal_tx=invoke_transaction,
@@ -202,7 +207,7 @@ class StarknetWrapper:
 
             return ret
 
-        return self.origin.get_transaction_status(transaction_hash)
+        return self.__origin.get_transaction_status(transaction_hash)
 
     def get_transaction(self, transaction_hash: str):
         """Returns the transaction identified by `transaction_hash`."""
@@ -211,7 +216,7 @@ class StarknetWrapper:
         if tx_hash_int in self.__transaction_wrappers:
             return self.__transaction_wrappers[tx_hash_int].transaction
 
-        return self.origin.get_transaction(transaction_hash)
+        return self.__origin.get_transaction(transaction_hash)
 
     def get_transaction_receipt(self, transaction_hash: str):
         """Returns the transaction receipt of the transaction identified by `transaction_hash`."""
@@ -228,7 +233,7 @@ class StarknetWrapper:
 
     def get_number_of_blocks(self) -> int:
         """Returns the number of blocks stored so far."""
-        return len(self.__num2block) + self.origin.get_number_of_blocks()
+        return len(self.__num2block) + self.__origin.get_number_of_blocks()
 
     async def __generate_block(self, tx_wrapper: TransactionWrapper):
         """
@@ -285,14 +290,14 @@ class StarknetWrapper:
         block_hash_int = int(block_hash, 16)
         if block_hash_int in self.__hash2block:
             return self.__hash2block[block_hash_int]
-        return self.origin.get_block_by_hash(block_hash=block_hash)
+        return self.__origin.get_block_by_hash(block_hash=block_hash)
 
     def get_block_by_number(self, block_number: int):
         """Returns the block whose block_number is provided"""
         if block_number is None:
             if self.__num2block:
                 return self.__get_last_block()
-            return self.origin.get_block_by_number(block_number)
+            return self.__origin.get_block_by_number(block_number)
 
         if block_number < 0:
             message = f"Block number must be a non-negative integer; got: {block_number}."
@@ -305,7 +310,7 @@ class StarknetWrapper:
         if block_number in self.__num2block:
             return self.__num2block[block_number]
 
-        return self.origin.get_block_by_number(block_number)
+        return self.__origin.get_block_by_number(block_number)
 
     async def __store_transaction(self, internal_tx: InternalTransaction, status: TxStatus,
         execution_info: StarknetTransactionExecutionInfo, error_message: str=None
@@ -333,7 +338,7 @@ class StarknetWrapper:
         if self.__is_contract_deployed(contract_address):
             contract_wrapper = self.__get_contract_wrapper(contract_address)
             return contract_wrapper.code
-        return self.origin.get_code(contract_address)
+        return self.__origin.get_code(contract_address)
 
     async def get_storage_at(self, contract_address: int, key: int) -> str:
         """
@@ -346,4 +351,4 @@ class StarknetWrapper:
         state = contract_states[contract_address]
         if key in state.storage_updates:
             return hex(state.storage_updates[key].value)
-        return self.origin.get_storage_at(self, contract_address, key)
+        return self.__origin.get_storage_at(self, contract_address, key)

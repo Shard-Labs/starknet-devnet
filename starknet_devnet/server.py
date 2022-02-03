@@ -16,7 +16,6 @@ from werkzeug.datastructures import MultiDict
 
 from .constants import CAIRO_LANG_VERSION
 from .starknet_wrapper import StarknetWrapper
-from .origin import NullOrigin
 from .util import custom_int, fixed_length_hex, parse_args
 
 app = Flask(__name__)
@@ -33,16 +32,7 @@ def is_alive():
 async def add_transaction():
     """Endpoint for accepting DEPLOY and INVOKE_FUNCTION transactions."""
 
-    request_dict = json.loads(request.data.decode("utf-8"))
-
-    if "signature" not in request_dict and request_dict["type"] == TransactionType.INVOKE_FUNCTION.name:
-        request_dict["signature"] = []
-
-    try:
-        transaction = Transaction.load(request_dict)
-    except (TypeError, ValidationError):
-        msg = f"Invalid tx. Be sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
-        abort(Response(msg, 400))
+    transaction = validate_transaction(request.data)
 
     tx_type = transaction.tx_type.name
 
@@ -61,6 +51,39 @@ async def add_transaction():
         **result_dict
     })
 
+def validate_transaction(data: bytes):
+    """Ensure `data` is a valid Starknet transaction. Returns the parsed `Transaction`."""
+    try:
+        request_dict = json.loads(data.decode("utf-8"))
+    except json.JSONDecodeError:
+        abort(Response("Request body is not a valid JSON object", 400))
+
+    if "type" not in request_dict:
+        abort(Response("Request should contain a \"type\" key", 400))
+
+    tx_type = request_dict["type"]
+
+    if tx_type == TransactionType.DEPLOY.name:
+        if "constructor_calldata" not in request_dict:
+            request_dict["constructor_calldata"] = []
+    elif tx_type == TransactionType.INVOKE_FUNCTION.name:
+        if "signature" not in request_dict:
+            request_dict["signature"] = []
+
+        if "calldata" not in request_dict:
+            request_dict["calldata"] = []
+    else:
+        abort(Response(f"Invalid tx_type: {tx_type}", 400))
+
+    try:
+        transaction = Transaction.load(request_dict)
+    except (TypeError, ValidationError) as err:
+        print(err)
+        msg = f"Invalid tx. Be sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
+        abort(Response(msg, 400))
+
+    return transaction
+
 @app.route("/feeder_gateway/get_contract_addresses", methods=["GET"])
 def get_contract_addresses():
     """Endpoint that returns an object containing the addresses of key system components."""
@@ -72,19 +95,35 @@ async def call_contract():
     Endpoint for receiving calls (not invokes) of contract functions.
     """
 
-    request_dict = json.loads(request.data.decode("utf-8"))
-
-    if "signature" not in request_dict:
-        request_dict["signature"] = []
+    call_specifications = validate_call(request.data)
 
     try:
-        call_specifications = InvokeFunction.load(request_dict)
         result_dict = await starknet_wrapper.call(call_specifications)
     except StarkException as err:
         # code 400 would make more sense, but alpha returns 500
         abort(Response(err.message, 500))
 
     return jsonify(result_dict)
+
+def validate_call(data: bytes):
+    """Ensure `data` is valid Starknet function call. Returns an `InvokeFunction`."""
+    try:
+        request_dict: dict = json.loads(data.decode("utf-8"))
+    except json.JSONDecodeError:
+        abort(Response("Request body is not a valid JSON object", 400))
+
+    if "calldata" not in request_dict:
+        request_dict["calldata"] = []
+    if "signature" not in request_dict:
+        request_dict["signature"] = []
+
+    try:
+        call_specifications = InvokeFunction.load(request_dict)
+    except (TypeError, ValidationError) as err:
+        print(err)
+        abort(Response("Invalid Starknet function call", 400))
+
+    return call_specifications
 
 def _check_block_hash(request_args: MultiDict):
     block_hash = request_args.get("blockHash", type=custom_int)
@@ -163,17 +202,18 @@ def get_transaction_receipt():
     ret = starknet_wrapper.get_transaction_receipt(transaction_hash)
     return jsonify(ret)
 
-args = parse_args()
-# Uncomment this once fork support is added
-# origin = Origin(args.fork) if args.fork else NullOrigin()
-origin = NullOrigin()
-starknet_wrapper = StarknetWrapper(origin)
+starknet_wrapper = StarknetWrapper()
 
 def main():
     """Runs the server."""
 
     # reduce startup logging
     os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+
+    args = parse_args()
+    # Uncomment this once fork support is added
+    # origin = Origin(args.fork) if args.fork else NullOrigin()
+    # starknet_wrapper.set_origin(origin)
 
     app.run(host=args.host, port=args.port)
 

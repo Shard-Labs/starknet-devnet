@@ -25,3 +25,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 starknet-devnet = "starknet_devnet.server:main"
+
+[tool.pytest.ini_options]
+markers = [
+    "deploy",
+    "invoke",
+    "call"
+]
