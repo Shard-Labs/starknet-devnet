@@ -38,29 +38,28 @@ def send_call(req_dict: dict):
 def assert_deploy_resp(resp: bytes):
     """Asserts the validity of invoke response body."""
     resp_dict = json.loads(resp.data.decode("utf-8"))
-    assert resp_dict["code"] == "TRANSACTION_RECEIVED"
     assert set(resp_dict.keys()) == set(["address", "code", "transaction_hash"])
+    assert resp_dict["code"] == "TRANSACTION_RECEIVED"
 
 def assert_invoke_resp(resp: bytes):
     """Asserts the validity of invoke response body."""
     resp_dict = json.loads(resp.data.decode("utf-8"))
+    assert set(resp_dict.keys()) == set(["address", "code", "transaction_hash", "result"])
     assert resp_dict["code"] == "TRANSACTION_RECEIVED"
     assert resp_dict["result"] == []
-    assert set(resp_dict.keys()) == set(["address", "code", "transaction_hash", "result"])
 
 def assert_call_resp(resp: bytes):
     """Asserts the validity of call response body."""
     resp_dict = json.loads(resp.data.decode("utf-8"))
-    assert resp_dict == { "result": ["0x14"] }
+    assert resp_dict == { "result": ["0xa"] }
 
 @pytest.mark.deploy
 def test_deploy_without_calldata():
     """Deploy with complete request data"""
     req_dict = json.loads(DEPLOY_CONTENT)
     del req_dict["constructor_calldata"]
-
     resp = send_transaction(req_dict)
-    assert_deploy_resp(resp)
+    assert resp.status_code == 400
 
 @pytest.mark.deploy
 def test_deploy_with_complete_request_data():
@@ -70,27 +69,23 @@ def test_deploy_with_complete_request_data():
         content_type="application/json",
         data=DEPLOY_CONTENT
     )
-    resp_dict = json.loads(resp.data.decode("utf-8"))
-    assert resp_dict["code"] == "TRANSACTION_RECEIVED"
-    assert set(resp_dict.keys()) == set(["address", "code", "transaction_hash"])
+    assert_deploy_resp(resp)
 
 @pytest.mark.invoke
 def test_invoke_without_signature():
     """Invoke without signature"""
     req_dict = json.loads(INVOKE_CONTENT)
     del req_dict["signature"]
-
     resp = send_transaction(req_dict)
-    assert_invoke_resp(resp)
+    assert resp.status_code == 400
 
 @pytest.mark.invoke
 def test_invoke_without_calldata():
     """Invoke without calldata"""
     req_dict = json.loads(INVOKE_CONTENT)
     del req_dict["calldata"]
-
     resp = send_transaction(req_dict)
-    assert_invoke_resp(resp)
+    assert resp.status_code == 400
 
 @pytest.mark.invoke
 def test_invoke_with_complete_request_data():
@@ -105,7 +100,7 @@ def test_call_without_signature():
     req_dict = json.loads(CALL_CONTENT)
     del req_dict["signature"]
     resp = send_call(req_dict)
-    assert_call_resp(resp)
+    assert resp.status_code == 400
 
 @pytest.mark.call
 def test_call_without_calldata():
@@ -113,7 +108,7 @@ def test_call_without_calldata():
     req_dict = json.loads(CALL_CONTENT)
     del req_dict["calldata"]
     resp = send_call(req_dict)
-    assert_call_resp(resp)
+    assert resp.status_code == 400
 
 @pytest.mark.call
 def test_call_with_complete_request_data():

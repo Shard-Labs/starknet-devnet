@@ -58,28 +58,10 @@ def validate_transaction(data: bytes):
     except json.JSONDecodeError:
         abort(Response("Request body is not a valid JSON object", 400))
 
-    if "type" not in request_dict:
-        abort(Response("Request should contain a \"type\" key", 400))
-
-    tx_type = request_dict["type"]
-
-    if tx_type == TransactionType.DEPLOY.name:
-        if "constructor_calldata" not in request_dict:
-            request_dict["constructor_calldata"] = []
-    elif tx_type == TransactionType.INVOKE_FUNCTION.name:
-        if "signature" not in request_dict:
-            request_dict["signature"] = []
-
-        if "calldata" not in request_dict:
-            request_dict["calldata"] = []
-    else:
-        abort(Response(f"Invalid tx_type: {tx_type}", 400))
-
     try:
         transaction = Transaction.load(request_dict)
     except (TypeError, ValidationError) as err:
-        print(err)
-        msg = f"Invalid tx. Be sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
+        msg = f"Invalid tx: {err}\nBe sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
         abort(Response(msg, 400))
 
     return transaction
@@ -109,19 +91,13 @@ def validate_call(data: bytes):
     """Ensure `data` is valid Starknet function call. Returns an `InvokeFunction`."""
     try:
         request_dict: dict = json.loads(data.decode("utf-8"))
-    except json.JSONDecodeError:
-        abort(Response("Request body is not a valid JSON object", 400))
-
-    if "calldata" not in request_dict:
-        request_dict["calldata"] = []
-    if "signature" not in request_dict:
-        request_dict["signature"] = []
+    except json.JSONDecodeError as err:
+        abort(Response(f"Request body is not a valid JSON object: {err}", 400))
 
     try:
         call_specifications = InvokeFunction.load(request_dict)
     except (TypeError, ValidationError) as err:
-        print(err)
-        abort(Response("Invalid Starknet function call", 400))
+        abort(Response(f"Invalid Starknet function call: {err}", 400))
 
     return call_specifications
 
