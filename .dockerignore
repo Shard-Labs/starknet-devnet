@@ -12,3 +12,4 @@ starknet-hardhat-example/
 scripts/
 Dockerfile
 .dockerignore
+test/
