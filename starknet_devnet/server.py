@@ -54,7 +54,7 @@ def validate_transaction(data: bytes):
     """Ensure `data` is a valid Starknet transaction. Returns the parsed `Transaction`."""
 
     try:
-        transaction = Transaction.load(data)
+        transaction = Transaction.loads(data)
     except (TypeError, ValidationError) as err:
         msg = f"Invalid tx: {err}\nBe sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
         abort(Response(msg, 400))
@@ -86,7 +86,7 @@ def validate_call(data: bytes):
     """Ensure `data` is valid Starknet function call. Returns an `InvokeFunction`."""
 
     try:
-        call_specifications = InvokeFunction.load(data)
+        call_specifications = InvokeFunction.loads(data)
     except (TypeError, ValidationError) as err:
         abort(Response(f"Invalid Starknet function call: {err}", 400))
 
