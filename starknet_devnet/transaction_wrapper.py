@@ -49,8 +49,7 @@ class TransactionWrapper(ABC):
         self.transaction_hash = tx_details.transaction_hash
 
         events = []
-
-        if hasattr(execution_info, 'raw_events'):
+        if hasattr(execution_info, "raw_events"):
             events = execution_info.raw_events
 
         self.transaction = {

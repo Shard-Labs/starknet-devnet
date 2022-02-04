@@ -208,7 +208,7 @@ def main():
     """Runs the server."""
 
     # reduce startup logging
-    os.environ['WERKZEUG_RUN_MAIN'] = 'true'
+    os.environ["WERKZEUG_RUN_MAIN"] = "true"
 
     args = parse_args()
     # Uncomment this once fork support is added
