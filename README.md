@@ -102,7 +102,7 @@ python3 -m test.test_cli_auth
 
 To see if Devnet can interact with the Hardhat plugin, run:
 ```text
-python3 -m test.test_plugin
+./test/test_plugin.sh
 ```
 
 ## Development - Build
