@@ -13,3 +13,4 @@ scripts/
 Dockerfile
 .dockerignore
 test/
+.pylintrc
