@@ -15,5 +15,8 @@ cd starknet-hardhat-example
 npm ci
 npm link @shardlabs/starknet-hardhat-plugin
 
+echo "Installing ganache-cli"
+npm ci -g ganache-cli
+
 # generate artifacts
 npx hardhat starknet-compile

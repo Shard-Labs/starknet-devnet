@@ -8,3 +8,4 @@ except ImportError:
 
 CAIRO_LANG_VERSION = version("cairo-lang")
 FAILURE_REASON_KEY = "transaction_failure_reason"
+TIMEOUT_FOR_WEB3_REQUESTS = 120 #seconds

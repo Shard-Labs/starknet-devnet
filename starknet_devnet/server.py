@@ -3,6 +3,7 @@ A server exposing Starknet functionalities as API endpoints.
 """
 
 import os
+import json
 
 from flask import Flask, request, jsonify, abort
 from flask.wrappers import Response
@@ -16,6 +17,8 @@ from werkzeug.datastructures import MultiDict
 from .constants import CAIRO_LANG_VERSION
 from .starknet_wrapper import StarknetWrapper
 from .util import custom_int, fixed_length_hex, parse_args
+
+
 
 app = Flask(__name__)
 CORS(app)
@@ -42,6 +45,8 @@ async def add_transaction():
         contract_address, transaction_hash, result_dict = await starknet_wrapper.invoke(transaction)
     else:
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
+
+    result_dict = await starknet_wrapper.postman_flush()
 
     return jsonify({
         "code": StarkErrorCode.TRANSACTION_RECEIVED.name,
@@ -79,6 +84,8 @@ async def call_contract():
     except StarkException as err:
         # code 400 would make more sense, but alpha returns 500
         abort(Response(err.message, 500))
+
+    result_dict = await starknet_wrapper.postman_flush()
 
     return jsonify(result_dict)
 
@@ -168,6 +175,64 @@ def get_transaction_receipt():
     transaction_hash = request.args.get("transactionHash")
     ret = starknet_wrapper.get_transaction_receipt(transaction_hash)
     return jsonify(ret)
+
+starknet_wrapper = StarknetWrapper()
+@app.route("/postman/deploy_l1_messaging_contract", methods=["POST"])
+async def deploy_l1_messaging_contract():
+    """
+    Deploys the MockStarknetMessaging contract in the L1 network specified by the networkUrl argument in the POST body
+    The networkId argument is used to check if a local Ganache instance or a testnet should be used
+    """
+
+    request_dict = json.loads(request.data.decode("utf-8"))
+
+    if "networkUrl" not in request_dict:
+        error_message = "L1 network not specified"
+        abort(Response(error_message, 500))
+    else:
+        network_url = request_dict["networkUrl"]
+
+    if "networkId" in request_dict:
+        network_id = request_dict["networkId"]
+    else:
+        network_id = None
+
+    result_dict= await starknet_wrapper.deploy_messaging_contract_in_l1(network_url,network_id)
+    return jsonify(result_dict)
+
+@app.route("/postman/load_l1_messaging_contract", methods=["POST"])
+async def load_l1_messaging_contract():
+    """
+    Loads a MockStarknetMessaging contract already deployed in the L1 network specified by the networkUrl argument,
+    in the address specified in the address argument in the POST body.
+    The networkId argument is used to check if a local Ganache instance or a testnet should be used.
+    """
+
+    request_dict = json.loads(request.data.decode("utf-8"))
+
+    if "networkUrl" not in request_dict or "address" not in request_dict:
+        error_message = "L1 network or StarknetMessaging contract address not specified"
+        abort(Response(error_message, 500))
+    else:
+        network_url = request_dict["networkUrl"]
+        contract_address = request_dict["address"]
+
+    if "networkId" in request_dict:
+        network_id = request_dict["networkId"]
+    else:
+        network_id = None
+
+    result_dict= await starknet_wrapper.load_messaging_contract_in_l1(network_url, contract_address, network_id)
+    return jsonify(result_dict)
+
+@app.route("/postman/flush", methods=["POST"])
+async def flush():
+    """
+    Handles all pending L1 <> L2 messages and sends them to the other layer
+    """
+
+    result_dict= await starknet_wrapper.postman_flush()
+    return jsonify(result_dict)
 
 starknet_wrapper = StarknetWrapper()
 

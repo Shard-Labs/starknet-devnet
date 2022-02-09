@@ -20,9 +20,10 @@ from .origin import NullOrigin, Origin
 from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo
 from .contract_wrapper import ContractWrapper
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
+from .postman_wrapper import GanachePostmanWrapper
 from .constants import FAILURE_REASON_KEY
 
-class StarknetWrapper:
+class StarknetWrapper: # pylint: disable=too-many-instance-attributes
     """
     Wraps a Starknet instance and stores data to be returned by the server:
     contract states, transactions, blocks, storages.
@@ -47,6 +48,10 @@ class StarknetWrapper:
         self.__starknet = None
 
         self.__current_carried_state = None
+
+        self.__postman_wrapper = None
+
+        self.__l1_provider = None
 
     async def __preserve_current_state(self, state: CarriedState):
         self.__current_carried_state = deepcopy(state)
@@ -352,3 +357,66 @@ class StarknetWrapper:
         if key in state.storage_updates:
             return hex(state.storage_updates[key].value)
         return self.__origin.get_storage_at(self, contract_address, key)
+
+    async def deploy_messaging_contract_in_l1(self, network_url: str, network_id: str) -> dict:
+        """Creates a Postman Wrapper instance and deploys a new Messaging contract in the L1 network"""
+
+        # If no L1 network ID provided, will use a Ganache instance
+        if network_id is None or network_id == "ganache":
+            try:
+                starknet = await self.get_starknet()
+                self.__postman_wrapper = GanachePostmanWrapper(network_url)
+                self.__postman_wrapper.deploy_mock_starknet_messaging_contract(starknet)
+            except Exception as error:
+                message = f"""Exception when trying to deploy the Starknet Messaging contract in a Ganache instance.
+                Make sure you have a Ganache instance running at the provided network url.
+                Exception:
+                {error}"""
+                raise StarknetDevnetException(message=message) from error
+        else:
+            message = "L1 interaction is only usable with a local running Ganache instance."
+            raise StarknetDevnetException(message=message)
+
+        self.__l1_provider = network_url
+        return {
+            "l1_provider": network_url,
+            "address": self.__postman_wrapper.mock_starknet_messaging_contract.address
+        }
+
+    async def load_messaging_contract_in_l1(self, network_url: str, contract_address: str, network_id: str) -> dict:
+        """Creates a Postman Wrapper instance and loads an already deployed Messaging contract in the L1 network"""
+
+        # If no L1 network ID provided, will use a Ganache instance
+        if network_id is None or network_id == "ganache":
+            try:
+                starknet = await self.get_starknet()
+                self.__postman_wrapper = GanachePostmanWrapper(network_url)
+                self.__postman_wrapper.get_mock_messaging_contract_in_l1(starknet,contract_address)
+            except Exception as error:
+                message = f"""Exception when trying to load the Starknet Messaging contract in a Ganache instance.
+                Make sure you have a Ganache instance running at the provided network url, and that the Messaging Contract is deployed at the provided address
+                Exception:
+                {error}"""
+                raise StarknetDevnetException(message=message) from error
+        else:
+            message = "L1 interaction is only usable with a local running Ganache instance."
+            raise StarknetDevnetException(message=message)
+
+        self.__l1_provider = network_url
+        return {
+            "l1_provider": network_url,
+            "address": self.__postman_wrapper.mock_starknet_messaging_contract.address
+        }
+
+    async def postman_flush(self) -> dict:
+        """Handles all pending L1 <> L2 messages and sends them to the other layer. """
+
+        state = await self.__get_state()
+        l2_to_l1_messages = state.l2_to_l1_messages_log
+        await self.__postman_wrapper.flush()
+
+        return {
+            "l1_provider": self.__l1_provider,
+            "n_consumed_l2_to_l1_messages": self.__postman_wrapper.postman.n_consumed_l2_to_l1_messages,
+            "consumed_l2_messages": l2_to_l1_messages
+        }
