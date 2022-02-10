@@ -73,10 +73,13 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `tx_status`
   - `get_transaction_receipt`
 - The following Starknet CLI commands are **not** supported:
-  - `get_contract_addresses` - L1-L2 interaction is currently not supported
+  - `get_contract_addresses` - Not yet supported
 
 ## Hardhat integration
 - If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate Devnet.
+
+## Postman integration
+- Postman is a Starknet utility that allows testing L1-L2 interactions. To extend this testing for devnet, 3 unique endpoints can be used 
 
 ## Development - Prerequisite
 If you're a developer willing to contribute, be sure to have installed [Poetry](https://pypi.org/project/poetry/).

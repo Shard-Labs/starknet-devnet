@@ -25,27 +25,25 @@ MESSAGING_CONTRACT_ADDRESS: str
 L2_CONTRACT_ADDRESS: str
 
 @pytest.mark.web3_deploy
-def init_ganache():
+def test_init_ganache():
     """Initializes a new Ganache instance and a new Mock Messaging contract"""
     args = "ganache-cli -p 5005 --chainId 32 --networkId 32 --gasLimit 8000000 --allow-unlimited-contract-size &"
     subprocess.run(args, encoding="utf-8", check=False, capture_output=True)
-
     deploy_messaging_contract_request = {
         "networkUrl": GANACHE_URL
     }
-
     resp = app.test_client().post(
         "/postman/deploy_l1_messaging_contract",
         content_type="application/json",
         data=json.dumps(deploy_messaging_contract_request)
     )
-
     resp_dict = json.loads(resp.data.decode("utf-8"))
     assert "address" in resp_dict
     assert resp_dict["l1_provider"] == GANACHE_URL
+    print("here4")
 
 @pytest.mark.web3_deploy
-def deploy_l1_contracts():
+def test_deploy_l1_contracts():
     """Deploys Ethereum contracts in the Ganache instance, including the L1L2Example and MockStarknetMessaging contracts"""
 
     global MESSAGING_CONTRACT_ADDRESS # pylint: disable=global-statement
@@ -62,7 +60,7 @@ def deploy_l1_contracts():
     L1L2_EXAMPLE_CONTRACT_ADDRESS = l1l2_example_contract["networks"]["32"]["address"]
 
 @pytest.mark.deploy
-def init_l2_contract():
+def test_init_l2_contract():
     """Deploys the L1L2Example cairo contract"""
 
     global L2_CONTRACT_ADDRESS # pylint: disable=global-statement
@@ -92,7 +90,7 @@ def init_l2_contract():
     assert value == "2333"
 
 @pytest.mark.web3_deploy
-def load_messaging_contract():
+def test_load_messaging_contract():
     """Loads a Mock Messaging contract already deployed in the Ganache instance"""
 
     load_messaging_contract_request = {
@@ -111,7 +109,7 @@ def load_messaging_contract():
     assert resp_dict["l1_provider"] == GANACHE_URL
 
 @pytest.mark.web3_messaging
-def l1_l2_message_exchange():
+def test_l1_l2_message_exchange():
     """Tests message exchange"""
 
     # assert contract balance when starting
