@@ -1,7 +1,10 @@
+"""Util functions for invoking and calling Web3 contracts"""
+
+from test.test_endpoints import load_file_content
+
 import json
 from web3 import Web3
 
-from test.test_endpoints import load_file_content
 
 def web3_invoke(function, url, inputs, contract_address, abi_path):
     """Invokes a function in a Web3 contract"""
