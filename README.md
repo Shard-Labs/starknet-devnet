@@ -79,7 +79,19 @@ If you don't specify the `HOST` part, the server will indeed be available on all
 - If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate Devnet.
 
 ## Postman integration
-- Postman is a Starknet utility that allows testing L1-L2 interactions. To extend this testing for devnet, 3 unique endpoints can be used 
+Postman is a Starknet utility that allows testing L1-L2 interactions. To extend this testing for devnet, 3 unique endpoints can be used:
+
+- Deploy the StarknetMockMessaging contract needed for L1-L2 interaction test:
+  - POST "/postman/deploy_l1_messaging_contract"
+  - body: `{ "networkUrl":"http://localhost:5005/" }`
+
+- Load an already deployed StarknetMockMessaging contract:
+  - POST "/postman/load_l1_messaging_contract"
+  - body: `{ "networkUrl":"http://localhost:5005", "address":"0x83D76591560d9CD02CE16c060c92118d19F996b3" }`
+
+- Flush. This will go through the new enqueued messages sent from L1 and send them to L2. This has to be done manually for L1 -> L2, but for L2 -> L1, it is done automatically:
+  - POST "/postman/flush"
+  - no body
 
 ## Development - Prerequisite
 If you're a developer willing to contribute, be sure to have installed [Poetry](https://pypi.org/project/poetry/).

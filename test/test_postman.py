@@ -10,11 +10,12 @@ from test.web3_util import web3_call, web3_invoke
 import json
 import subprocess
 import pytest
+import os
 
 from starknet_devnet.server import app
 
-STARKNET_MESSAGING_PATH = "/build/contracts/MockStarknetMessaging.json"
-L1L2EXAMPLE_ETH_PATH = "/build/contracts/L1L2Example.json"
+STARKNET_MESSAGING_PATH = "build/contracts/MockStarknetMessaging.json"
+L1L2EXAMPLE_ETH_PATH = "build/contracts/L1L2Example.json"
 
 ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/l1l2.cairo/l1l2.json"
@@ -27,8 +28,8 @@ L2_CONTRACT_ADDRESS: str
 @pytest.mark.web3_deploy
 def test_init_ganache():
     """Initializes a new Ganache instance and a new Mock Messaging contract"""
-    args = "ganache-cli -p 5005 --chainId 32 --networkId 32 --gasLimit 8000000 --allow-unlimited-contract-size &"
-    subprocess.run(args, encoding="utf-8", check=False, capture_output=True)
+    ganache_cli = "ganache-cli -p 5005 --chainId 32 --networkId 32 --gasLimit 8000000 "
+    subprocess.Popen(ganache_cli, 0, shell=True, stdout=subprocess.DEVNULL, preexec_fn=os.setsid)
     deploy_messaging_contract_request = {
         "networkUrl": GANACHE_URL
     }
@@ -40,17 +41,16 @@ def test_init_ganache():
     resp_dict = json.loads(resp.data.decode("utf-8"))
     assert "address" in resp_dict
     assert resp_dict["l1_provider"] == GANACHE_URL
-    print("here4")
 
 @pytest.mark.web3_deploy
-def test_deploy_l1_contracts():
+async def test_deploy_l1_contracts():
     """Deploys Ethereum contracts in the Ganache instance, including the L1L2Example and MockStarknetMessaging contracts"""
 
     global MESSAGING_CONTRACT_ADDRESS # pylint: disable=global-statement
     global L1L2_EXAMPLE_CONTRACT_ADDRESS # pylint: disable=global-statement
 
-    args = "( cd test && truffle migrate)"
-    output = subprocess.run(args, encoding="utf-8", check=False, capture_output=True)
+    args = "truffle migrate"
+    output = await subprocess.run(args, shell=True, encoding="utf-8", check=False, capture_output=True)
     assert output.returncode == 0
 
     messaging_contract = json.loads(load_file_content(STARKNET_MESSAGING_PATH))
