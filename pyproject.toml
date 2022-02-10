@@ -30,5 +30,7 @@ starknet-devnet = "starknet_devnet.server:main"
 markers = [
     "deploy",
     "invoke",
-    "call"
+    "call",
+    "web3_deploy",
+    "web3_messaging"
 ]
