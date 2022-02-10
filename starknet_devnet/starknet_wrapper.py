@@ -413,6 +413,9 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
 
         state = await self.__get_state()
         l2_to_l1_messages = state.l2_to_l1_messages_log
+        if self.__postman_wrapper is None:
+            return {}
+
         await self.__postman_wrapper.flush()
 
         return {

@@ -46,7 +46,7 @@ async def add_transaction():
     else:
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
 
-    result_dict = await starknet_wrapper.postman_flush()
+    await starknet_wrapper.postman_flush()
 
     return jsonify({
         "code": StarkErrorCode.TRANSACTION_RECEIVED.name,
@@ -85,7 +85,7 @@ async def call_contract():
         # code 400 would make more sense, but alpha returns 500
         abort(Response(err.message, 500))
 
-    result_dict = await starknet_wrapper.postman_flush()
+    await starknet_wrapper.postman_flush()
 
     return jsonify(result_dict)
 
