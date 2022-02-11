@@ -115,12 +115,28 @@ def test_l1_l2_message_exchange():
     """Tests message exchange"""
 
     # assert contract balance when starting
-    balance = web3_call("userBalances",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,1)
+    balance = web3_call(
+        "userBalances",
+        L1_URL,
+        L1L2_EXAMPLE_CONTRACT_ADDRESS,
+        L1L2_EXAMPLE_ETH_PATH,
+        1)
     assert balance == 0
 
     # withdraw in l1 and assert contract balance
-    web3_transact("withdraw",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,1000)
-    balance = web3_call("userBalances",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,1)
+    web3_transact(
+        "withdraw",
+        L1_URL,
+        L1L2_EXAMPLE_CONTRACT_ADDRESS,
+        L1L2_EXAMPLE_ETH_PATH,
+        int(L2_CONTRACT_ADDRESS,base=16), 1, 1000)
+
+    balance = web3_call(
+        "userBalances",
+        L1_URL,
+        L1L2_EXAMPLE_CONTRACT_ADDRESS,
+        L1L2_EXAMPLE_ETH_PATH,
+        1)
     assert balance == 1000
 
     # assert l2 contract balance
@@ -130,11 +146,24 @@ def test_l1_l2_message_exchange():
         abi_path=ABI_PATH,
         inputs=["1"]
     )
+
     assert l2_balance == "2333"
 
     # deposit in l1 and assert contract balance
-    web3_transact("deposit",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,600)
-    balance = web3_call("userBalances",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,1)
+    web3_transact(
+        "deposit",
+        L1_URL,
+        L1L2_EXAMPLE_CONTRACT_ADDRESS,
+        L1L2_EXAMPLE_ETH_PATH,
+        int(L2_CONTRACT_ADDRESS,base=16), 1, 600)
+
+    balance = web3_call(
+        "userBalances",
+        L1_URL,
+        L1L2_EXAMPLE_CONTRACT_ADDRESS,
+        L1L2_EXAMPLE_ETH_PATH,
+        1)
+
     assert balance == 400
 
     # flush postman messages
@@ -149,4 +178,5 @@ def test_l1_l2_message_exchange():
         abi_path=ABI_PATH,
         inputs=["1"]
     )
+
     assert l2_balance == "2933"
