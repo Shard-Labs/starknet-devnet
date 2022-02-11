@@ -2,18 +2,12 @@
 Test endpoints directly.
 """
 
-import json
-import os
+from test.util import load_file_content
 
+import json
 import pytest
 
 from starknet_devnet.server import app
-
-def load_file_content(file_name: str):
-    """Load content of file located in the same directory as this test file."""
-    full_file_path = os.path.join(os.path.dirname(__file__), file_name)
-    with open(full_file_path, encoding="utf-8") as deploy_file:
-        return deploy_file.read()
 
 DEPLOY_CONTENT = load_file_content("deploy.json")
 INVOKE_CONTENT = load_file_content("invoke.json")

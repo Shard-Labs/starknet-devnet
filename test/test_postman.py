@@ -4,9 +4,8 @@ Test endpoints directly.
 
 
 
-from test.settings import GANACHE_URL, GATEWAY_URL
-from test.test_endpoints import load_file_content
-from test.util import call, deploy, invoke, run_devnet_in_background
+from test.settings import L1_URL, GATEWAY_URL
+from test.util import call, deploy, invoke, run_devnet_in_background, load_file_content
 from test.web3_util import web3_call, web3_invoke
 
 import atexit
@@ -17,7 +16,7 @@ import requests
 import pytest
 
 STARKNET_MESSAGING_PATH = "build/contracts/MockStarknetMessaging.json"
-L1L2EXAMPLE_ETH_PATH = "build/contracts/L1L2Example.json"
+L1L2_EXAMPLE_ETH_PATH = "build/contracts/L1L2Example.json"
 
 ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/l1l2.cairo/l1l2.json"
@@ -38,15 +37,15 @@ def test_init_ganache():
     time.sleep(5)
     atexit.register(proc.kill)
     deploy_messaging_contract_request = {
-        "networkUrl": GANACHE_URL
+        "networkUrl": L1_URL
     }
     resp = requests.post(
-        f"{GATEWAY_URL}/postman/deploy_l1_messaging_contract",
+        f"{GATEWAY_URL}/postman/load_l1_messaging_contract",
         json=deploy_messaging_contract_request
     )
     resp_dict = json.loads(resp.text)
     assert "address" in resp_dict
-    assert resp_dict["l1_provider"] == GANACHE_URL
+    assert resp_dict["l1_provider"] == L1_URL
 
 @pytest.mark.web3_deploy
 def test_deploy_l1_contracts():
@@ -58,7 +57,7 @@ def test_deploy_l1_contracts():
     args = "cd test && truffle migrate && cd .."
     subprocess.run(args, shell=True, encoding="utf-8", check=False, capture_output=True)
     messaging_contract = json.loads(load_file_content(STARKNET_MESSAGING_PATH))
-    l1l2_example_contract = json.loads(load_file_content(L1L2EXAMPLE_ETH_PATH))
+    l1l2_example_contract = json.loads(load_file_content(L1L2_EXAMPLE_ETH_PATH))
 
     MESSAGING_CONTRACT_ADDRESS = messaging_contract["networks"]["32"]["address"]
     L1L2_EXAMPLE_CONTRACT_ADDRESS = l1l2_example_contract["networks"]["32"]["address"]
@@ -68,7 +67,7 @@ def test_load_messaging_contract():
     """Loads a Mock Messaging contract already deployed in the Ganache instance"""
 
     load_messaging_contract_request = {
-        "networkUrl": GANACHE_URL,
+        "networkUrl": L1_URL,
         "address": MESSAGING_CONTRACT_ADDRESS
     }
 
@@ -79,7 +78,7 @@ def test_load_messaging_contract():
 
     resp_dict = json.loads(resp.text)
     assert resp_dict["address"] == MESSAGING_CONTRACT_ADDRESS
-    assert resp_dict["l1_provider"] == GANACHE_URL
+    assert resp_dict["l1_provider"] == L1_URL
 
 @pytest.mark.deploy
 def test_init_l2_contract():
@@ -117,12 +116,12 @@ def test_l1_l2_message_exchange():
     """Tests message exchange"""
 
     # assert contract balance when starting
-    balance = web3_call("userBalances",GANACHE_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2EXAMPLE_ETH_PATH,1)
+    balance = web3_call("userBalances",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,1)
     assert balance == 0
 
     # withdraw in l1 and assert contract balance
-    web3_invoke("withdraw",GANACHE_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,1000)
-    balance = web3_call("userBalances",GANACHE_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2EXAMPLE_ETH_PATH,1)
+    web3_invoke("withdraw",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,1000)
+    balance = web3_call("userBalances",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,1)
     assert balance == 1000
 
     # assert l2 contract balance
@@ -135,8 +134,8 @@ def test_l1_l2_message_exchange():
     assert l2_balance == "2333"
 
     # deposit in l1 and assert contract balance
-    web3_invoke("deposit",GANACHE_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,600)
-    balance = web3_call("userBalances",GANACHE_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2EXAMPLE_ETH_PATH,1)
+    web3_invoke("deposit",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,600)
+    balance = web3_call("userBalances",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,1)
     assert balance == 400
 
     # flush postman messages

@@ -4,6 +4,7 @@ File containing functions that wrap Starknet CLI commands.
 
 import atexit
 import json
+import os
 import re
 import subprocess
 import time
@@ -226,3 +227,9 @@ def assert_failing_deploy(contract_path):
     """Run deployment for a contract that's expected to be rejected."""
     deploy_info = deploy(contract_path)
     assert_tx_status(deploy_info["tx_hash"], "REJECTED")
+
+def load_file_content(file_name: str):
+    """Load content of file located in the same directory as this test file."""
+    full_file_path = os.path.join(os.path.dirname(__file__), file_name)
+    with open(full_file_path, encoding="utf-8") as deploy_file:
+        return deploy_file.read()

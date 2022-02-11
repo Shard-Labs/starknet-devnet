@@ -83,7 +83,7 @@ Postman is a Starknet utility that allows testing L1-L2 interactions. To extend 
 
 - Deploy the StarknetMockMessaging contract needed for L1-L2 interaction test:
   - POST "/postman/deploy_l1_messaging_contract"
-  - body: `{ "networkUrl":"http://localhost:5005/" }`
+  - body: `{ "networkUrl":"http://localhost:5005" }`
 
 - Load an already deployed StarknetMockMessaging contract:
   - POST "/postman/load_l1_messaging_contract"
@@ -97,14 +97,13 @@ This method of L1 <> L2 communication testing differs from Starknet Alpha networ
 ```
 constructor(IStarknetCore starknetCore_) public {
         starknetCore = starknetCore_;
-    }
-
+}
 ```
-The constructor takes an IStarknetCore contract as argument, however for devnet L1 <> L2 communication testing, this will have to be replaced with the [MockStarknetMessaging.sol](https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/starknet/testing/MockStarknetMessaging.sol) contract:
+The constructor takes an `IStarknetCore` contract as argument, however for devnet L1 <> L2 communication testing, this will have to be replaced with the [MockStarknetMessaging.sol](https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/starknet/testing/MockStarknetMessaging.sol) contract:
 ```
-    constructor(MockStarknetMessaging mockStarknetMessaging_) public {
-        starknetCore = mockStarknetMessaging_;
-    }
+constructor(MockStarknetMessaging mockStarknetMessaging_) public {
+    starknetCore = mockStarknetMessaging_;
+}
 ```
 
 ## Development - Prerequisite
