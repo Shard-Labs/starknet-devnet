@@ -81,11 +81,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
 ## Postman integration
 Postman is a Starknet utility that allows testing L1-L2 interactions. To extend this testing for devnet, 3 unique endpoints can be used:
 
-- Deploy the StarknetMockMessaging contract needed for L1-L2 interaction test:
-  - POST "/postman/deploy_l1_messaging_contract"
-  - body: `{ "networkUrl":"http://localhost:5005" }`
-
-- Load an already deployed StarknetMockMessaging contract:
+- Load a `StarknetMockMessaging` contract. The `address` in the body is optional. If provided, the `StarknetMockMessaging` contract will be fetched from that address, otherwise a new one will be deployed:
   - POST "/postman/load_l1_messaging_contract"
   - body: `{ "networkUrl":"http://localhost:5005", "address":"0x83D76591560d9CD02CE16c060c92118d19F996b3" }`
 
