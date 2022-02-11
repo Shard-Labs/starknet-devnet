@@ -282,3 +282,4 @@ def handle_w3_value(val):
     if isinstance(val, bytes):
         return f"0x{val.hex()}"
     return val
+    
