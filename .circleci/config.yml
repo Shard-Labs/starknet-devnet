@@ -40,7 +40,7 @@ jobs:
           command: poetry run pytest test/test_endpoints.py
       - run:
           name: Test postman
-          command: poetry run pytest test/test_postman.py -s
+          command: poetry run pytest test/test_postman.py
       - run:
           name: Test plugin - dockerized
           command: ./test/test_plugin.sh

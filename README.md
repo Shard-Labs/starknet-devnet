@@ -93,6 +93,20 @@ Postman is a Starknet utility that allows testing L1-L2 interactions. To extend 
   - POST "/postman/flush"
   - no body
 
+This method of L1 <> L2 communication testing differs from Starknet Alpha networks. Taking the [L1L2Example.sol](https://www.cairo-lang.org/docs/_static/L1L2Example.sol) contract in the [starknet documentation](https://www.cairo-lang.org/docs/hello_starknet/l1l2.html):
+```
+constructor(IStarknetCore starknetCore_) public {
+        starknetCore = starknetCore_;
+    }
+
+```
+The constructor takes an IStarknetCore contract as argument, however for devnet L1 <> L2 communication testing, this will have to be replaced with the [MockStarknetMessaging.sol](https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/starknet/testing/MockStarknetMessaging.sol) contract:
+```
+    constructor(MockStarknetMessaging mockStarknetMessaging_) public {
+        starknetCore = mockStarknetMessaging_;
+    }
+```
+
 ## Development - Prerequisite
 If you're a developer willing to contribute, be sure to have installed [Poetry](https://pypi.org/project/poetry/).
 
