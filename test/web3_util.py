@@ -6,7 +6,7 @@ import json
 from web3 import Web3
 
 
-def web3_invoke(function, url, contract_address, abi_path, *inputs):
+def web3_transact(function, url, contract_address, abi_path, *inputs):
     """Invokes a function in a Web3 contract"""
 
     web3 = Web3(Web3.HTTPProvider(url))

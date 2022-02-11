@@ -6,7 +6,7 @@ Test endpoints directly.
 
 from test.settings import L1_URL, GATEWAY_URL
 from test.util import call, deploy, invoke, run_devnet_in_background, load_file_content
-from test.web3_util import web3_call, web3_invoke
+from test.web3_util import web3_call, web3_transact
 
 import atexit
 import time
@@ -30,7 +30,6 @@ L2_CONTRACT_ADDRESS: str
 def test_init_ganache():
     """Initializes a new Ganache instance and a new Mock Messaging contract"""
     run_devnet_in_background(sleep_seconds=1)
-    time.sleep(5)
     command = ["ganache-cli", "-p", "5005", "--chainId", "32", "--networkId", "32", "--gasLimit", "8000000", "--allow-unlimited-contract-size"]
     # pylint: disable=consider-using-with
     proc = subprocess.Popen(command, close_fds=True)
@@ -120,7 +119,7 @@ def test_l1_l2_message_exchange():
     assert balance == 0
 
     # withdraw in l1 and assert contract balance
-    web3_invoke("withdraw",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,1000)
+    web3_transact("withdraw",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,1000)
     balance = web3_call("userBalances",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,1)
     assert balance == 1000
 
@@ -134,7 +133,7 @@ def test_l1_l2_message_exchange():
     assert l2_balance == "2333"
 
     # deposit in l1 and assert contract balance
-    web3_invoke("deposit",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,600)
+    web3_transact("deposit",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,int(L2_CONTRACT_ADDRESS,base=16),1,600)
     balance = web3_call("userBalances",L1_URL,L1L2_EXAMPLE_CONTRACT_ADDRESS,L1L2_EXAMPLE_ETH_PATH,1)
     assert balance == 400
 
