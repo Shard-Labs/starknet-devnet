@@ -52,7 +52,8 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
         self.__postman_wrapper = None
 
         self.__l1_provider = None
-        """Saves the L1 network being used for L1 <> L2 communication."""
+        """Saves the L1 URL being used for L1 <> L2 communication."""
+
     async def __preserve_current_state(self, state: CarriedState):
         self.__current_carried_state = deepcopy(state)
         self.__current_carried_state.shared_state = state.shared_state
@@ -366,7 +367,7 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
             try:
                 starknet = await self.get_starknet()
                 self.__postman_wrapper = GanachePostmanWrapper(network_url)
-                self.__postman_wrapper.get_mock_messaging_contract_in_l1(starknet,contract_address)
+                self.__postman_wrapper.load_mock_messaging_contract_in_l1(starknet,contract_address)
             except Exception as error:
                 message = f"""Exception when trying to load the Starknet Messaging contract in a Ganache instance.
 Make sure you have a Ganache instance running at the provided network url, and that the Messaging Contract is deployed at the provided address

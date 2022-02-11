@@ -22,7 +22,7 @@ class PostmanWrapper(ABC):
         self.eth_account: EthAccount = None
 
     @abstractmethod
-    def get_mock_messaging_contract_in_l1(self, starknet, contract_address):
+    def load_mock_messaging_contract_in_l1(self, starknet, contract_address):
         """Retrieves the Mock Messaging contract deployed in an L1 network"""
 
     async def flush(self):
@@ -38,17 +38,14 @@ class GanachePostmanWrapper(PostmanWrapper):
         self.web3 = Web3(HTTPProvider(network_url, request_kwargs=request_kwargs))
         self.eth_account = EthAccount(self.web3,self.web3.eth.accounts[0])
 
-    def __deploy(self, starknet):
-        self.mock_starknet_messaging_contract = self.eth_account.deploy(load_nearby_contract("MockStarknetMessaging"))
-        self.postman = Postman(self.mock_starknet_messaging_contract,starknet)
-
-    def get_mock_messaging_contract_in_l1(self, starknet, contract_address):
+    def load_mock_messaging_contract_in_l1(self, starknet, contract_address):
         if contract_address is None:
-            self.__deploy(starknet)
+            self.mock_starknet_messaging_contract = self.eth_account.deploy(load_nearby_contract("MockStarknetMessaging"))
         else:
             address = Web3.toChecksumAddress(contract_address)
             contract_json = load_nearby_contract("MockStarknetMessaging")
             abi = contract_json["abi"]
             w3_contract = self.web3.eth.contract(abi=abi,address=address)
             self.mock_starknet_messaging_contract = EthContract(self.web3,address,w3_contract,abi,self.eth_account)
-            self.postman = Postman(self.mock_starknet_messaging_contract,starknet)
+
+        self.postman = Postman(self.mock_starknet_messaging_contract,starknet)

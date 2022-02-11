@@ -205,7 +205,7 @@ def validate_load_messaging_contract(request_dict: dict):
     network_url = request_dict.get("networkUrl")
     if network_url is None:
         error_message = "L1 network or StarknetMessaging contract address not specified"
-        abort(Response(error_message, 500))
+        abort(Response(error_message, 400))
     return network_url
 
 starknet_wrapper = StarknetWrapper()
