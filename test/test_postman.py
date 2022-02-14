@@ -32,7 +32,7 @@ def test_init_ganache():
     run_devnet_in_background(sleep_seconds=1)
     command = ["ganache-cli", "-p", "5005", "--chainId", "32", "--networkId", "32", "--gasLimit", "8000000", "--allow-unlimited-contract-size"]
     # pylint: disable=consider-using-with
-    proc = subprocess.Popen(command, close_fds=True)
+    proc = subprocess.Popen(command, close_fds=True, stdout=subprocess.PIPE)
     time.sleep(5)
     atexit.register(proc.kill)
     deploy_messaging_contract_request = {

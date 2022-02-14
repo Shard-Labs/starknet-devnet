@@ -9,15 +9,20 @@ const cairoLangVersion = executed.stdout.toString().trim();
 process.chdir(originalCwd);
 
 module.exports = {
-    cairo: {
-        version: cairoLangVersion
+    starknet: {
+        dockerizedVersion: cairoLangVersion,
+        network: "devnet",
+        wallets: {
+          OpenZeppelin: {
+            accountName: "OpenZeppelin",
+            modulePath: "starkware.starknet.wallets.open_zeppelin.OpenZeppelinAccount",
+            accountPath: "~/.starknet_accounts"
+          }
+        }
     },
     networks: {
         devnet: {
             url: "http://localhost:5000"
         }
-    },
-    mocha: {
-        starknetNetwork: "devnet"
     }
 }
