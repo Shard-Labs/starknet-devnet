@@ -7,10 +7,11 @@ import time
 from copy import deepcopy
 from typing import Dict
 
-from starkware.starknet.business_logic.internal_transaction import InternalDeploy, InternalInvokeFunction, InternalTransaction
+from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
 from starkware.starknet.business_logic.state import CarriedState
 from starkware.starknet.definitions.transaction_type import TransactionType
-from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Transaction
+from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address
+from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Transaction
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 from starkware.starkware_utils.error_handling import StarkException
@@ -105,21 +106,28 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
         """Set the origin chain."""
         self.__origin = origin
 
-    async def deploy(self, transaction: Transaction):
+    async def deploy(self, deploy_transaction: Deploy):
         """
         Deploys the contract specified with `transaction`.
         Returns (contract_address, transaction_hash).
         """
 
         state = await self.__get_state()
-        deploy_transaction: InternalDeploy = InternalDeploy.from_external(transaction, state.general_config)
+        contract_definition = deploy_transaction.contract_definition
+        tx_hash = deploy_transaction.calculate_hash(state.general_config)
+        contract_address = calculate_contract_address(
+            caller_address=0,
+            constructor_calldata=deploy_transaction.constructor_calldata,
+            salt=deploy_transaction.contract_address_salt,
+            contract_definition=deploy_transaction.contract_definition
+        )
 
         starknet = await self.get_starknet()
 
-        if deploy_transaction.contract_address not in self.__address2contract_wrapper:
+        if contract_address not in self.__address2contract_wrapper:
             try:
                 contract = await starknet.deploy(
-                    contract_def=deploy_transaction.contract_definition,
+                    contract_def=contract_definition,
                     constructor_calldata=deploy_transaction.constructor_calldata,
                     contract_address_salt=deploy_transaction.contract_address_salt
                 )
@@ -127,7 +135,7 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
                 error_message = None
                 status = TxStatus.ACCEPTED_ON_L2
 
-                self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, deploy_transaction.contract_definition)
+                self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, contract_definition)
                 await self.__update_state()
             except StarkException as err:
                 error_message = err.message
@@ -135,13 +143,15 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
                 execution_info = DummyExecutionInfo()
 
             await self.__store_transaction(
-                internal_tx=deploy_transaction,
+                transaction=deploy_transaction,
+                contract_address=contract_address,
+                tx_hash=tx_hash,
                 status=status,
                 execution_info=execution_info,
                 error_message=error_message
             )
 
-        return deploy_transaction.contract_address, deploy_transaction.hash_value
+        return contract_address, tx_hash
 
     async def invoke(self, transaction: InvokeFunction):
         """Perform invoke according to specifications in `transaction`."""
@@ -166,7 +176,9 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
             adapted_result = []
 
         await self.__store_transaction(
-            internal_tx=invoke_transaction,
+            transaction=invoke_transaction,
+            contract_address=transaction.contract_address,
+            tx_hash=invoke_transaction.hash_value,
             status=status,
             execution_info=execution_info,
             error_message=error_message
@@ -318,16 +330,23 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
 
         return self.__origin.get_block_by_number(block_number)
 
-    async def __store_transaction(self, internal_tx: InternalTransaction, status: TxStatus,
+    # pylint: disable=too-many-arguments
+    async def __store_transaction(self, transaction: Transaction, contract_address: int, tx_hash: int, status: TxStatus,
         execution_info: StarknetTransactionExecutionInfo, error_message: str=None
     ):
         """Stores the provided data as a deploy transaction in `self.transactions`."""
-        if internal_tx.tx_type == TransactionType.DEPLOY:
-            tx_wrapper = DeployTransactionWrapper(internal_tx, status, execution_info)
-        elif internal_tx.tx_type == TransactionType.INVOKE_FUNCTION:
-            tx_wrapper = InvokeTransactionWrapper(internal_tx, status, execution_info)
+        if transaction.tx_type == TransactionType.DEPLOY:
+            tx_wrapper = DeployTransactionWrapper(
+                transaction=transaction,
+                contract_address=contract_address,
+                tx_hash=tx_hash,
+                status=status,
+                execution_info=execution_info
+            )
+        elif transaction.tx_type == TransactionType.INVOKE_FUNCTION:
+            tx_wrapper = InvokeTransactionWrapper(transaction, status, execution_info)
         else:
-            raise StarknetDevnetException(message=f"Illegal tx_type: {internal_tx.tx_type}")
+            raise StarknetDevnetException(message=f"Illegal tx_type: {transaction.tx_type}")
 
         if status == TxStatus.REJECTED:
             assert error_message, "error_message must be present if tx rejected"

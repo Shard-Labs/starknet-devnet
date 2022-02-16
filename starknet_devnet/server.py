@@ -33,7 +33,6 @@ async def add_transaction():
     """Endpoint for accepting DEPLOY and INVOKE_FUNCTION transactions."""
 
     transaction = validate_transaction(request.data)
-
     tx_type = transaction.tx_type.name
 
     if tx_type == TransactionType.DEPLOY.name:
@@ -53,15 +52,13 @@ async def add_transaction():
         **result_dict
     })
 
-def validate_transaction(data: bytes):
+def validate_transaction(data: bytes, loader: Transaction=Transaction):
     """Ensure `data` is a valid Starknet transaction. Returns the parsed `Transaction`."""
-
     try:
-        transaction = Transaction.loads(data)
+        transaction = loader.loads(data)
     except (TypeError, ValidationError) as err:
         msg = f"Invalid tx: {err}\nBe sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
         abort(Response(msg, 400))
-
     return transaction
 
 @app.route("/feeder_gateway/get_contract_addresses", methods=["GET"])

@@ -6,7 +6,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 
-from starkware.starknet.business_logic.internal_transaction import InternalDeploy, InternalInvokeFunction
+from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
+from starkware.starknet.services.api.gateway.transaction import Deploy
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
@@ -88,16 +89,17 @@ class TransactionWrapper(ABC):
 class DeployTransactionWrapper(TransactionWrapper):
     """Wrapper of Deploy Transaction."""
 
-    def __init__(self, internal_tx: InternalDeploy, status: TxStatus, execution_info: StarknetTransactionExecutionInfo):
+    # pylint: disable=too-many-arguments
+    def __init__(self, transaction: Deploy, contract_address: int, tx_hash: int, status: TxStatus, execution_info: StarknetTransactionExecutionInfo):
         super().__init__(
             status,
             execution_info,
             DeployTransactionDetails(
                 TransactionType.DEPLOY.name,
-                contract_address=fixed_length_hex(internal_tx.contract_address),
-                transaction_hash=fixed_length_hex(internal_tx.hash_value),
-                constructor_calldata=[str(arg) for arg in internal_tx.constructor_calldata],
-                contract_address_salt=hex(internal_tx.contract_address_salt)
+                contract_address=fixed_length_hex(contract_address),
+                transaction_hash=fixed_length_hex(tx_hash),
+                constructor_calldata=[str(arg) for arg in transaction.constructor_calldata],
+                contract_address_salt=hex(transaction.contract_address_salt)
             )
         )
 
