@@ -18,6 +18,10 @@ class Origin:
         """Returns the transaction object."""
         raise NotImplementedError
 
+    def get_transaction_receipt(self, transaction_hash: str):
+        """Returns the transaction receipt object."""
+        raise NotImplementedError
+
     def get_block_by_hash(self, block_hash: str):
         """Returns the block identified with either its hash."""
         raise NotImplementedError
@@ -51,8 +55,15 @@ class NullOrigin(Origin):
 
     def get_transaction(self, transaction_hash: str):
         return {
+            "status": TxStatus.NOT_RECEIVED.name
+        }
+
+    def get_transaction_receipt(self, transaction_hash: str):
+        return {
+            "l2_to_l1_messages": [],
             "status": TxStatus.NOT_RECEIVED.name,
-            "transaction_hash": transaction_hash
+            "transaction_hash": transaction_hash,
+            "events": []
         }
 
     def get_block_by_hash(self, block_hash: str):

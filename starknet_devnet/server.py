@@ -47,7 +47,7 @@ async def add_transaction():
 
     return jsonify({
         "code": StarkErrorCode.TRANSACTION_RECEIVED.name,
-        "transaction_hash": fixed_length_hex(transaction_hash),
+        "transaction_hash": hex(transaction_hash),
         "address": fixed_length_hex(contract_address),
         **result_dict
     })
@@ -102,7 +102,6 @@ def _check_block_hash(request_args: MultiDict):
 @app.route("/feeder_gateway/get_block", methods=["GET"])
 async def get_block():
     """Endpoint for retrieving a block identified by its hash or number."""
-
     block_hash = request.args.get("blockHash")
     block_number = request.args.get("blockNumber", type=custom_int)
 

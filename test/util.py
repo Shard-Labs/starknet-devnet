@@ -86,8 +86,33 @@ def assert_transaction(tx_hash, expected_status, expected_signature=None):
     if expected_signature:
         assert_equal(transaction["transaction"]["signature"], expected_signature)
 
+def assert_transaction_not_received(tx_hash):
+    """Assert correct tx response when there is no tx with `tx_hash`."""
+    output = my_run([
+        "starknet", "get_transaction",
+        "--hash", tx_hash
+    ])
+    transaction = json.loads(output.stdout)
+    assert_equal(transaction, {
+        "status": "NOT_RECEIVED"
+    })
+
+def assert_transaction_receipt_not_received(tx_hash):
+    """Assert correct tx receipt response when there is no tx with `tx_hash`."""
+    output = my_run([
+        "starknet", "get_transaction_receipt",
+        "--hash", tx_hash,
+    ])
+    receipt = json.loads(output.stdout)
+    assert_equal(receipt, {
+        "events": [],
+        "l2_to_l1_messages": [],
+        "status": "NOT_RECEIVED",
+        "transaction_hash": tx_hash
+    })
+
 def invoke(function, inputs, address, abi_path, signature=None):
-    """Wrapper around starknet invoke"""
+    """Wrapper around starknet invoke. Returns tx hash."""
     args = [
         "starknet", "invoke",
         "--function", function,
@@ -212,7 +237,11 @@ def assert_block(latest_block_number, latest_tx_hash):
 
     assert_equal(latest_block["block_number"], latest_block_number)
     assert_equal(latest_block["status"], "ACCEPTED_ON_L2")
-    assert_equal(latest_block["transactions"][0]["transaction_hash"], latest_tx_hash)
+
+    latest_block_transactions = latest_block["transactions"]
+    assert_equal(len(latest_block_transactions), 1)
+    latest_transaction = latest_block_transactions[0]
+    assert_equal(latest_transaction["transaction_hash"], latest_tx_hash)
 
 def assert_salty_deploy(contract_path, inputs, salt, expected_address, expected_tx_hash):
     """Run twice deployment with salt. Expect the same output."""

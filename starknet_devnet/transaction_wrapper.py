@@ -3,6 +3,7 @@ Contains code for wrapping transactions.
 """
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import List
 
@@ -39,6 +40,20 @@ class InvokeTransactionDetails(TransactionDetails):
     calldata: List[str]
     signature: List[str]
     entry_point_selector: str
+    entry_point_type: str
+
+def get_events(execution_info: StarknetTransactionExecutionInfo):
+    """Extract events if any; stringify content."""
+    if not hasattr(execution_info, "raw_events"):
+        return []
+    events = []
+    for event in execution_info.raw_events:
+        events.append({
+            "from_address": hex(event.from_address),
+            "data": [str(d) for d in event.data],
+            "keys": [str(key) for key in event.keys]
+        })
+    return events
 
 class TransactionWrapper(ABC):
     """Transaction Wrapper base class."""
@@ -49,9 +64,7 @@ class TransactionWrapper(ABC):
     ):
         self.transaction_hash = tx_details.transaction_hash
 
-        events = []
-        if hasattr(execution_info, "raw_events"):
-            events = execution_info.raw_events
+        events = get_events(execution_info)
 
         self.transaction = {
             "status": status.name,
@@ -72,6 +85,15 @@ class TransactionWrapper(ABC):
         """Sets `block_hash` and `block_number` to the wrapped transaction and receipt."""
         self.transaction["block_hash"] = self.receipt["block_hash"] = block_hash
         self.transaction["block_number"] = self.receipt["block_number"] = block_number
+
+    def get_receipt_block_variant(self):
+        """
+        Receipt is a part of get_block response, but somewhat modified.
+        This method returns the modified version.
+        """
+        receipt = deepcopy(self.receipt)
+        del receipt["status"]
+        return receipt
 
     def set_failure_reason(self, error_message: str):
         """Sets the failure reason to transaction and receipt dicts."""
@@ -116,7 +138,8 @@ class InvokeTransactionWrapper(TransactionWrapper):
                 contract_address=fixed_length_hex(internal_tx.contract_address),
                 transaction_hash=fixed_length_hex(internal_tx.hash_value),
                 calldata=[str(arg) for arg in internal_tx.calldata],
-                entry_point_selector=str(internal_tx.entry_point_selector),
+                entry_point_selector=fixed_length_hex(internal_tx.entry_point_selector),
+                entry_point_type=internal_tx.entry_point_type.name,
                 signature=[str(sig_part) for sig_part in internal_tx.signature]
             )
         )

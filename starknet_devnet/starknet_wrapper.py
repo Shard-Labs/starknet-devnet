@@ -239,15 +239,11 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
     def get_transaction_receipt(self, transaction_hash: str):
         """Returns the transaction receipt of the transaction identified by `transaction_hash`."""
 
-        tx_hash_int = int(transaction_hash,16)
+        tx_hash_int = int(transaction_hash, 16)
         if tx_hash_int in self.__transaction_wrappers:
             return self.__transaction_wrappers[tx_hash_int].receipt
 
-        return {
-            "l2_to_l1_messages": [],
-            "status": TxStatus.NOT_RECEIVED.name,
-            "transaction_hash": transaction_hash
-        }
+        return self.__origin.get_transaction_receipt(transaction_hash)
 
     def get_number_of_blocks(self) -> int:
         """Returns the number of blocks stored so far."""
@@ -289,7 +285,7 @@ class StarknetWrapper: # pylint: disable=too-many-instance-attributes
             "state_root": state_root.hex(),
             "status": TxStatus.ACCEPTED_ON_L2.name,
             "timestamp": timestamp,
-            "transaction_receipts": [tx_wrapper.receipt],
+            "transaction_receipts": [tx_wrapper.get_receipt_block_variant()],
             "transactions": [tx_wrapper.transaction["transaction"]],
         }
 
