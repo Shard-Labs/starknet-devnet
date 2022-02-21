@@ -136,6 +136,17 @@ def get_code():
     result_dict = starknet_wrapper.get_code(contract_address)
     return jsonify(result_dict)
 
+@app.route("/feeder_gateway/get_full_contract", methods=["GET"])
+def get_full_contract():
+    """
+    Returns the contract definition of the contract whose contractAddress is provided.
+    """
+    _check_block_hash(request.args)
+
+    contract_address = request.args.get("contractAddress", type=custom_int)
+    result_dict = starknet_wrapper.get_full_contract(contract_address)
+    return jsonify(result_dict)
+
 @app.route("/feeder_gateway/get_storage_at", methods=["GET"])
 async def get_storage_at():
     """Endpoint for returning the storage identified by `key` from the contract at """

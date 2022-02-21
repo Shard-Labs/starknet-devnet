@@ -3,6 +3,7 @@ Contains classes that provide the abstraction of L2 blockchain.
 """
 
 from starknet_devnet.util import StarknetDevnetException, TxStatus
+from starkware.starknet.services.api.contract_definition import ContractDefinition
 
 
 class Origin:
@@ -32,6 +33,10 @@ class Origin:
 
     def get_code(self, contract_address: int) -> dict:
         """Returns the code of the contract."""
+        raise NotImplementedError
+
+    def get_full_contract(self, contract_address: int) -> ContractDefinition:
+        """Returns the contract definition"""
         raise NotImplementedError
 
     def get_storage_at(self, contract_address: int, key: int) -> str:
