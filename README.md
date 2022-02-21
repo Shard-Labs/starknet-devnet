@@ -78,10 +78,10 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `invoke`
   - `tx_status`
   - `get_transaction_receipt`
+  - `get_full_contract`
 - The following Starknet CLI commands are **not** supported:
   - `get_contract_addresses`
   - `get_state_update`
-  - `get_full_contract`
 
 ## Hardhat integration
 - If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate Devnet.
