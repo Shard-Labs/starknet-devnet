@@ -2,9 +2,11 @@
 A server exposing Starknet functionalities as API endpoints.
 """
 
-import atexit
 import os
 import json
+import signal
+import sys
+import dill as pickle
 
 from flask import Flask, request, jsonify, abort
 from flask.wrappers import Response
@@ -210,7 +212,7 @@ def validate_load_messaging_contract(request_dict: dict):
 def dump():
     """Dumps the starknet_wrapper"""
 
-    request_dict = request.json
+    request_dict = request.json or {}
     dump_path = request_dict.get("path") or dumper.dump_path
     if not dump_path:
         abort(Response("No path provided", 400))
@@ -220,6 +222,11 @@ def dump():
 
 starknet_wrapper = StarknetWrapper()
 dumper = Dumper(starknet_wrapper)
+
+def handle_exit(_signum, _frame):
+    """Assumes atexit handler is registered."""
+    dumper.dump(dumper.dump_path)
+    sys.exit(0)
 
 def main():
     """Runs the server."""
@@ -237,10 +244,14 @@ def main():
     # starknet_wrapper.set_origin(origin)
 
     if args.load_path:
-        starknet_wrapper = StarknetWrapper.load(args.load_path)
+        try:
+            starknet_wrapper = StarknetWrapper.load(args.load_path)
+        except (FileNotFoundError, pickle.UnpicklingError):
+            sys.exit(f"Error: Cannot load from {args.load_path}. Make sure the file exists and contains a Devnet dump.")
 
     if args.dump_on == DumpOn.EXIT:
-        atexit.register(dumper.dump)
+        signal.signal(signal.SIGTERM, handle_exit)
+        signal.signal(signal.SIGINT, handle_exit)
 
     dumper.dump_path = args.dump_path
     dumper.dump_on = args.dump_on

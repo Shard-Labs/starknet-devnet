@@ -19,10 +19,13 @@ class Dumper:
 
     def dump(self, path: str):
         """Dump to `path`."""
-        assert self.dump_path, "No dump_path defined"
-        with open(path, "rb") as file:
-            pickle.dump(file, self.dumpable)
+        path = path or self.dump_path
+        assert path, "No dump_path defined"
+        print("Dumping Devnet to:", path)
+        with open(path, "wb") as file:
+            pickle.dump(self.dumpable, file)
 
     def dump_if_required(self):
         """Dump only if specified in self.dump_on."""
-        self.dump(self.dump_path)
+        if self.dump_on == DumpOn.TRANSACTION:
+            self.dump(self.dump_path)

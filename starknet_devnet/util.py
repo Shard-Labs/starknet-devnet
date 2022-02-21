@@ -81,7 +81,7 @@ def parse_dump_on(option: str):
     """Parse dumping frequency option."""
     if option in DUMP_ON_OPTIONS:
         return DumpOn[option.upper()]
-    sys.exit("Invalid dump_on option: {}. Valid options: {DUMP_ON_OPTIONS_STRINGIFIED}")
+    sys.exit(f"Error: Invalid --dump-on option: {option}. Valid options: {DUMP_ON_OPTIONS_STRINGIFIED}")
 
 DEFAULT_HOST = "localhost"
 DEFAULT_PORT = 5000
@@ -131,7 +131,7 @@ def parse_args():
 
     args = parser.parse_args()
     if args.dump_on and not args.dump_path:
-        sys.exit("--dump-path required if --dump-on present")
+        sys.exit("Error: --dump-path required if --dump-on present")
 
     return args
 
