@@ -29,7 +29,7 @@ class ContractWrapper:
     """
     def __init__(self, contract: StarknetContract, contract_definition: ContractDefinition):
         self.contract: StarknetContract = contract
-        self.contract_definition = contract_definition.dump();
+        self.contract_definition = contract_definition.dump()
 
         self.code: dict = {
             "abi": contract_definition.abi,
