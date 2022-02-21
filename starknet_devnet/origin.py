@@ -83,6 +83,13 @@ class NullOrigin(Origin):
             "bytecode": []
         }
 
+    def get_full_contract(self, contract_address: int) -> dict:
+        return {
+            "abi": {},
+            "entry_points_by_type": {},
+            "program": {}
+        }
+
     def get_storage_at(self, contract_address: int, key: int) -> str:
         return hex(0)
 
@@ -112,6 +119,9 @@ class ForkedOrigin(Origin):
         raise NotImplementedError
 
     def get_code(self, contract_address: int) -> dict:
+        raise NotImplementedError
+
+    def get_full_contract(self, contract_address: int) -> dict:
         raise NotImplementedError
 
     def get_storage_at(self, contract_address: int, key: int) -> str:
