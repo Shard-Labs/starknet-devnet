@@ -17,7 +17,6 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
-from starkware.starknet.services.api.contract_definition import ContractDefinition
 
 from .origin import NullOrigin, Origin
 from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo, enable_pickling
@@ -372,8 +371,8 @@ class StarknetWrapper:
             return contract_wrapper.code
         return self.__origin.get_code(contract_address)
 
-    def get_full_contract(self, contract_address: int) -> ContractDefinition:
-        """Returns a `ContractDefinition` of the contract at `contract_address`."""
+    def get_full_contract(self, contract_address: int) -> dict:
+        """Returns a `dict` contract definition of the contract at `contract_address`."""
         if self.__is_contract_deployed(contract_address):
             contract_wrapper = self.__get_contract_wrapper(contract_address)
             return contract_wrapper.contract_definition

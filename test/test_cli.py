@@ -3,6 +3,7 @@ The main testing script. Runs the devnet and calls its endpoints.
 """
 
 from .util import (
+    assert_contract_definition,
     assert_negative_block_input,
     assert_transaction_not_received,
     assert_transaction_receipt_not_received,
@@ -43,6 +44,9 @@ assert_transaction_receipt_not_received(NONEXISTENT_TX_HASH)
 
 # check code
 assert_contract_code(deploy_info["address"])
+
+# check contract definition
+assert_contract_definition(deploy_info["address"])
 
 # increase and assert balance
 invoke_tx_hash = invoke(

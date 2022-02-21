@@ -29,11 +29,11 @@ class ContractWrapper:
     """
     def __init__(self, contract: StarknetContract, contract_definition: ContractDefinition):
         self.contract: StarknetContract = contract
-        self.contract_definition = contract_definition;
+        self.contract_definition = contract_definition.dump();
 
         self.code: dict = {
             "abi": contract_definition.abi,
-            "bytecode": [hex(el) for el in contract_definition.program.data]
+            "bytecode": self.contract_definition["program"]["data"]
         }
 
         self.types: dict = extract_types(contract_definition.abi)

@@ -167,6 +167,16 @@ def assert_contract_code(address):
     # just checking key equality
     assert_equal(sorted(code.keys()), ["abi", "bytecode"])
 
+def assert_contract_definition(address):
+    """Asserts the content of the contract definition of a contract at address."""
+    output = my_run([
+        "starknet", "get_full_contract",
+        "--contract_address", address
+    ])
+    contract_definition = json.loads(output.stdout)
+    # just checking key equality
+    assert_equal(sorted(contract_definition.keys()), ["abi", "entry_points_by_type", "program"])
+
 def assert_storage(address, key, expected_value):
     """Asserts the storage value stored at (address, key)."""
     output = my_run([
