@@ -3,9 +3,11 @@ This module introduces `StarknetWrapper`, a wrapper class of
 starkware.starknet.testing.starknet.Starknet.
 """
 
+import json
 import time
 from copy import deepcopy
 from typing import Dict
+from web3 import Web3
 
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
@@ -396,6 +398,7 @@ class StarknetWrapper:
         if network_id is None or network_id == "ganache":
             try:
                 starknet = await self.get_starknet()
+                starknet.state.l2_to_l1_messages_log.clear()
                 self.__postman_wrapper = GanachePostmanWrapper(network_url)
                 self.__postman_wrapper.load_mock_messaging_contract_in_l1(starknet,contract_address)
             except Exception as error:
@@ -418,14 +421,36 @@ Exception:
         """Handles all pending L1 <> L2 messages and sends them to the other layer. """
 
         state = await self.__get_state()
-        l2_to_l1_messages = state.l2_to_l1_messages_log
+
         if self.__postman_wrapper is None:
             return {}
 
+        postman = self.__postman_wrapper.postman
+
+        l1_to_l2_messages = json.loads(Web3.toJSON(postman.message_to_l2_filter.get_new_entries()))
+        l2_to_l1_messages = state.l2_to_l1_messages_log[postman.n_consumed_l2_to_l1_messages :]
+
         await self.__postman_wrapper.flush()
+
+        return self.parse_l1_l2_messages(l1_to_l2_messages, l2_to_l1_messages)
+
+    def parse_l1_l2_messages(self, l1_raw_messages, l2_raw_messages) -> dict:
+        """Converts some of the values in the dictionaries from integer to hex"""
+
+        for message in l1_raw_messages:
+            message["args"]["to_address"] = hex(message["args"]["to_address"])
+
+        l2_messages = []
+        for message in l2_raw_messages:
+            new_message = {
+                "from_address": hex(message.from_address),
+                "payload": message.payload,
+                "to_address": hex(message.to_address)
+            }
+            l2_messages.append(new_message)
 
         return {
             "l1_provider": self.__l1_provider,
-            "n_consumed_l2_to_l1_messages": self.__postman_wrapper.postman.n_consumed_l2_to_l1_messages,
-            "consumed_l2_messages": l2_to_l1_messages
+            "consumed_l1_messages": l1_raw_messages,
+            "consumed_l2_messages": l2_messages
         }

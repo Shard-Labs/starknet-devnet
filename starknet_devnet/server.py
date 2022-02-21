@@ -48,7 +48,7 @@ async def add_transaction():
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
 
     # after tx
-    await starknet_wrapper.postman_flush()
+
     if dumper.dump_on == DumpOn.TRANSACTION:
         dumper.dump()
 
@@ -86,8 +86,6 @@ async def call_contract():
     except StarkException as err:
         # code 400 would make more sense, but alpha returns 500
         abort(Response(err.message, 500))
-
-    await starknet_wrapper.postman_flush()
 
     return jsonify(result_dict)
 
