@@ -47,6 +47,8 @@ async def add_transaction():
     else:
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
 
+    # after tx
+    await starknet_wrapper.postman_flush()
     dumper.dump_if_required()
 
     return jsonify({
@@ -220,13 +222,13 @@ def dump():
     dumper.dump(dump_path)
     return Response(status=200)
 
-starknet_wrapper = StarknetWrapper()
-dumper = Dumper(starknet_wrapper)
-
-def handle_exit(_signum, _frame):
-    """Assumes atexit handler is registered."""
+def dump_on_exit(_signum, _frame):
+    """Dumps on exit."""
     dumper.dump(dumper.dump_path)
     sys.exit(0)
+
+starknet_wrapper = StarknetWrapper()
+dumper = Dumper(starknet_wrapper)
 
 def main():
     """Runs the server."""
@@ -250,8 +252,8 @@ def main():
             sys.exit(f"Error: Cannot load from {args.load_path}. Make sure the file exists and contains a Devnet dump.")
 
     if args.dump_on == DumpOn.EXIT:
-        signal.signal(signal.SIGTERM, handle_exit)
-        signal.signal(signal.SIGINT, handle_exit)
+        signal.signal(signal.SIGTERM, dump_on_exit)
+        signal.signal(signal.SIGINT, dump_on_exit)
 
     dumper.dump_path = args.dump_path
     dumper.dump_on = args.dump_on
