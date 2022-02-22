@@ -48,4 +48,4 @@ if [ ! -f "$TEST_FILE" ]; then
     exit 1
 fi
 
-npx hardhat test "$TEST_FILE"
+npx hardhat test --no-compile "$TEST_FILE"
