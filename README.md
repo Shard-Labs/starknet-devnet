@@ -23,7 +23,6 @@ brew install gmp
 
 ## Disclaimer
 - Devnet should not be used as a replacement for Alpha testnet. After testing on Devnet, be sure to test on testnet!
-- Hash calculation of transactions and blocks differs from the one used in Alpha testnet.
 - Specifying a block by its hash/number is not supported. All interaction is done with the latest block.
 - Read more in [interaction](#interaction-api).
 
