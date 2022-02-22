@@ -35,14 +35,15 @@ def send_dump_request(dump_path: str=None):
     json_load = { "path": dump_path } if dump_path else None
     return requests.post(f"{GATEWAY_URL}/dump", json=json_load)
 
-def assert_dump_present(dump_path: str, sleep_seconds=0):
+def assert_dump_present(dump_path: str, sleep_seconds=2):
     """Assert there is a non-empty dump file."""
     time.sleep(sleep_seconds)
     assert os.path.isfile(dump_path)
     assert os.path.getsize(dump_path) > 0
 
-def assert_no_dump_present(dump_path: str):
+def assert_no_dump_present(dump_path: str, sleep_seconds=2):
     """Assert there is no dump file."""
+    time.sleep(sleep_seconds)
     assert not os.path.isfile(dump_path)
 
 def dump_and_assert(dump_path: str=None):
@@ -79,7 +80,7 @@ def test_load_if_no_file():
 
     assert devnet_proc.returncode != 0
     expected_msg = f"Error: Cannot load from {DUMP_PATH}. Make sure the file exists and contains a Devnet dump.\n"
-    assert devnet_proc.stderr.read() == bytes(expected_msg)
+    assert devnet_proc.stderr.read().decode("utf-8") == expected_msg
 
 def test_dumping_if_path_not_provided():
     """Assert failure if dumping attempted without a known path."""
@@ -135,7 +136,7 @@ def test_dumping_on_exit():
     assert balance_after_invoke == "30"
 
     assert_no_dump_present(DUMP_PATH)
-    devnet_proc.send_signal(signal.SIGINT)
+    devnet_proc.send_signal(signal.SIGINT) # simulate Ctrl+C because devnet can't handle kill
     assert_dump_present(DUMP_PATH, sleep_seconds=3)
 
 def test_invalid_dump_on_option():
