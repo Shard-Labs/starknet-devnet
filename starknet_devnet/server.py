@@ -253,8 +253,8 @@ def main():
             sys.exit(f"Error: Cannot load from {args.load_path}. Make sure the file exists and contains a Devnet dump.")
 
     if args.dump_on == DumpOn.EXIT:
-        signal.signal(signal.SIGTERM, dump_on_exit)
-        signal.signal(signal.SIGINT, dump_on_exit)
+        for sig in [signal.SIGTERM, signal.SIGINT]:
+            signal.signal(sig, dump_on_exit)
 
     dumper.dump_path = args.dump_path
     dumper.dump_on = args.dump_on
