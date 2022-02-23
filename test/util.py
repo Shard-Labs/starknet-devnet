@@ -17,7 +17,7 @@ class ReturnCodeAssertionError(AssertionError):
 def run_devnet_in_background(*args, sleep_seconds=3):
     """
     Runs starknet-devnet in background.
-    By default sleeps 1 second after spawning devnet.
+    By default sleeps 3 second after spawning devnet.
     Accepts extra args to pass to `starknet-devnet` command.
     Returns the process handle.
     """
