@@ -46,7 +46,7 @@ assert_transaction_receipt_not_received(NONEXISTENT_TX_HASH)
 assert_contract_code(deploy_info["address"])
 
 # check contract definition
-assert_contract_definition(deploy_info["address"])
+assert_contract_definition(deploy_info["address"], CONTRACT_PATH)
 
 # increase and assert balance
 invoke_tx_hash = invoke(
