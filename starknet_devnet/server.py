@@ -147,10 +147,10 @@ def get_full_contract():
 
     try:
         result_dict = starknet_wrapper.get_full_contract(contract_address)
-        return jsonify(result_dict)
     except StarknetDevnetException as error:
         # alpha throws 500 for unitialized contracts
         abort(Response(error.message, 500))
+    return jsonify(result_dict)
 
 @app.route("/feeder_gateway/get_storage_at", methods=["GET"])
 async def get_storage_at():
