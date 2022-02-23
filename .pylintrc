@@ -1,2 +1,5 @@
 [FORMAT]
 max-line-length=150
+
+[BASIC]
+min-public-methods=1

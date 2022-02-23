@@ -6,12 +6,6 @@ import dill as pickle
 
 from .util import DumpOn
 
-def perform_dump(dumpable, path):
-    """Performs the very act of dumping."""
-    with open(path, "wb") as file:
-        pickle.dump(dumpable, file)
-
-# pylint: disable=too-few-public-methods
 class Dumper:
     """Class for dumping objects."""
 
@@ -26,6 +20,11 @@ class Dumper:
         self.dump_on: DumpOn = None
         """When to dump."""
 
+    def __write_file(self, path):
+        """Writes the dump to disk."""
+        with open(path, "wb") as file:
+            pickle.dump(self.dumpable, file)
+
     def dump(self, path: str=None):
         """Dump to `path`."""
         path = path or self.dump_path
@@ -33,7 +32,7 @@ class Dumper:
         print("Dumping Devnet to:", path)
 
         multiprocessing.Process(
-            target=perform_dump,
-            args=[self.dumpable, path]
+            target=self.__write_file,
+            args=[path]
         ).start()
         # don't .join(), let it run in background
