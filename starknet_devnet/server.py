@@ -49,7 +49,8 @@ async def add_transaction():
 
     # after tx
     await starknet_wrapper.postman_flush()
-    dumper.dump_if_required()
+    if dumper.dump_on == DumpOn.TRANSACTION:
+        dumper.dump()
 
     return jsonify({
         "code": StarkErrorCode.TRANSACTION_RECEIVED.name,
