@@ -59,8 +59,8 @@ class StarknetWrapper:
         self.__l1_provider = None
         """Saves the L1 URL being used for L1 <> L2 communication."""
 
-    @classmethod
-    def load(cls, path: str) -> "StarknetWrapper":
+    @staticmethod
+    def load(path: str) -> "StarknetWrapper":
         """Load a serialized instance of this class from `path`."""
         with open(path, "rb") as file:
             return pickle.load(file)
