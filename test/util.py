@@ -177,11 +177,10 @@ def assert_contract_definition(address, contract_path):
     ])
     contract_definition: ContractDefinition = ContractDefinition.load(json.loads(output.stdout))
 
-    with open(contract_path, encoding="utf-8") as contract_file:
-        loaded_contract = json.load(contract_file)
-        loaded_contract_definition: ContractDefinition = ContractDefinition.Schema().load(loaded_contract)
+    loaded_contract = load_json_from_path(contract_path)
+    loaded_contract_definition: ContractDefinition = ContractDefinition.load(loaded_contract)
 
-        assert_equal(contract_definition, loaded_contract_definition.remove_debug_info())
+    assert_equal(contract_definition, loaded_contract_definition.remove_debug_info())
 
 def assert_storage(address, key, expected_value):
     """Asserts the storage value stored at (address, key)."""
