@@ -193,6 +193,15 @@ def get_transaction_receipt():
     ret = starknet_wrapper.get_transaction_receipt(transaction_hash)
     return jsonify(ret)
 
+@app.route("/feeder_gateway/get_state_update", methods=["GET"])
+def get_state_update():
+    """
+    Returns the status update from the last state update
+    """
+
+    state_update = starknet_wrapper.get_state_update()
+    return jsonify(state_update)
+
 @app.route("/postman/load_l1_messaging_contract", methods=["POST"])
 async def load_l1_messaging_contract():
     """

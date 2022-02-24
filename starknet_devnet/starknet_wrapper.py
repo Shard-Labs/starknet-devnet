@@ -59,6 +59,8 @@ class StarknetWrapper:
         self.__l1_provider = None
         """Saves the L1 URL being used for L1 <> L2 communication."""
 
+        self.__state_update = None
+
     @staticmethod
     def load(path: str) -> "StarknetWrapper":
         """Load a serialized instance of this class from `path`."""
@@ -77,6 +79,42 @@ class StarknetWrapper:
             self.__starknet = await Starknet.empty()
             await self.__preserve_current_state(self.__starknet.state.state)
         return self.__starknet
+
+    def __get_state_updates(self, previous_state: CarriedState, current_state: CarriedState):
+        print("State diff")
+        deployed_contracts = []
+        storage_diffs = {}
+
+
+        for contract_address in current_state.contract_states.keys():
+            storage_updates = current_state.contract_states[contract_address].storage_updates
+            previous_storage_updates = None
+
+            if contract_address not in previous_state.contract_states:
+                deployed_contracts.append({
+                    "address": contract_address
+                })
+            else:
+                previous_storage_updates = previous_state.contract_states[contract_address].storage_updates
+
+
+            for storage_key, leaf in storage_updates.items():
+                if previous_storage_updates and previous_storage_updates[storage_key].value != leaf.value:
+                    if not contract_address in storage_diffs:
+                        storage_diffs[contract_address] = []
+
+                    storage_diffs[contract_address].append({
+                        "key": storage_key,
+                        "value": hex(leaf.value)
+                    })
+
+                print(storage_key, hex(leaf.value), previous_storage_updates)
+
+        return {
+            "deployed_contracts": deployed_contracts,
+            "storage_diffs": storage_diffs
+        }
+
 
     async def __get_state(self):
         """
@@ -97,6 +135,8 @@ class StarknetWrapper:
         )
         self.__starknet.state.state.shared_state = updated_shared_state
         await self.__preserve_current_state(self.__starknet.state.state)
+
+        self.__state_update = self.__get_state_updates(previous_state, current_carried_state)
 
     async def __get_state_root(self):
         state = await self.__get_state()
@@ -429,3 +469,7 @@ Exception:
             "n_consumed_l2_to_l1_messages": self.__postman_wrapper.postman.n_consumed_l2_to_l1_messages,
             "consumed_l2_messages": l2_to_l1_messages
         }
+
+    def get_state_update(self):
+        """Returns deployed contracts and storage diff from last state update"""
+        return self.__state_update
