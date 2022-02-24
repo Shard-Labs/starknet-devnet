@@ -3,7 +3,7 @@
 HOST="localhost"
 PORT="5000"
 L1_HOST="localhost"
-L1_PORT="5005"
+L1_PORT="8545"
 
 GATEWAY_URL=f"http://{HOST}:{PORT}"
 FEEDER_GATEWAY_URL=f"http://{HOST}:{PORT}"
