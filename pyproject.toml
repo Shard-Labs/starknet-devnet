@@ -29,9 +29,10 @@ starknet-devnet = "starknet_devnet.server:main"
 
 [tool.pytest.ini_options]
 markers = [
+    "call",
     "deploy",
     "invoke",
-    "call",
+    "state_update",
     "web3_deploy",
     "web3_messaging"
 ]
