@@ -17,3 +17,5 @@ npm link @shardlabs/starknet-hardhat-plugin
 
 # generate artifacts
 npx hardhat starknet-compile
+
+npx hardhat compile
