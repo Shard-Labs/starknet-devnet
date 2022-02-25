@@ -21,11 +21,12 @@ ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/l1l2.cairo/l1l2.json"
 ABI_PATH = f"{ARTIFACTS_PATH}/l1l2.cairo/l1l2_abi.json"
 
-ETH_CONTRACTS_PATH = "starknet-hardhat-example/artifacts/contracts"
+ETH_CONTRACTS_PATH = "../starknet-hardhat-example/artifacts/contracts"
 STARKNET_MESSAGING_PATH = f"{ETH_CONTRACTS_PATH}/MockStarknetMessaging.sol/MockStarknetMessaging.json"
 L1L2_EXAMPLE_PATH = f"{ETH_CONTRACTS_PATH}/L1L2.sol/L1L2Example.json"
 
 def pytest_configure():
+    """Set globals"""
     pytest.L1L2_EXAMPLE_CONTRACT = None
     pytest.STARKNET_MESSAGING_CONTRACT = None
     pytest.L2_CONTRACT_ADDRESS = None
