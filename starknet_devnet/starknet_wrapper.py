@@ -438,15 +438,15 @@ Exception:
         """Converts some of the values in the dictionaries from integer to hex"""
 
         for message in l1_raw_messages:
-            message["args"]["selector"] = fixed_length_hex(message["args"]["selector"])
-            message["args"]["to_address"] = fixed_length_hex(message["args"]["to_address"])
+            message["args"]["selector"] = hex(message["args"]["selector"])
+            message["args"]["to_address"] = fixed_length_hex(message["args"]["to_address"]) # L2 addresses need the leading 0
 
         l2_messages = []
         for message in l2_raw_messages:
             new_message = {
-                "from_address": fixed_length_hex(message.from_address),
+                "from_address": fixed_length_hex(message.from_address), # L2 addresses need the leading 0
                 "payload": message.payload,
-                "to_address": fixed_length_hex(message.to_address)
+                "to_address": hex(message.to_address)
             }
             l2_messages.append(new_message)
 
