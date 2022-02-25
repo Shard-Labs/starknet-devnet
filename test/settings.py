@@ -7,4 +7,4 @@ L1_PORT="8545"
 
 GATEWAY_URL=f"http://{HOST}:{PORT}"
 FEEDER_GATEWAY_URL=f"http://{HOST}:{PORT}"
-L1_URL=f"http://{L1_HOST}:{L1_PORT}"
+L1_URL=f"http://{L1_HOST}:{L1_PORT}/"

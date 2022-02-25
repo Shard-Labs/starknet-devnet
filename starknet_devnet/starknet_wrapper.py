@@ -24,7 +24,7 @@ from .origin import NullOrigin, Origin
 from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo, enable_pickling
 from .contract_wrapper import ContractWrapper
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
-from .postman_wrapper import GanachePostmanWrapper
+from .postman_wrapper import LocalPostmanWrapper
 from .constants import FAILURE_REASON_KEY
 
 enable_pickling()
@@ -394,21 +394,21 @@ class StarknetWrapper:
     async def load_messaging_contract_in_l1(self, network_url: str, contract_address: str, network_id: str) -> dict:
         """Creates a Postman Wrapper instance and loads an already deployed Messaging contract in the L1 network"""
 
-        # If no L1 network ID provided, will use a Ganache instance
-        if network_id is None or network_id == "ganache":
+        # If no L1 network ID provided, will use a local testnet instance
+        if network_id is None or network_id == "local":
             try:
                 starknet = await self.get_starknet()
                 starknet.state.l2_to_l1_messages_log.clear()
-                self.__postman_wrapper = GanachePostmanWrapper(network_url)
+                self.__postman_wrapper = LocalPostmanWrapper(network_url)
                 self.__postman_wrapper.load_mock_messaging_contract_in_l1(starknet,contract_address)
             except Exception as error:
-                message = f"""Exception when trying to load the Starknet Messaging contract in a Ganache instance.
-Make sure you have a Ganache instance running at the provided network url, and that the Messaging Contract is deployed at the provided address
+                message = f"""Exception when trying to load the Starknet Messaging contract in a local testnet instance.
+Make sure you have a local testnet instance running at the provided network url, and that the Messaging Contract is deployed at the provided address
 Exception:
 {error}"""
                 raise StarknetDevnetException(message=message) from error
         else:
-            message = "L1 interaction is only usable with a local running Ganache instance."
+            message = "L1 interaction is only usable with a local running local testnet instance."
             raise StarknetDevnetException(message=message)
 
         self.__l1_provider = network_url
@@ -427,7 +427,7 @@ Exception:
 
         postman = self.__postman_wrapper.postman
 
-        l1_to_l2_messages = json.loads(Web3.toJSON(postman.message_to_l2_filter.get_new_entries()))
+        l1_to_l2_messages = json.loads(Web3.toJSON(self.__postman_wrapper.l1_to_l2_message_filter.get_new_entries()))
         l2_to_l1_messages = state.l2_to_l1_messages_log[postman.n_consumed_l2_to_l1_messages :]
 
         await self.__postman_wrapper.flush()
@@ -438,6 +438,7 @@ Exception:
         """Converts some of the values in the dictionaries from integer to hex"""
 
         for message in l1_raw_messages:
+            message["args"]["selector"] = hex(message["args"]["to_address"])
             message["args"]["to_address"] = hex(message["args"]["to_address"])
 
         l2_messages = []
@@ -451,6 +452,8 @@ Exception:
 
         return {
             "l1_provider": self.__l1_provider,
-            "consumed_l1_messages": l1_raw_messages,
-            "consumed_l2_messages": l2_messages
+            "consumed_messages": {
+                "from_l1": l1_raw_messages,
+                "from_l2": l2_messages
+            }
         }
