@@ -438,7 +438,7 @@ Exception:
         """Converts some of the values in the dictionaries from integer to hex"""
 
         for message in l1_raw_messages:
-            message["args"]["selector"] = fixed_length_hex(message["args"]["to_address"])
+            message["args"]["selector"] = fixed_length_hex(message["args"]["selector"])
             message["args"]["to_address"] = fixed_length_hex(message["args"]["to_address"])
 
         l2_messages = []
