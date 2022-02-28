@@ -61,7 +61,7 @@ class StarknetWrapper:
         self.__l1_provider = None
         """Saves the L1 URL being used for L1 <> L2 communication."""
 
-        self.__state_update = None
+        self.__last_state_update = None
 
     @staticmethod
     def load(path: str) -> "StarknetWrapper":
@@ -94,7 +94,7 @@ class StarknetWrapper:
 
             if contract_address not in previous_state.contract_states:
                 deployed_contracts.append({
-                    "address": contract_address
+                    "address": fixed_length_hex(contract_address)
                 })
             else:
                 previous_storage_updates = previous_state.contract_states[contract_address].storage_updates
@@ -102,19 +102,26 @@ class StarknetWrapper:
 
             for storage_key, leaf in storage_updates.items():
                 if previous_storage_updates and previous_storage_updates[storage_key].value != leaf.value:
-                    if not contract_address in storage_diffs:
-                        storage_diffs[contract_address] = []
+                    contract_address_hexed = fixed_length_hex(contract_address)
 
-                    storage_diffs[contract_address].append({
-                        "key": storage_key,
+                    if not contract_address in storage_diffs:
+                        storage_diffs[contract_address_hexed] = []
+
+                    storage_diffs[contract_address_hexed].append({
+                        "key": hex(storage_key),
                         "value": hex(leaf.value)
                     })
 
-                print(storage_key, hex(leaf.value), previous_storage_updates)
+        new_root = current_state.shared_state.contract_states.root.hex()
+        old_root = previous_state.shared_state.contract_states.root.hex()
 
         return {
-            "deployed_contracts": deployed_contracts,
-            "storage_diffs": storage_diffs
+            "new_root": new_root,
+            "old_root": old_root,
+            "state_diff": {
+                "deployed_contracts": deployed_contracts,
+                "storage_diffs": storage_diffs
+            }
         }
 
 
@@ -138,7 +145,7 @@ class StarknetWrapper:
         self.__starknet.state.state.shared_state = updated_shared_state
         await self.__preserve_current_state(self.__starknet.state.state)
 
-        self.__state_update = self.__get_state_updates(previous_state, current_carried_state)
+        self.__last_state_update = self.__get_state_updates(previous_state, current_carried_state)
 
     async def __get_state_root(self):
         state = await self.__get_state()
@@ -501,4 +508,11 @@ Exception:
 
     def get_state_update(self):
         """Returns deployed contracts and storage diff from last state update"""
-        return self.__state_update
+        try:
+            last_block = self.__get_last_block()
+            state_update = self.__last_state_update
+
+            state_update["block_hash"] = last_block["block_hash"]
+            return state_update
+        except StarknetDevnetException:
+            return None
