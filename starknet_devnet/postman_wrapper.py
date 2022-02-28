@@ -20,6 +20,7 @@ class PostmanWrapper(ABC):
         self.web3: Web3 = None
         self.mock_starknet_messaging_contract: EthContract = None
         self.eth_account: EthAccount = None
+        self.l1_to_l2_message_filter = None
 
     @abstractmethod
     def load_mock_messaging_contract_in_l1(self, starknet, contract_address):
@@ -29,8 +30,8 @@ class PostmanWrapper(ABC):
         """Handles the L1 <> L2 message exchange"""
         await self.postman.flush()
 
-class GanachePostmanWrapper(PostmanWrapper):
-    """Wrapper of Postman usage on a local testnet instantiated using Ganache"""
+class LocalPostmanWrapper(PostmanWrapper):
+    """Wrapper of Postman usage on a local testnet instantiated using a local testnet"""
 
     def __init__(self, network_url: str):
         super().__init__()
@@ -49,3 +50,4 @@ class GanachePostmanWrapper(PostmanWrapper):
             self.mock_starknet_messaging_contract = EthContract(self.web3,address,w3_contract,abi,self.eth_account)
 
         self.postman = Postman(self.mock_starknet_messaging_contract,starknet)
+        self.l1_to_l2_message_filter = self.mock_starknet_messaging_contract.w3_contract.events.LogMessageToL2.createFilter(fromBlock="latest")

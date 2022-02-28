@@ -3,9 +3,11 @@ This module introduces `StarknetWrapper`, a wrapper class of
 starkware.starknet.testing.starknet.Starknet.
 """
 
+import json
 import time
 from copy import deepcopy
 from typing import Dict
+from web3 import Web3
 
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
@@ -22,7 +24,7 @@ from .origin import NullOrigin, Origin
 from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo, enable_pickling
 from .contract_wrapper import ContractWrapper
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
-from .postman_wrapper import GanachePostmanWrapper
+from .postman_wrapper import LocalPostmanWrapper
 from .constants import FAILURE_REASON_KEY
 
 enable_pickling()
@@ -432,20 +434,21 @@ class StarknetWrapper:
     async def load_messaging_contract_in_l1(self, network_url: str, contract_address: str, network_id: str) -> dict:
         """Creates a Postman Wrapper instance and loads an already deployed Messaging contract in the L1 network"""
 
-        # If no L1 network ID provided, will use a Ganache instance
-        if network_id is None or network_id == "ganache":
+        # If no L1 network ID provided, will use a local testnet instance
+        if network_id is None or network_id == "local":
             try:
                 starknet = await self.get_starknet()
-                self.__postman_wrapper = GanachePostmanWrapper(network_url)
+                starknet.state.l2_to_l1_messages_log.clear()
+                self.__postman_wrapper = LocalPostmanWrapper(network_url)
                 self.__postman_wrapper.load_mock_messaging_contract_in_l1(starknet,contract_address)
             except Exception as error:
-                message = f"""Exception when trying to load the Starknet Messaging contract in a Ganache instance.
-Make sure you have a Ganache instance running at the provided network url, and that the Messaging Contract is deployed at the provided address
+                message = f"""Exception when trying to load the Starknet Messaging contract in a local testnet instance.
+Make sure you have a local testnet instance running at the provided network url, and that the Messaging Contract is deployed at the provided address
 Exception:
 {error}"""
                 raise StarknetDevnetException(message=message) from error
         else:
-            message = "L1 interaction is only usable with a local running Ganache instance."
+            message = "L1 interaction is only usable with a local running local testnet instance."
             raise StarknetDevnetException(message=message)
 
         self.__l1_provider = network_url
@@ -458,16 +461,42 @@ Exception:
         """Handles all pending L1 <> L2 messages and sends them to the other layer. """
 
         state = await self.__get_state()
-        l2_to_l1_messages = state.l2_to_l1_messages_log
+
         if self.__postman_wrapper is None:
             return {}
 
+        postman = self.__postman_wrapper.postman
+
+        l1_to_l2_messages = json.loads(Web3.toJSON(self.__postman_wrapper.l1_to_l2_message_filter.get_new_entries()))
+        l2_to_l1_messages = state.l2_to_l1_messages_log[postman.n_consumed_l2_to_l1_messages :]
+
         await self.__postman_wrapper.flush()
+
+        return self.parse_l1_l2_messages(l1_to_l2_messages, l2_to_l1_messages)
+
+    def parse_l1_l2_messages(self, l1_raw_messages, l2_raw_messages) -> dict:
+        """Converts some of the values in the dictionaries from integer to hex"""
+
+        for message in l1_raw_messages:
+            message["args"]["selector"] = hex(message["args"]["selector"])
+            message["args"]["to_address"] = fixed_length_hex(message["args"]["to_address"]) # L2 addresses need the leading 0
+            message["args"]["payload"] = [hex(val) for val in message["args"]["payload"]]
+
+        l2_messages = []
+        for message in l2_raw_messages:
+            new_message = {
+                "from_address": fixed_length_hex(message.from_address), # L2 addresses need the leading 0
+                "payload": [hex(val) for val in message.payload],
+                "to_address": hex(message.to_address)
+            }
+            l2_messages.append(new_message)
 
         return {
             "l1_provider": self.__l1_provider,
-            "n_consumed_l2_to_l1_messages": self.__postman_wrapper.postman.n_consumed_l2_to_l1_messages,
-            "consumed_l2_messages": l2_to_l1_messages
+            "consumed_messages": {
+                "from_l1": l1_raw_messages,
+                "from_l2": l2_messages
+            }
         }
 
     def get_state_update(self):

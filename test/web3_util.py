@@ -1,33 +1,27 @@
 """Util functions for invoking and calling Web3 contracts"""
 
-from test.test_endpoints import load_file_content
-
-import json
 from web3 import Web3
 
+def web3_deploy(web3: Web3, contract, *inputs):
+    """Deploys a Solidity contract"""
+    abi=contract['abi']
+    bytecode=contract['bytecode']
+    contract = web3.eth.contract(abi=abi, bytecode=bytecode)
+    tx_hash = contract.constructor(*inputs).transact()
+    tx_receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    return web3.eth.contract(address=tx_receipt.contractAddress, abi=abi)
 
-def web3_transact(function, url, contract_address, abi_path, *inputs):
+def web3_transact(web3: Web3, function, contract,  *inputs):
     """Invokes a function in a Web3 contract"""
 
-    web3 = Web3(Web3.HTTPProvider(url))
-    address=Web3.toChecksumAddress(contract_address)
-
-    abi=json.loads(load_file_content(abi_path))["abi"]
-    contract = web3.eth.contract(address=address,abi=abi)
-
     contract_function = contract.get_function_by_name(function)(*inputs)
-    tx_hash = contract_function.transact({"from": web3.eth.accounts[0], "value": 0})
+    tx_hash = contract_function.transact()
+    web3.eth.waitForTransactionReceipt(tx_hash)
 
     return tx_hash
 
-def web3_call(function, url, contract_address, abi_path, *inputs):
-    """Invokes a function in a Web3 contract"""
-
-    web3 = Web3(Web3.HTTPProvider(url))
-    address=Web3.toChecksumAddress(contract_address)
-
-    abi=json.loads(load_file_content(abi_path))["abi"]
-    contract = web3.eth.contract(address=address,abi=abi)
+def web3_call(function, contract, *inputs):
+    """Calls a function in a Web3 contract"""
 
     value = contract.get_function_by_name(function)(*inputs).call()
 

@@ -48,7 +48,6 @@ async def add_transaction():
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
 
     # after tx
-    await starknet_wrapper.postman_flush()
     if dumper.dump_on == DumpOn.TRANSACTION:
         dumper.dump()
 
@@ -86,8 +85,6 @@ async def call_contract():
     except StarkException as err:
         # code 400 would make more sense, but alpha returns 500
         abort(Response(err.message, 500))
-
-    await starknet_wrapper.postman_flush()
 
     return jsonify(result_dict)
 
@@ -207,7 +204,7 @@ async def load_l1_messaging_contract():
     """
     Loads a MockStarknetMessaging contract. If one is already deployed in the L1 network specified by the networkUrl argument,
     in the address specified in the address argument in the POST body, it is used, otherwise a new one will be deployed.
-    The networkId argument is used to check if a local Ganache instance or a testnet should be used.
+    The networkId argument is used to check if a local testnet instance or a public testnet should be used.
     """
 
     request_dict = json.loads(request.data.decode("utf-8"))

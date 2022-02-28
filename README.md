@@ -68,6 +68,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
 ## Interaction
 - Interact with Devnet as you would with the official Starknet [Alpha testnet](https://www.cairo-lang.org/docs/hello_starknet/amm.html?highlight=alpha#interaction-examples).
 - The exact underlying API is not exposed for the same reason Alpha testnet does not expose it.
+- To use Devnet with Starknet CLI, provide Devnet's URL to the `--gateway_url` and `--feeder_gateway_url` options of Starknet CLI commands.
 - The following Starknet CLI commands are supported:
   - `call`
   - `deploy`
@@ -87,7 +88,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
 - If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate Devnet.
 
 ## Postman integration
-Postman is a Starknet utility that allows testing L1 <> L2 interactions. To extend this testing for devnet, 3 unique endpoints can be used:
+Postman is a Starknet utility that allows testing L1 <> L2 interactions. To utilize functionality, you can use [`starknet-hardhat-plugin`](https://github.com/Shard-Labs/starknet-hardhat-plugin), as witnessed in [this example](https://github.com/Shard-Labs/starknet-hardhat-example/blob/master/test/postman.test.ts). Or you can directly interact with the two Postman-specific endpoints:
 
 - Load a `StarknetMockMessaging` contract. The `address` in the body is optional. If provided, the `StarknetMockMessaging` contract will be fetched from that address, otherwise a new one will be deployed:
   - POST "/postman/load_l1_messaging_contract"
