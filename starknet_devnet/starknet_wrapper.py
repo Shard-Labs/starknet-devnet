@@ -21,7 +21,7 @@ from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
 
 from .origin import NullOrigin, Origin
-from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo, enable_pickling
+from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo, enable_pickling, generate_state_update
 from .contract_wrapper import ContractWrapper
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
 from .postman_wrapper import LocalPostmanWrapper
@@ -85,47 +85,6 @@ class StarknetWrapper:
             await self.__preserve_current_state(self.__starknet.state.state)
         return self.__starknet
 
-    def __generate_state_update(self, previous_state: CarriedState, current_state: CarriedState):
-        deployed_contracts = []
-        storage_diffs = {}
-
-
-        for contract_address in current_state.contract_states.keys():
-            storage_updates = current_state.contract_states[contract_address].storage_updates
-            previous_storage_updates = None
-
-            if contract_address not in previous_state.contract_states:
-                deployed_contracts.append({
-                    "address": fixed_length_hex(contract_address)
-                })
-            else:
-                previous_storage_updates = previous_state.contract_states[contract_address].storage_updates
-
-
-            for storage_key, leaf in storage_updates.items():
-                if previous_storage_updates and previous_storage_updates[storage_key].value != leaf.value:
-                    contract_address_hexed = fixed_length_hex(contract_address)
-
-                    if not contract_address in storage_diffs:
-                        storage_diffs[contract_address_hexed] = []
-
-                    storage_diffs[contract_address_hexed].append({
-                        "key": hex(storage_key),
-                        "value": hex(leaf.value)
-                    })
-
-        new_root = current_state.shared_state.contract_states.root.hex()
-        old_root = previous_state.shared_state.contract_states.root.hex()
-
-        return {
-            "new_root": new_root,
-            "old_root": old_root,
-            "state_diff": {
-                "deployed_contracts": deployed_contracts,
-                "storage_diffs": storage_diffs
-            }
-        }
-
 
     async def __get_state(self):
         """
@@ -147,7 +106,7 @@ class StarknetWrapper:
         self.__starknet.state.state.shared_state = updated_shared_state
         await self.__preserve_current_state(self.__starknet.state.state)
 
-        self.__last_state_update = self.__generate_state_update(previous_state, current_carried_state)
+        self.__last_state_update = generate_state_update(previous_state, current_carried_state)
 
     async def __get_state_root(self):
         state = await self.__get_state()

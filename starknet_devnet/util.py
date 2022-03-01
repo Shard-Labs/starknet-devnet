@@ -9,6 +9,7 @@ import sys
 
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.testing.contract import StarknetContract
+from starkware.starknet.business_logic.state import CarriedState
 
 from . import __version__
 
@@ -170,3 +171,47 @@ def enable_pickling():
 
     StarknetContract.__getstate__ = contract_getstate
     StarknetContract.__setstate__ = contract_setstate
+
+def generate_state_update(previous_state: CarriedState, current_state: CarriedState):
+    """
+    Returns roots, deployed contracts and storage diffs between 2 states
+    """
+    deployed_contracts = []
+    storage_diffs = {}
+
+
+    for contract_address in current_state.contract_states.keys():
+        storage_updates = current_state.contract_states[contract_address].storage_updates
+        previous_storage_updates = None
+
+        if contract_address not in previous_state.contract_states:
+            deployed_contracts.append({
+                "address": fixed_length_hex(contract_address)
+            })
+        else:
+            previous_storage_updates = previous_state.contract_states[contract_address].storage_updates
+
+
+        for storage_key, leaf in storage_updates.items():
+            if previous_storage_updates and previous_storage_updates[storage_key].value != leaf.value:
+                contract_address_hexed = fixed_length_hex(contract_address)
+
+                if not contract_address in storage_diffs:
+                    storage_diffs[contract_address_hexed] = []
+
+                storage_diffs[contract_address_hexed].append({
+                    "key": hex(storage_key),
+                    "value": hex(leaf.value)
+                })
+
+    new_root = current_state.shared_state.contract_states.root.hex()
+    old_root = previous_state.shared_state.contract_states.root.hex()
+
+    return {
+        "new_root": new_root,
+        "old_root": old_root,
+        "state_diff": {
+            "deployed_contracts": deployed_contracts,
+            "storage_diffs": storage_diffs
+        }
+    }
