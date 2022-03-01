@@ -193,10 +193,13 @@ def get_transaction_receipt():
 @app.route("/feeder_gateway/get_state_update", methods=["GET"])
 def get_state_update():
     """
-    Returns the status update from the last state update
+    Returns the status update from the block identified by the blockHash argument in the GET request.
+    If no block hash was provided it will default to the last block.
     """
 
-    state_update = starknet_wrapper.get_state_update()
+    block_hash = request.args.get("blockHash")
+    state_update = starknet_wrapper.get_state_update(block_hash)
+
     return jsonify(state_update)
 
 @app.route("/postman/load_l1_messaging_contract", methods=["POST"])

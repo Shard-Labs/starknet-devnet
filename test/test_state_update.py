@@ -25,14 +25,14 @@ def run_before_and_after_test():
     # after test
     devnet_proc.kill()
 
-
-def get_state_update():
+def get_state_update(block_hash = None):
     """Get state update"""
-    res =  requests.get(f"{FEEDER_GATEWAY_URL}/feeder_gateway/get_state_update")
+    res = requests.get(
+        f"{FEEDER_GATEWAY_URL}/feeder_gateway/get_state_update",
+        params={"blockHash":block_hash}
+    )
 
     return res.json()
-
-
 
 def deploy_empty_contract():
     """
@@ -43,7 +43,6 @@ def deploy_empty_contract():
     contract_address = deploy_dict["address"]
 
     return contract_address
-
 
 @pytest.mark.state_update
 def test_initial_state_update():
@@ -81,19 +80,25 @@ def test_storage_diff():
     assert contract_storage_diffs[0].get("value") == hex(30)
     assert contract_storage_diffs[0].get("key") is not None
 
-
-
 @pytest.mark.state_update
 def test_block_hash():
     """Test block hash in the state update"""
     deploy_empty_contract()
-    state_update = get_state_update()
+    initial_state_update = get_state_update()
 
-    last_block = json.loads(get_block().stdout)
+    first_block = json.loads(get_block().stdout)
+    first_block_hash = first_block.get("block_hash")
 
-    # assert state_update.get("block_hash") is None
-    assert last_block.get("block_hash") == state_update.get("block_hash")
+    assert first_block_hash == initial_state_update.get("block_hash")
 
+    # creates new block
+    deploy_empty_contract()
+
+    new_state_update = get_state_update()
+    previous_state_update = get_state_update(first_block_hash)
+
+    assert new_state_update["block_hash"] != first_block_hash
+    assert previous_state_update == initial_state_update
 
 @pytest.mark.state_update
 def test_roots():
@@ -106,10 +111,10 @@ def test_roots():
     assert new_root is not None
     assert state_update.get("old_root") is not None
 
-    # create new block
+    # creates new block
     deploy_empty_contract()
-    state_update = get_state_update()
 
+    state_update = get_state_update()
     old_root = state_update.get("old_root")
 
     assert old_root == new_root

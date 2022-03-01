@@ -52,6 +52,9 @@ class StarknetWrapper:
         self.__num2block: Dict[int, Dict] = {}
         """Maps block number to block (one transaction per block); holds only own blocks."""
 
+        self.__hash2state_update: Dict[int, dict] = {}
+        """Maps block hash to state update"""
+
         self.__starknet = None
 
         self.__current_carried_state = None
@@ -82,8 +85,7 @@ class StarknetWrapper:
             await self.__preserve_current_state(self.__starknet.state.state)
         return self.__starknet
 
-    def __get_state_updates(self, previous_state: CarriedState, current_state: CarriedState):
-        print("State diff")
+    def __generate_state_update(self, previous_state: CarriedState, current_state: CarriedState):
         deployed_contracts = []
         storage_diffs = {}
 
@@ -145,7 +147,7 @@ class StarknetWrapper:
         self.__starknet.state.state.shared_state = updated_shared_state
         await self.__preserve_current_state(self.__starknet.state.state)
 
-        self.__last_state_update = self.__get_state_updates(previous_state, current_carried_state)
+        self.__last_state_update = self.__generate_state_update(previous_state, current_carried_state)
 
     async def __get_state_root(self):
         state = await self.__get_state()
@@ -351,6 +353,10 @@ class StarknetWrapper:
         self.__num2block[block_number] = block
         self.__hash2block[block_hash] = block
 
+        if self.__last_state_update:
+            self.__last_state_update["block_hash"] = hex(block_hash)
+            self.__hash2state_update[block_hash] = self.__last_state_update.copy()
+
         return block_hash_hexed, block_number
 
     def __get_last_block(self):
@@ -506,13 +512,15 @@ Exception:
             }
         }
 
-    def get_state_update(self):
-        """Returns deployed contracts and storage diff from last state update"""
-        try:
-            last_block = self.__get_last_block()
-            state_update = self.__last_state_update
+    def get_state_update(self, block_hash=None):
+        """Returns state update for the provided block hash or the last state update if none provided"""
+        if block_hash:
+            numeric_hash = int(block_hash, 16)
 
-            state_update["block_hash"] = last_block["block_hash"]
-            return state_update
-        except StarknetDevnetException:
-            return None
+            if numeric_hash not in self.__hash2block:
+                error_message = f"No state updates saved for the provided block hash {block_hash}"
+                raise StarknetDevnetException(error_message)
+
+            return self.__hash2state_update[numeric_hash]
+
+        return self.__last_state_update
