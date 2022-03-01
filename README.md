@@ -3,13 +3,23 @@ A Flask wrapper of Starknet state. Similar in purpose to Ganache.
 
 Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 
+## Contents
+- [Install](#install)
+- [Disclaimer](#disclaimer)
+- [Run](#run)
+- [Interaction](#interaction)
+- [Dumping and Loading](#dumping)
+- [Hardhat integration](#hardhat-integration)
+- [L1-L2 Postman communication](#postman-integration)
+- [Development](#development)
+
 ## Install
 ```text
 pip install starknet-devnet
 ```
 
-## Requirements
-Works with Python versions <=3.9.7.
+### Requirements
+Works with Python versions <=3.9.10.
 
 On Ubuntu/Debian, first run:
 ```text
@@ -46,21 +56,22 @@ optional arguments:
   --dump-on DUMP_ON     Specify when to dump; can dump on: exit, transaction
 ```
 
-## Run with Docker
+### Run with Docker
 Devnet is available as a Docker container ([shardlabs/starknet-devnet](https://hub.docker.com/repository/docker/shardlabs/starknet-devnet)):
 ```text
 docker pull shardlabs/starknet-devnet
 ```
 
-### Host and port with Docker
 The server inside the container listens to the port 5000, which you need to publish to a desired `<PORT>` on your host machine:
 ```text
 docker run -it -p [HOST:]<PORT>:5000 shardlabs/starknet-devnet
 ```
+
 E.g. if you want to use your host machine's `127.0.0.1:5000`, you need to run:
 ```text
 docker run -it -p 127.0.0.1:5000:5000 shardlabs/starknet-devnet
 ```
+
 You may ignore any address-related output logged on container startup (e.g. `Running on all addresses` or `Running on http://172.17.0.2:5000`). What you will use is what you specified with the `-p` argument.
 
 If you don't specify the `HOST` part, the server will indeed be available on all of your host machine's addresses (localhost, local network IP, etc.), which may present a security issue if you don't want anyone from the local network to access your Devnet instance.
@@ -129,13 +140,13 @@ starknet-devnet --dump-on transaction --dump-path <PATH>
 curl -X POST http://<HOST>:<PORT>/dump -d '{ "path": <PATH> }' -H "Content-Type: application/json"
 ```
 
-## Loading
+### Loading
 To load a preserved Devnet instance, run:
 ```
 starknet-devnet --load-path <PATH>
 ```
 
-## Enabling dumping and loading with Docker
+### Enabling dumping and loading with Docker
 To enable dumping and loading if running Devnet in a Docker container, you must bind the container path with the path on your host machine.
 
 This example:
@@ -165,15 +176,15 @@ docker run -it \
   --dump-on exit --dump-path /dumpdir/dump.pkl
 ```
 
-## Development - Prerequisite
+## Development
 If you're a developer willing to contribute, be sure to have installed [Poetry](https://pypi.org/project/poetry/).
 
-## Development - Run
+### Development - Run
 ```text
 poetry run starknet-devnet
 ```
 
-## Development - Test
+### Development - Test
 When running tests locally, do it from the project root.
 
 Setup an example project by running:
@@ -187,12 +198,18 @@ python3 -m test.test_cli
 python3 -m test.test_cli_auth
 ```
 
-To see if Devnet can interact with the Hardhat plugin, run:
+To see if Devnet can interact with the Hardhat plugin, set environment variables `HARDHAT_CONFIG_FILE` and `TEST_FILE` and run:
 ```text
 ./test/test_plugin.sh
 ```
 
-## Development - Build
+Other tests in the `test` directory use `pytest`, so run them with:
+```text
+poetry run pytest <TEST_FILE>
+```
+
+### Development - Build
+You don't need to build anything to be able to run locally, but if you need the `*.whl` or `*.tar.gz` artifacts, run
 ```text
 poetry build
 ```
