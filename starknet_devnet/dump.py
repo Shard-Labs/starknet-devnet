@@ -6,6 +6,9 @@ import dill as pickle
 
 from .util import DumpOn
 
+# Instead of "fork", the default on MacOS since Python3.8 has been "spawn", which causes pickling to fail
+multiprocessing.set_start_method("fork")
+
 class Dumper:
     """Class for dumping objects."""
 
