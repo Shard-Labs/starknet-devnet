@@ -6,7 +6,9 @@ import json
 import pytest
 import requests
 
-from .util import deploy, invoke, run_devnet_in_background, get_block
+from starkware.starknet.core.os.contract_hash import compute_contract_hash
+
+from .util import deploy, invoke, load_contract_definition, run_devnet_in_background, get_block
 from .settings import FEEDER_GATEWAY_URL
 
 ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
@@ -44,6 +46,12 @@ def deploy_empty_contract():
 
     return contract_address
 
+def get_contract_hash():
+    """Get contract hash of the sample contract"""
+    contract_definition = load_contract_definition(CONTRACT_PATH)
+
+    return compute_contract_hash(contract_definition)
+
 @pytest.mark.state_update
 def test_initial_state_update():
     """Test initial state update"""
@@ -61,6 +69,10 @@ def test_deployed_contracts():
 
     assert len(deployed_contracts) == 1
     assert deployed_contracts[0].get("address") == contract_address
+
+    deployed_contract_hash =  deployed_contracts[0].get("contract_hash")
+
+    assert int(deployed_contract_hash, 16) == get_contract_hash()
 
 @pytest.mark.state_update
 def test_storage_diff():

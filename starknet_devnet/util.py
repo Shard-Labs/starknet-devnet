@@ -186,7 +186,8 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
 
         if contract_address not in previous_state.contract_states:
             deployed_contracts.append({
-                "address": fixed_length_hex(contract_address)
+                "address": fixed_length_hex(contract_address),
+                "contract_hash": current_state.contract_states[contract_address].state.contract_hash.hex()
             })
         else:
             previous_storage_updates = previous_state.contract_states[contract_address].storage_updates

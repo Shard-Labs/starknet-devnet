@@ -150,6 +150,12 @@ def call(function, address, abi_path, inputs=None):
     print("Call successful!")
     return output.stdout.rstrip()
 
+def load_contract_definition(contract_path: str):
+    """Loads the contract defintion from the contract path"""
+    loaded_contract = load_json_from_path(contract_path)
+
+    return ContractDefinition.load(loaded_contract)
+
 def assert_tx_status(tx_hash, expected_tx_status):
     """Asserts the tx_status of the tx with tx_hash."""
     output = my_run([
@@ -177,8 +183,7 @@ def assert_contract_definition(address, contract_path):
     ])
     contract_definition: ContractDefinition = ContractDefinition.load(json.loads(output.stdout))
 
-    loaded_contract = load_json_from_path(contract_path)
-    loaded_contract_definition: ContractDefinition = ContractDefinition.load(loaded_contract)
+    loaded_contract_definition = load_contract_definition(contract_path)
 
     assert_equal(contract_definition, loaded_contract_definition.remove_debug_info())
 
