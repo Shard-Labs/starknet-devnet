@@ -26,7 +26,7 @@ def run_before_and_after_test():
     # after test
     devnet_proc.kill()
 
-def get_state_update(block_hash = None, block_number = None):
+def get_state_update(block_hash=None, block_number=None):
     """Get state update"""
     params = {
         "blockHash": block_hash,
