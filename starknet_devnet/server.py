@@ -103,15 +103,18 @@ def _check_block_hash(request_args: MultiDict):
     if block_hash is not None:
         print("Specifying a block by its hash is not supported. All interaction is done with the latest block.")
 
+def _check_block_arguments(block_hash, block_number):
+    if block_hash is not None and block_number is not None:
+        message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
+        abort(Response(message, 500))
+
 @app.route("/feeder_gateway/get_block", methods=["GET"])
 async def get_block():
     """Endpoint for retrieving a block identified by its hash or number."""
     block_hash = request.args.get("blockHash")
     block_number = request.args.get("blockNumber", type=custom_int)
 
-    if block_hash is not None and block_number is not None:
-        message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
-        abort(Response(message, 500))
+    _check_block_arguments(block_hash, block_number)
 
     try:
         if block_hash is not None:
@@ -198,7 +201,11 @@ def get_state_update():
     """
 
     block_hash = request.args.get("blockHash")
-    state_update = starknet_wrapper.get_state_update(block_hash)
+    block_number = request.args.get("blockNumber", type=custom_int)
+
+    _check_block_arguments(block_hash, block_number)
+
+    state_update = starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
 
     return jsonify(state_update)
 

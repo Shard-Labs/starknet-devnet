@@ -26,11 +26,16 @@ def run_before_and_after_test():
     # after test
     devnet_proc.kill()
 
-def get_state_update(block_hash = None):
+def get_state_update(block_hash = None, block_number = None):
     """Get state update"""
+    params = {
+        "blockHash": block_hash,
+        "blockNumber": block_number,
+    }
+
     res = requests.get(
         f"{FEEDER_GATEWAY_URL}/feeder_gateway/get_state_update",
-        params={"blockHash":block_hash}
+        params=params
     )
 
     return res.json()
@@ -110,6 +115,22 @@ def test_block_hash():
 
     assert new_state_update["block_hash"] != first_block_hash
     assert previous_state_update == initial_state_update
+
+@pytest.mark.state_update
+def test_block_number():
+    """Test block hash in the state update"""
+    deploy_empty_contract()
+    initial_state_update = get_state_update()
+
+    # creates new block
+    deploy_empty_contract()
+
+    new_state_update = get_state_update()
+    first_block_state_update = get_state_update(block_number=0)
+    second_block_state_update = get_state_update(block_number=1)
+
+    assert first_block_state_update == initial_state_update
+    assert second_block_state_update == new_state_update
 
 @pytest.mark.state_update
 def test_roots():

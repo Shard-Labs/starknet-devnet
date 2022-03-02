@@ -85,7 +85,6 @@ class StarknetWrapper:
             await self.__preserve_current_state(self.__starknet.state.state)
         return self.__starknet
 
-
     async def __get_state(self):
         """
         Returns the StarknetState of the underlyling Starknet instance,
@@ -469,7 +468,7 @@ Exception:
             }
         }
 
-    def get_state_update(self, block_hash=None):
+    def get_state_update(self, block_hash=None, block_number=None):
         """Returns state update for the provided block hash or the last state update if none provided"""
         if block_hash:
             numeric_hash = int(block_hash, 16)
@@ -477,6 +476,16 @@ Exception:
             if numeric_hash not in self.__hash2block:
                 error_message = f"No state updates saved for the provided block hash {block_hash}"
                 raise StarknetDevnetException(error_message)
+
+            return self.__hash2state_update[numeric_hash]
+
+        if block_number is not None:
+            if block_number not in self.__num2block:
+                error_message = f"No state updates saved for the provided block number {block_number}"
+                raise StarknetDevnetException(error_message)
+
+            block = self.__num2block[block_number]
+            numeric_hash = int(block["block_hash"], 16)
 
             return self.__hash2state_update[numeric_hash]
 
