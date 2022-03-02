@@ -64,12 +64,12 @@ def test_deployed_contracts():
     contract_address = deploy_empty_contract()
 
     state_update = get_state_update()
-    deployed_contracts = state_update.get("state_diff").get("deployed_contracts")
+    deployed_contracts = state_update["state_diff"]["deployed_contracts"]
 
     assert len(deployed_contracts) == 1
-    assert deployed_contracts[0].get("address") == contract_address
+    assert deployed_contracts[0]["address"] == contract_address
 
-    deployed_contract_hash =  deployed_contracts[0].get("contract_hash")
+    deployed_contract_hash =  deployed_contracts[0]["contract_hash"]
 
     assert int(deployed_contract_hash, 16) == get_contract_hash()
 
@@ -81,15 +81,15 @@ def test_storage_diff():
 
     state_update = get_state_update()
 
-    storage_diffs = state_update.get("state_diff").get("storage_diffs")
+    storage_diffs = state_update["state_diff"]["storage_diffs"]
 
     assert len(storage_diffs) == 1
 
-    contract_storage_diffs = storage_diffs.get(contract_address)
+    contract_storage_diffs = storage_diffs[contract_address]
 
     assert len(contract_storage_diffs) == 1
-    assert contract_storage_diffs[0].get("value") == hex(30)
-    assert contract_storage_diffs[0].get("key") == hex(int(BALANCE_KEY))
+    assert contract_storage_diffs[0]["value"] == hex(30)
+    assert contract_storage_diffs[0]["key"] == hex(int(BALANCE_KEY))
 
 @pytest.mark.state_update
 def test_block_hash():
@@ -98,9 +98,9 @@ def test_block_hash():
     initial_state_update = get_state_update()
 
     first_block = get_block(parse=True)
-    first_block_hash = first_block.get("block_hash")
+    first_block_hash = first_block["block_hash"]
 
-    assert first_block_hash == initial_state_update.get("block_hash")
+    assert first_block_hash == initial_state_update["block_hash"]
 
     # creates new block
     deploy_empty_contract()
@@ -117,15 +117,15 @@ def test_roots():
     deploy_empty_contract()
     state_update = get_state_update()
 
-    new_root = state_update.get("new_root")
+    new_root = state_update["new_root"]
 
     assert new_root is not None
-    assert state_update.get("old_root") is not None
+    assert state_update["old_root"] is not None
 
     # creates new block
     deploy_empty_contract()
 
     state_update = get_state_update()
-    old_root = state_update.get("old_root")
+    old_root = state_update["old_root"]
 
     assert old_root == new_root
