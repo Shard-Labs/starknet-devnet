@@ -13,6 +13,7 @@ from .settings import FEEDER_GATEWAY_URL
 ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract.json"
 ABI_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract_abi.json"
+BALANCE_KEY = "916907772491729262376534102982219947830828984996257231353398618781993312401"
 
 @pytest.fixture(autouse=True)
 def run_before_and_after_test():
@@ -88,7 +89,7 @@ def test_storage_diff():
 
     assert len(contract_storage_diffs) == 1
     assert contract_storage_diffs[0].get("value") == hex(30)
-    assert contract_storage_diffs[0].get("key") is not None
+    assert contract_storage_diffs[0].get("key") == hex(int(BALANCE_KEY))
 
 @pytest.mark.state_update
 def test_block_hash():
