@@ -311,10 +311,8 @@ class StarknetWrapper:
 
         self.__num2block[block_number] = block
         self.__hash2block[block_hash] = block
-
-        if self.__last_state_update:
-            self.__last_state_update["block_hash"] = hex(block_hash)
-            self.__hash2state_update[block_hash] = self.__last_state_update.copy()
+        self.__last_state_update["block_hash"] = hex(block_hash)
+        self.__hash2state_update[block_hash] = self.__last_state_update
 
         return block_hash_hexed, block_number
 
