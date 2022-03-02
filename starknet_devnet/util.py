@@ -192,18 +192,17 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
         else:
             previous_storage_updates = previous_state.contract_states[contract_address].storage_updates
 
+            for storage_key, leaf in storage_updates.items():
+                if previous_storage_updates[storage_key].value != leaf.value:
+                    contract_address_hexed = fixed_length_hex(contract_address)
 
-        for storage_key, leaf in storage_updates.items():
-            if previous_storage_updates and previous_storage_updates[storage_key].value != leaf.value:
-                contract_address_hexed = fixed_length_hex(contract_address)
+                    if contract_address_hexed not in storage_diffs:
+                        storage_diffs[contract_address_hexed] = []
 
-                if contract_address_hexed not in storage_diffs:
-                    storage_diffs[contract_address_hexed] = []
-
-                storage_diffs[contract_address_hexed].append({
-                    "key": hex(storage_key),
-                    "value": hex(leaf.value)
-                })
+                    storage_diffs[contract_address_hexed].append({
+                        "key": hex(storage_key),
+                        "value": hex(leaf.value)
+                    })
 
     new_root = current_state.shared_state.contract_states.root.hex()
     old_root = previous_state.shared_state.contract_states.root.hex()
