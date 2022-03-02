@@ -197,7 +197,7 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
             if previous_storage_updates and previous_storage_updates[storage_key].value != leaf.value:
                 contract_address_hexed = fixed_length_hex(contract_address)
 
-                if not contract_address in storage_diffs:
+                if contract_address_hexed not in storage_diffs:
                     storage_diffs[contract_address_hexed] = []
 
                 storage_diffs[contract_address_hexed].append({
