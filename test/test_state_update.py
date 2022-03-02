@@ -2,7 +2,6 @@
 Test get_state_update endpoint
 """
 
-import json
 import pytest
 import requests
 
@@ -97,7 +96,7 @@ def test_block_hash():
     deploy_empty_contract()
     initial_state_update = get_state_update()
 
-    first_block = json.loads(get_block().stdout)
+    first_block = get_block(parse=True)
     first_block_hash = first_block.get("block_hash")
 
     assert first_block_hash == initial_state_update.get("block_hash")
