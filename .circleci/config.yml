@@ -37,7 +37,7 @@ jobs:
           command: python3 -m test.test_cli_auth
       - run:
           name: Test endpoints directly
-          command: poetry run pytest test/test_endpoints.py
+          command: poetry run pytest -s -vv test/test_endpoints.py
       - run:
           name: Test postman
           command: poetry run pytest -s -vv test/test_postman.py
