@@ -46,7 +46,10 @@ class Origin:
         raise NotImplementedError
 
     def get_state_update(self, block_hash: str=None, block_number: int=None) -> dict or None:
-        """Returns the number of blocks stored so far"""
+        """
+        Returns the state update for provided block hash or block number.
+        If none are provided return the last state update
+        """
         raise NotImplementedError
 
 class NullOrigin(Origin):
