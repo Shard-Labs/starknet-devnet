@@ -205,7 +205,10 @@ def get_state_update():
 
     _check_block_arguments(block_hash, block_number)
 
-    state_update = starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
+    try:
+        state_update = starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
+    except StarkException as err:
+        abort(Response(err.message, 500))
 
     return jsonify(state_update)
 

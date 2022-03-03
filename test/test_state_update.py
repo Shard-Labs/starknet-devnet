@@ -26,8 +26,8 @@ def run_before_and_after_test():
     # after test
     devnet_proc.kill()
 
-def get_state_update(block_hash=None, block_number=None):
-    """Get state update"""
+def get_state_update_response(block_hash=None, block_number=None):
+    """Get state update response"""
     params = {
         "blockHash": block_hash,
         "blockNumber": block_number,
@@ -38,7 +38,11 @@ def get_state_update(block_hash=None, block_number=None):
         params=params
     )
 
-    return res.json()
+    return res
+
+def get_state_update(block_hash=None, block_number=None):
+    """Get state update"""
+    return get_state_update_response(block_hash, block_number).json()
 
 def deploy_empty_contract():
     """
@@ -117,6 +121,13 @@ def test_block_hash():
     assert previous_state_update == initial_state_update
 
 @pytest.mark.state_update
+def test_wrong_block_hash():
+    """Test wrong block hash in the state update"""
+    state_update_response = get_state_update_response(block_hash="WRONG_HASH")
+
+    assert state_update_response.status_code == 500
+
+@pytest.mark.state_update
 def test_block_number():
     """Test block hash in the state update"""
     deploy_empty_contract()
@@ -131,6 +142,13 @@ def test_block_number():
 
     assert first_block_state_update == initial_state_update
     assert second_block_state_update == new_state_update
+
+@pytest.mark.state_update
+def test_wrong_block_number():
+    """Test wrong block hash in the state update"""
+    state_update_response = get_state_update_response(block_number=42)
+
+    assert state_update_response.status_code == 500
 
 @pytest.mark.state_update
 def test_roots():

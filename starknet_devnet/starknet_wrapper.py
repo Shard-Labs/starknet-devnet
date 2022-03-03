@@ -395,9 +395,9 @@ class StarknetWrapper:
         state = await self.__get_state()
         contract_states = state.state.contract_states
 
-        state = contract_states[contract_address]
-        if key in state.storage_updates:
-            return hex(state.storage_updates[key].value)
+        contract_state = contract_states[contract_address]
+        if key in contract_state.storage_updates:
+            return hex(contract_state.storage_updates[key].value)
         return self.__origin.get_storage_at(self, contract_address, key)
 
     async def load_messaging_contract_in_l1(self, network_url: str, contract_address: str, network_id: str) -> dict:
@@ -469,24 +469,25 @@ Exception:
         }
 
     def get_state_update(self, block_hash=None, block_number=None):
-        """Returns state update for the provided block hash or the last state update if none provided"""
+        """
+        Returns state update for the provided block hash or block number.
+        It will return the last state update if block is not provided.
+        """
         if block_hash:
             numeric_hash = int(block_hash, 16)
 
-            if numeric_hash not in self.__hash2block:
-                error_message = f"No state updates saved for the provided block hash {block_hash}"
-                raise StarknetDevnetException(error_message)
+            if numeric_hash in self.__hash2block:
+                return self.__hash2state_update[numeric_hash]
 
-            return self.__hash2state_update[numeric_hash]
+            return self.__origin.get_state_update(block_hash=block_hash)
 
         if block_number is not None:
-            if block_number not in self.__num2block:
-                error_message = f"No state updates saved for the provided block number {block_number}"
-                raise StarknetDevnetException(error_message)
+            if block_number in self.__num2block:
+                block = self.__num2block[block_number]
+                numeric_hash = int(block["block_hash"], 16)
 
-            block = self.__num2block[block_number]
-            numeric_hash = int(block["block_hash"], 16)
+                return self.__hash2state_update[numeric_hash]
 
-            return self.__hash2state_update[numeric_hash]
+            return self.__origin.get_state_update(block_number=block_number)
 
-        return self.__last_state_update
+        return self.__last_state_update or self.__origin.get_state_update()
