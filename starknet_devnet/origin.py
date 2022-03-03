@@ -45,7 +45,7 @@ class Origin:
         """Returns the number of blocks stored so far"""
         raise NotImplementedError
 
-    def get_state_update(self, block_hash: str = None, block_number: int = None) -> dict or None:
+    def get_state_update(self, block_hash: str=None, block_number: int=None) -> dict or None:
         """Returns the number of blocks stored so far"""
         raise NotImplementedError
 
@@ -99,7 +99,7 @@ class NullOrigin(Origin):
     def get_number_of_blocks(self):
         return 0
 
-    def get_state_update(self, block_hash: str = None, block_number: int = None) -> dict or None:
+    def get_state_update(self, block_hash: str=None, block_number: int=None) -> dict or None:
         if block_hash:
             error_message = f"No state updates saved for the provided block hash {block_hash}"
             raise StarknetDevnetException(message=error_message)
@@ -141,5 +141,5 @@ class ForkedOrigin(Origin):
     def get_number_of_blocks(self):
         return self.number_of_blocks
 
-    def get_state_update(self, block_hash: str = None, block_number: int = None) -> dict or None:
+    def get_state_update(self, block_hash: str=None, block_number: int=None) -> dict or None:
         raise NotImplementedError
