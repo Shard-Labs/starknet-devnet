@@ -130,6 +130,7 @@ def get_code():
     """
     Returns the ABI and bytecode of the contract whose contractAddress is provided.
     """
+
     _check_block_hash(request.args)
 
     contract_address = request.args.get("contractAddress", type=custom_int)
@@ -202,8 +203,6 @@ def get_state_update():
 
     block_hash = request.args.get("blockHash")
     block_number = request.args.get("blockNumber", type=custom_int)
-
-    _check_block_arguments(block_hash, block_number)
 
     try:
         state_update = starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
