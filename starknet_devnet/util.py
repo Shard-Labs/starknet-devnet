@@ -183,9 +183,8 @@ def generate_storage_diff(previous_storage_updates, storage_updates):
 
     for storage_key, leaf in storage_updates.items():
         previous_leaf = previous_storage_updates.get(storage_key)
-        previous_value = previous_leaf.value if previous_leaf else None
 
-        if  previous_leaf is None or previous_value != leaf.value:
+        if previous_leaf is None or previous_leaf.value != leaf.value:
             storage_diff.append({
                 "key": hex(storage_key),
                 "value": hex(leaf.value)
