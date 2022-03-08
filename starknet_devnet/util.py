@@ -172,6 +172,28 @@ def enable_pickling():
     StarknetContract.__getstate__ = contract_getstate
     StarknetContract.__setstate__ = contract_setstate
 
+def generate_storage_diff(previous_storage_updates, storage_updates):
+    """
+    Returns storage diff between previous and current storage updates
+    """
+    if not previous_storage_updates:
+        return []
+
+    storage_diff = []
+
+    for storage_key, leaf in storage_updates.items():
+        previous_leaf = previous_storage_updates.get(storage_key)
+        previous_value = previous_leaf.value if previous_leaf else None
+
+        if  previous_leaf is None or previous_value != leaf.value:
+            storage_diff.append({
+                "key": hex(storage_key),
+                "value": hex(leaf.value)
+            })
+
+    return storage_diff
+
+
 def generate_state_update(previous_state: CarriedState, current_state: CarriedState):
     """
     Returns roots, deployed contracts and storage diffs between 2 states
@@ -179,10 +201,7 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
     deployed_contracts = []
     storage_diffs = {}
 
-
     for contract_address in current_state.contract_states.keys():
-        storage_updates = current_state.contract_states[contract_address].storage_updates
-
         if contract_address not in previous_state.contract_states:
             deployed_contracts.append({
                 "address": fixed_length_hex(contract_address),
@@ -190,22 +209,12 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
             })
         else:
             previous_storage_updates = previous_state.contract_states[contract_address].storage_updates
+            storage_updates = current_state.contract_states[contract_address].storage_updates
+            storage_diff = generate_storage_diff(previous_storage_updates, storage_updates)
 
-            if previous_storage_updates:
-                for storage_key, leaf in storage_updates.items():
-                    previous_leaf = previous_storage_updates.get(storage_key)
-                    previous_value = previous_leaf.value if previous_leaf is not None else None
-
-                    if  previous_leaf is None or previous_value != leaf.value:
-                        contract_address_hexed = fixed_length_hex(contract_address)
-
-                        if contract_address_hexed not in storage_diffs:
-                            storage_diffs[contract_address_hexed] = []
-
-                        storage_diffs[contract_address_hexed].append({
-                            "key": hex(storage_key),
-                            "value": hex(leaf.value)
-                        })
+            if len(storage_diff) > 0:
+                contract_address_hexed = fixed_length_hex(contract_address)
+                storage_diffs[contract_address_hexed] = storage_diff
 
     new_root = current_state.shared_state.contract_states.root.hex()
     old_root = previous_state.shared_state.contract_states.root.hex()
