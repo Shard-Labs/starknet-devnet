@@ -65,12 +65,12 @@ docker pull shardlabs/starknet-devnet
 
 The server inside the container listens to the port 5000, which you need to publish to a desired `<PORT>` on your host machine:
 ```text
-docker run -it -p [HOST:]<PORT>:5000 shardlabs/starknet-devnet
+docker run -p [HOST:]<PORT>:5000 shardlabs/starknet-devnet
 ```
 
 E.g. if you want to use your host machine's `127.0.0.1:5000`, you need to run:
 ```text
-docker run -it -p 127.0.0.1:5000:5000 shardlabs/starknet-devnet
+docker run -p 127.0.0.1:5000:5000 shardlabs/starknet-devnet
 ```
 
 You may ignore any address-related output logged on container startup (e.g. `Running on all addresses` or `Running on http://172.17.0.2:5000`). What you will use is what you specified with the `-p` argument.
@@ -153,27 +153,23 @@ To enable dumping and loading if running Devnet in a Docker container, you must 
 This example:
 - Relies on [Docker bind mount](https://docs.docker.com/storage/bind-mounts/); try [Docker volume](https://docs.docker.com/storage/volumes/) instead.
 - Assumes that `/actual/dumpdir` exists. If unsure, use absolute paths.
-- Assumes you are listening on `127.0.0.1:5000`. However, leave the `--host 0.0.0.0` part as it is.
+- Assumes you are listening on `127.0.0.1:5000`.
 
 If there is `dump.pkl` inside `/actual/dumpdir`, you can load it with:
 ```
-docker run -it \
+docker run \
   -p 127.0.0.1:5000:5000 \
   --mount type=bind,source=/actual/dumpdir,target=/dumpdir \
   shardlabs/starknet-devnet \
-  poetry run starknet-devnet \
-  --host 0.0.0.0 --port 5000 \
   --load-path /dumpdir/dump.pkl
 ```
 
 To dump to `/actual/dumpdir/dump.pkl` on Devnet shutdown, run:
 ```
-docker run -it \
+docker run \
   -p 127.0.0.1:5000:5000 \
   --mount type=bind,source=/actual/dumpdir,target=/dumpdir \
   shardlabs/starknet-devnet \
-  poetry run starknet-devnet \
-  --host 0.0.0.0 --port 5000 \
   --dump-on exit --dump-path /dumpdir/dump.pkl
 ```
 
