@@ -73,7 +73,7 @@ class TransactionWrapper(ABC):
         }
 
         self.receipt = {
-            "execution_resources": execution_info.call_info.cairo_usage,
+            "execution_resources": execution_info.call_info.execution_resources,
             "l2_to_l1_messages": execution_info.l2_to_l1_messages,
             "events": events,
             "status": status.name,

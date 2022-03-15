@@ -148,7 +148,7 @@ class StarknetDevnetException(StarkException):
 class DummyCallInfo:
     """Used temporarily until contracts received from starknet.deploy include their own execution_info.call_info"""
     def __init__(self):
-        self.cairo_usage = {}
+        self.execution_resources = {}
 
 @dataclass
 class DummyExecutionInfo:
