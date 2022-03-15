@@ -50,8 +50,8 @@ def get_events(execution_info: StarknetTransactionExecutionInfo):
     for event in execution_info.raw_events:
         events.append({
             "from_address": hex(event.from_address),
-            "data": [str(d) for d in event.data],
-            "keys": [str(key) for key in event.keys]
+            "data": [hex(d) for d in event.data],
+            "keys": [hex(key) for key in event.keys]
         })
     return events
 
