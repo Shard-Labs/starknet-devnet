@@ -20,7 +20,7 @@ pip install starknet-devnet
 ```
 
 ### Requirements
-Works with Python versions <=3.9.10.
+Works with Python versions <=3.8.11.
 
 On Ubuntu/Debian, first run:
 ```text
