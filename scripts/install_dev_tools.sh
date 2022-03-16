@@ -13,7 +13,7 @@ echo "python3: $(python3 --version)"
 echo "pyenv available versions:"
 pyenv install --list
 
-PY_VERSION=3.8.12
+PY_VERSION=3.8.9
 pyenv install "$PY_VERSION"
 pyenv versions
 pyenv global "$PY_VERSION"
