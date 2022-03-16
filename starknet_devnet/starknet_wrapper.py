@@ -271,7 +271,7 @@ class StarknetWrapper:
         if tx_hash_int in self.__transaction_wrappers:
             return self.__transaction_wrappers[tx_hash_int].trace
 
-        return None
+        return self.__origin.get_transaction_trace(transaction_hash)
 
     def get_number_of_blocks(self) -> int:
         """Returns the number of blocks stored so far."""

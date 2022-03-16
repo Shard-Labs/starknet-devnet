@@ -201,8 +201,13 @@ def get_transaction_trace():
     """
 
     transaction_hash = request.args.get("transactionHash")
-    ret = starknet_wrapper.get_transaction_trace(transaction_hash)
-    return jsonify(ret)
+
+    try:
+        transaction_trace = starknet_wrapper.get_transaction_trace(transaction_hash)
+    except StarkException as err:
+        abort(Response(err), 500)
+
+    return jsonify(transaction_trace)
 
 @app.route("/feeder_gateway/get_state_update", methods=["GET"])
 def get_state_update():

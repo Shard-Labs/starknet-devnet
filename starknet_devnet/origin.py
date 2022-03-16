@@ -80,7 +80,9 @@ class NullOrigin(Origin):
         }
 
     def get_transaction_trace(self, transaction_hash: str):
-        return None
+        tx_hash_int = int(transaction_hash, 16)
+        message=f"Transaction corresponding to hash {tx_hash_int} is not found."
+        raise StarknetDevnetException(message=message)
 
     def get_block_by_hash(self, block_hash: str):
         message=f"Block hash not found; got: {block_hash}."

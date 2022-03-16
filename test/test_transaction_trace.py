@@ -97,7 +97,7 @@ def test_invoke_transaction_hash():
 
 @pytest.mark.transaction_trace
 def test_invoke_transaction_hash_with_signature():
-    """Test invoke transaction trace"""
+    """Test invoke transaction trace with signature"""
     contract_address = deploy_empty_contract()["address"]
     tx_hash = invoke("increase_balance", ["10", "20"], contract_address, ABI_PATH, SIGNATURE)
     res = get_transaction_trace_response(tx_hash)
@@ -110,3 +110,11 @@ def test_invoke_transaction_hash_with_signature():
         transaction_trace["function_invocation"],
         "test/expected/invoke_function_invocation.json"
     )
+
+@pytest.mark.transaction_trace
+def test_nonexistent_transaction_hash():
+    """Test if it throws 500 for nonexistent transaction trace"""
+    tx_hash = "0x0"
+    res = get_transaction_trace_response(tx_hash)
+
+    assert res.status_code == 500
