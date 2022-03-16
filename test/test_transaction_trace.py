@@ -7,17 +7,10 @@ import requests
 
 from starkware.starknet.core.os.contract_hash import compute_contract_hash
 
-from .util import deploy, load_contract_definition, run_devnet_in_background, invoke, load_json_from_path
+from .util import deploy, load_contract_definition, invoke, load_json_from_path
 from .settings import FEEDER_GATEWAY_URL
-
-ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
-CONTRACT_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract.json"
-ABI_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract_abi.json"
-BALANCE_KEY = "916907772491729262376534102982219947830828984996257231353398618781993312401"
-SIGNATURE = [
-    "1225578735933442828068102633747590437426782890965066746429241472187377583468",
-    "3568809569741913715045370357918125425757114920266578211811626257903121825123"
-]
+from .shared import ABI_PATH, CONTRACT_PATH, SIGNATURE, NONEXISTENT_TX_HASH
+from .util import run_devnet_in_background
 
 @pytest.fixture(autouse=True)
 def run_before_and_after_test():
@@ -114,7 +107,6 @@ def test_invoke_transaction_hash_with_signature():
 @pytest.mark.transaction_trace
 def test_nonexistent_transaction_hash():
     """Test if it throws 500 for nonexistent transaction trace"""
-    tx_hash = "0x0"
-    res = get_transaction_trace_response(tx_hash)
+    res = get_transaction_trace_response(NONEXISTENT_TX_HASH)
 
     assert res.status_code == 500

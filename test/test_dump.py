@@ -11,10 +11,8 @@ import pytest
 
 from .util import call, deploy, invoke, run_devnet_in_background
 from .settings import GATEWAY_URL
+from .shared import CONTRACT_PATH, ABI_PATH
 
-ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
-CONTRACT_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract.json"
-ABI_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract_abi.json"
 DUMP_PATH = "dump.pkl"
 
 @pytest.fixture(autouse=True)
