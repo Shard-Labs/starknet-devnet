@@ -33,6 +33,7 @@ markers = [
     "deploy",
     "invoke",
     "state_update",
+    "transaction_trace",
     "web3_deploy",
     "web3_messaging"
 ]

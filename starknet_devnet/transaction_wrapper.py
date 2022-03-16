@@ -82,7 +82,7 @@ class TransactionWrapper(ABC):
         }
 
         self.trace = {
-            "function_invocation": execution_info.call_info,
+            "function_invocation": execution_info.call_info.dump(),
             "signature": tx_details.to_dict().get("signature", [])
         }
 
