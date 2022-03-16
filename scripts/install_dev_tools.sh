@@ -17,6 +17,7 @@ PY_VERSION=3.8.9
 pyenv install "$PY_VERSION"
 pyenv versions
 pyenv global "$PY_VERSION"
+echo "Using global python at: $(which python)"
 
 CAIRO_LANG_VERSION=$(./scripts/get_version.sh cairo-lang)
 pip3 install poetry "cairo-lang==$CAIRO_LANG_VERSION"
