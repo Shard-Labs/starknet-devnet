@@ -10,9 +10,10 @@ echo "pip3: $(pip3 --version)"
 echo "python: $(python --version)"
 echo "python3: $(python3 --version)"
 
+pyenv install 3.8.12
 echo "pyenv versions"
 pyenv versions
-pyenv global 3.7
+pyenv global 3.8.12
 
 CAIRO_LANG_VERSION=$(./scripts/get_version.sh cairo-lang)
 pip3 install poetry "cairo-lang==$CAIRO_LANG_VERSION"
