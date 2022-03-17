@@ -228,10 +228,13 @@ def get_state_update():
     return jsonify(state_update)
 
 @app.route("/feeder_gateway/estimate_fee", methods=["POST"])
-def estimate_fee():
+async def estimate_fee():
     """Currently a dummy implementation, always returning 0."""
+    transaction = validate_transaction(request.data, InvokeFunction)
+    actual_fee = await starknet_wrapper.calculate_actual_fee(transaction)
+    print("DEBUG actual_fee", actual_fee)
     return jsonify({
-        "amount": 0,
+        "amount": actual_fee,
         "unit": "wei"
     })
 

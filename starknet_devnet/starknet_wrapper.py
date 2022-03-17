@@ -508,3 +508,13 @@ Exception:
             return self.__origin.get_state_update(block_number=block_number)
 
         return self.__last_state_update or self.__origin.get_state_update()
+
+    async def calculate_actual_fee(self, transaction: InvokeFunction):
+        """Calculates actual fee"""
+        state = await self.__get_state()
+        internal_tx = InternalInvokeFunction.from_external(transaction, state.general_config)
+
+        with state.state.copy_and_apply() as state_copy:
+            execution_info = await internal_tx.apply_state_updates(state_copy, state.general_config)
+
+        return execution_info.actual_fee
