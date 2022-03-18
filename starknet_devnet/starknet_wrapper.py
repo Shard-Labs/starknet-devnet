@@ -12,6 +12,7 @@ from web3 import Web3
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
 from starkware.starknet.business_logic.state import CarriedState
+from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee_by_cairo_usage
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Transaction
@@ -514,7 +515,13 @@ Exception:
         state = await self.__get_state()
         internal_tx = InternalInvokeFunction.from_external(transaction, state.general_config)
 
+        # TODO this doesn't work as expected, the change "simulated" here is actually applied to the state
         with state.state.copy_and_apply() as state_copy:
             execution_info = await internal_tx.apply_state_updates(state_copy, state.general_config)
 
-        return execution_info.actual_fee
+        cairo_resource_usage = execution_info.call_info.execution_resources.to_dict()
+        return calculate_tx_fee_by_cairo_usage(
+            general_config=state.general_config,
+            cairo_resource_usage=cairo_resource_usage,
+            l1_gas_usage=0
+        )

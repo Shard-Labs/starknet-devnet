@@ -232,7 +232,6 @@ async def estimate_fee():
     """Currently a dummy implementation, always returning 0."""
     transaction = validate_transaction(request.data, InvokeFunction)
     actual_fee = await starknet_wrapper.calculate_actual_fee(transaction)
-    print("DEBUG actual_fee", actual_fee)
     return jsonify({
         "amount": actual_fee,
         "unit": "wei"
