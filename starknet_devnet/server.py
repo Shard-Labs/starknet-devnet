@@ -123,6 +123,7 @@ async def get_block():
             result_dict = starknet_wrapper.get_block_by_number(block_number)
     except StarkException as err:
         abort(Response(err.message, 500))
+
     return jsonify(result_dict)
 
 @app.route("/feeder_gateway/get_code", methods=["GET"])
@@ -205,7 +206,7 @@ def get_transaction_trace():
     try:
         transaction_trace = starknet_wrapper.get_transaction_trace(transaction_hash)
     except StarkException as err:
-        abort(Response(err), 500)
+        abort(Response(err, 500))
 
     return jsonify(transaction_trace)
 

@@ -43,9 +43,7 @@ def deploy_empty_contract():
 def assert_function_invocation(function_invocation, expected_path):
     """Asserts function invocation"""
     expected_function_invocation = load_json_from_path(expected_path)
-
     assert function_invocation == expected_function_invocation
-
 
 @pytest.mark.transaction_trace
 def test_deploy_transaction_trace():

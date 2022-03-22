@@ -1,8 +1,8 @@
 {
     "calldata": ["0xa", "0x14"],
     "caller_address": "0x0",
-    "code_address": "0xa49c52dc442ca21865c0c202a8913744ff2f1cc5a9f57f9083987128758e3f",
-    "contract_address": "0xa49c52dc442ca21865c0c202a8913744ff2f1cc5a9f57f9083987128758e3f",
+    "code_address": "0x3ffc1d4aca9668dfd9b5b6d374367b9dc52daed0ae23c54cb93ea2ea6e2dc72",
+    "contract_address": "0x3ffc1d4aca9668dfd9b5b6d374367b9dc52daed0ae23c54cb93ea2ea6e2dc72",
     "entry_point_type": "EXTERNAL",
     "events": [],
     "execution_resources": {
