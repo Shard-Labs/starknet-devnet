@@ -5,12 +5,9 @@ Test get_transaction endpoint
 import pytest
 import requests
 
-from starkware.starknet.core.os.contract_hash import compute_contract_hash
-
-from .util import deploy, load_contract_definition, invoke, load_json_from_path
+from .util import deploy, invoke, load_json_from_path, run_devnet_in_background
 from .settings import FEEDER_GATEWAY_URL
 from .shared import ABI_PATH, CONTRACT_PATH, SIGNATURE, NONEXISTENT_TX_HASH
-from .util import run_devnet_in_background
 
 @pytest.fixture(autouse=True)
 def run_before_and_after_test():
@@ -43,12 +40,6 @@ def deploy_empty_contract():
     """
     return deploy(CONTRACT_PATH, inputs=["0"], salt="0x99")
 
-def get_contract_hash():
-    """Get contract hash of the sample contract"""
-    contract_definition = load_contract_definition(CONTRACT_PATH)
-
-    return compute_contract_hash(contract_definition)
-
 def assert_function_invocation(function_invocation, expected_path):
     """Asserts function invocation"""
     expected_function_invocation = load_json_from_path(expected_path)
@@ -58,7 +49,7 @@ def assert_function_invocation(function_invocation, expected_path):
 
 @pytest.mark.transaction_trace
 def test_deploy_transaction_trace():
-    """Test deploy transaction race"""
+    """Test deploy transaction trace"""
     tx_hash = deploy_empty_contract()["tx_hash"]
     res = get_transaction_trace_response(tx_hash)
 
