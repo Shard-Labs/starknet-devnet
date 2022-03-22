@@ -269,7 +269,15 @@ class StarknetWrapper:
 
         tx_hash_int = int(transaction_hash, 16)
         if tx_hash_int in self.__transaction_wrappers:
-            return self.__transaction_wrappers[tx_hash_int].trace
+            status = self.__transaction_wrappers[tx_hash_int].transaction["status"]
+            trace = self.__transaction_wrappers[tx_hash_int].trace
+
+            if not trace:
+                raise StarknetDevnetException(
+                    f"Transaction corresponding to hash {tx_hash_int} has no trace; status: {status}."
+                )
+
+            return trace
 
         return self.__origin.get_transaction_trace(transaction_hash)
 
