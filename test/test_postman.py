@@ -17,7 +17,10 @@ import pytest
 
 from web3 import Web3
 
-from .shared import CONTRACT_PATH, ABI_PATH
+from .shared import ARTIFACTS_PATH
+
+CONTRACT_PATH = f"{ARTIFACTS_PATH}/l1l2.cairo/l1l2.json"
+ABI_PATH = f"{ARTIFACTS_PATH}/l1l2.cairo/l1l2_abi.json"
 
 ETH_CONTRACTS_PATH = "../starknet-hardhat-example/artifacts/contracts"
 STARKNET_MESSAGING_PATH = f"{ETH_CONTRACTS_PATH}/MockStarknetMessaging.sol/MockStarknetMessaging.json"
