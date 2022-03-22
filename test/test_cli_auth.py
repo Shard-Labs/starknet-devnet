@@ -9,7 +9,10 @@ from .util import (
     call, deploy, invoke
 )
 
-from .shared import CONTRACT_PATH, ABI_PATH, SIGNATURE
+from .shared import ARTIFACTS_PATH, SIGNATURE
+
+CONTRACT_PATH = f"{ARTIFACTS_PATH}/auth_contract.cairo/auth_contract.json"
+ABI_PATH = f"{ARTIFACTS_PATH}/auth_contract.cairo/auth_contract_abi.json"
 
 run_devnet_in_background(sleep_seconds=1)
 # PRIVATE_KEY = "12345"
