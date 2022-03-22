@@ -20,7 +20,7 @@ pip install starknet-devnet
 ```
 
 ### Requirements
-Works with Python versions <=3.8.11.
+Works with Python versions <=3.8.9.
 
 On Ubuntu/Debian, first run:
 ```text
@@ -87,6 +87,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `get_block`
   - `get_code`
   - `get_full_contract`
+  - `get_state_update`
   - `get_storage_at`
   - `get_transaction_receipt`
   - `get_transaction_trace`
@@ -95,7 +96,8 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `tx_status`
 - The following Starknet CLI commands are **not** supported:
   - `get_contract_addresses`
-  - `get_state_update`
+  - `estimate_fee` (currently always returning 0)
+  - `get_transaction_trace`
 
 ## Hardhat integration
 - If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate Devnet.

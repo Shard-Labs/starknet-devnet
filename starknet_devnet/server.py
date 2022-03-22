@@ -226,6 +226,14 @@ def get_state_update():
 
     return jsonify(state_update)
 
+@app.route("/feeder_gateway/estimate_fee", methods=["POST"])
+def estimate_fee():
+    """Currently a dummy implementation, always returning 0."""
+    return jsonify({
+        "amount": 0,
+        "unit": "wei"
+    })
+
 @app.route("/postman/load_l1_messaging_contract", methods=["POST"])
 async def load_l1_messaging_contract():
     """

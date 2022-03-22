@@ -22,7 +22,7 @@ jobs:
           command: ./scripts/install_dev_tools.sh
       - run:
           name: Install dependencies
-          command: poetry install
+          command: ./scripts/install_dependencies.sh
       - run:
           name: Lint
           command: poetry run pylint starknet_devnet test
