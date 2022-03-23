@@ -1,7 +1,6 @@
 """Util functions for invoking and calling Web3 contracts"""
 
 from web3 import Web3
-
 def web3_deploy(web3: Web3, contract, *inputs):
     """Deploys a Solidity contract"""
     abi=contract['abi']

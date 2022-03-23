@@ -23,7 +23,7 @@ def run_devnet_in_background(*args, sleep_seconds=3):
     Accepts extra args to pass to `starknet-devnet` command.
     Returns the process handle.
     """
-    command = ["poetry", "run", "starknet-devnet", "--lite-mode", "--host", HOST, "--port", PORT, *args]
+    command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT, *args]
     # pylint: disable=consider-using-with
     proc = subprocess.Popen(command, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     time.sleep(sleep_seconds)
@@ -162,6 +162,7 @@ def assert_tx_status(tx_hash, expected_tx_status):
         "starknet", "tx_status",
         "--hash", tx_hash
     ])
+    print(output.stdout)
     tx_status = json.loads(output.stdout)["tx_status"]
     assert_equal(tx_status, expected_tx_status)
 
