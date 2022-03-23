@@ -179,6 +179,7 @@ class StarknetWrapper:
         invoke_transaction: InternalInvokeFunction = InternalInvokeFunction.from_external(transaction, state.general_config)
 
         try:
+            # This check might not be needed in future versions which will interact with the token contract
             if invoke_transaction.max_fee: # handle only if non-zero
                 actual_fee = await self.calculate_actual_fee(transaction)
                 if actual_fee > invoke_transaction.max_fee:
@@ -525,6 +526,7 @@ Exception:
         execution_info = await internal_tx.apply_state_updates(state_copy, state.general_config)
 
         cairo_resource_usage = execution_info.call_info.execution_resources.to_dict()
+
         return calculate_tx_fee_by_cairo_usage(
             general_config=state.general_config,
             cairo_resource_usage=cairo_resource_usage,
