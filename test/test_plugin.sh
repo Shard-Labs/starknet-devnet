@@ -31,7 +31,7 @@ function result_assertion() {
 }
 
 cd starknet-hardhat-example
-mv "$HARDHAT_CONFIG_FILE" hardhat.config.ts
+cp "$HARDHAT_CONFIG_FILE" hardhat.config.ts
 # npx hardhat starknet-compile <- Already executed in setup_example.sh
 # devnet already defined in config as localhost:5000
 npx hardhat starknet-deploy \
