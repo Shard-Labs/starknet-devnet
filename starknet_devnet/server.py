@@ -231,7 +231,11 @@ def get_state_update():
 async def estimate_fee():
     """Currently a dummy implementation, always returning 0."""
     transaction = validate_transaction(request.data, InvokeFunction)
-    actual_fee = await starknet_wrapper.calculate_actual_fee(transaction)
+    try:
+        actual_fee = await starknet_wrapper.calculate_actual_fee(transaction)
+    except StarkException as stark_exception:
+        abort(Response(stark_exception.message, stark_exception.code))
+
     return jsonify({
         "amount": actual_fee,
         "unit": "wei"
