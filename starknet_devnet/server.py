@@ -43,7 +43,10 @@ async def add_transaction():
         contract_address, transaction_hash = await starknet_wrapper.deploy(transaction)
         result_dict = {}
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:
-        contract_address, transaction_hash, result_dict = await starknet_wrapper.invoke(transaction)
+        try:
+            contract_address, transaction_hash, result_dict = await starknet_wrapper.invoke(transaction)
+        except StarkException as stark_exception:
+            abort(Response(stark_exception.message, 500))
     else:
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
 
@@ -234,7 +237,7 @@ async def estimate_fee():
     try:
         actual_fee = await starknet_wrapper.calculate_actual_fee(transaction)
     except StarkException as stark_exception:
-        abort(Response(stark_exception.message, stark_exception.code))
+        abort(Response(stark_exception.message, 500))
 
     return jsonify({
         "amount": actual_fee,
