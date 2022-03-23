@@ -71,6 +71,10 @@ class StarknetWrapper:
 
         self.__last_state_update = None
 
+        self.__tx_hash = 0
+
+        self.lite_mode = False
+
     @staticmethod
     def load(path: str) -> "StarknetWrapper":
         """Load a serialized instance of this class from `path`."""
@@ -134,7 +138,12 @@ class StarknetWrapper:
 
         state = await self.__get_state()
         contract_definition = deploy_transaction.contract_definition
-        tx_hash = deploy_transaction.calculate_hash(state.general_config)
+        if self.lite_mode:
+            tx_hash = self.__tx_hash
+            self.__tx_hash += 1
+        else:
+            tx_hash = deploy_transaction.calculate_hash(state.general_config)
+
         contract_address = calculate_contract_address(
             caller_address=0,
             constructor_calldata=deploy_transaction.constructor_calldata,
@@ -249,9 +258,8 @@ class StarknetWrapper:
             # first it must be checked if the object contains an element with that key
             if FAILURE_REASON_KEY in transaction:
                 ret["tx_failure_reason"] = transaction[FAILURE_REASON_KEY]
-
+            print(f"Transaction status is {ret['tx_status']}")
             return ret
-
         return self.origin.get_transaction_status(transaction_hash)
 
     def get_transaction(self, transaction_hash: str):
@@ -309,7 +317,6 @@ class StarknetWrapper:
             signature = [int(sig_part) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
 
         parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
-
         block_hash = await calculate_block_hash(
             general_config=state.general_config,
             parent_hash=int(parent_block_hash, 16),
@@ -320,7 +327,6 @@ class StarknetWrapper:
             tx_signatures=[signature],
             event_hashes=[]
         )
-
         block_hash_hexed = fixed_length_hex(block_hash)
         block = {
             "block_hash": block_hash_hexed,
@@ -393,7 +399,7 @@ class StarknetWrapper:
         if status == TxStatus.REJECTED:
             assert error_message, "error_message must be present if tx rejected"
             tx_wrapper.set_failure_reason(error_message)
-        else:
+        elif not self.lite_mode:
             block_hash, block_number = await self.__generate_block(tx_wrapper)
             tx_wrapper.set_block_data(block_hash, block_number)
 

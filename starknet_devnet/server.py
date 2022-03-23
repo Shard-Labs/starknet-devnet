@@ -6,6 +6,7 @@ import os
 import json
 import signal
 import sys
+import meinheld
 import dill as pickle
 
 from flask import Flask, request, jsonify, abort
@@ -325,8 +326,9 @@ def main():
 
     dumper.dump_path = args.dump_path
     dumper.dump_on = args.dump_on
-
-    app.run(host=args.host, port=args.port)
+    starknet_wrapper.lite_mode = args.lite_mode
+    meinheld.listen(("0.0.0.0", 5000))
+    meinheld.run(app)
 
 if __name__ == "__main__":
     main()
