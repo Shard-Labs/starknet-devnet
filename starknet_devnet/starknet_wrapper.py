@@ -22,7 +22,11 @@ from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
 
 from .origin import NullOrigin, Origin
-from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo, enable_pickling, generate_state_update
+from .util import (
+    DEFAULT_GENERAL_CONFIG,
+    Choice, StarknetDevnetException, TxStatus, DummyExecutionInfo,
+    fixed_length_hex, enable_pickling, generate_state_update
+)
 from .contract_wrapper import ContractWrapper
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
 from .postman_wrapper import LocalPostmanWrapper
@@ -82,7 +86,7 @@ class StarknetWrapper:
         Returns the underlying Starknet instance, creating it first if necessary.
         """
         if not self.__starknet:
-            self.__starknet = await Starknet.empty()
+            self.__starknet = await Starknet.empty(general_config=DEFAULT_GENERAL_CONFIG)
             await self.__preserve_current_state(self.__starknet.state.state)
         return self.__starknet
 
