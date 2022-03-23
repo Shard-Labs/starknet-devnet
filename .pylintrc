@@ -15,3 +15,5 @@ ignore-imports=no
 # expressions are accepted.
 generated-members=meinheld.*
 
+[SIMILARITIES]
+min-similarity-lines=50

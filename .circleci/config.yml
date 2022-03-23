@@ -30,9 +30,6 @@ jobs:
           name: Setup example
           command: ./scripts/setup_example.sh
       - run:
-          name: Test interaction with Starknet CLI (with authentication)
-          command: python3 -m test.test_cli_auth
-      - run:
           name: Run pytest tests
           command: poetry run pytest -s -vv test
       - run:

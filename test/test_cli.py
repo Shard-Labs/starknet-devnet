@@ -41,11 +41,7 @@ assert_storage(deploy_info["address"], BALANCE_KEY, "0x0")
 def run_before_and_after_test():
     """Run devnet before and kill it after the test run"""
     # before test
-    devnet_proc = run_devnet_in_background(sleep_seconds=1)
-    yield
-
-    # after test
-    devnet_proc.kill()
+    pytest.devnet_proc = run_devnet_in_background(sleep_seconds=1)
 
 
 @pytest.mark.cli
@@ -121,3 +117,7 @@ def test_starknet_cli():
     assert_events(salty_invoke_tx_hash, "test/expected/invoke_receipt_event.json")
 
     assert_failing_deploy(contract_path=FAILING_CONTRACT_PATH)
+
+def pytest_sessionfinish():
+    """Kill devnet after the test run"""
+    pytest.devnet_proc.kill()
