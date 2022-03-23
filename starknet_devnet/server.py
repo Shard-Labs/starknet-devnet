@@ -327,7 +327,7 @@ def main():
     dumper.dump_path = args.dump_path
     dumper.dump_on = args.dump_on
     starknet_wrapper.lite_mode = args.lite_mode
-    meinheld.listen(("0.0.0.0", 5000))
+    meinheld.listen((args.host, args.port))
     meinheld.run(app)
 
 if __name__ == "__main__":

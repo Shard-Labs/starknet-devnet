@@ -12,7 +12,6 @@ from web3 import Web3
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
 from starkware.starknet.business_logic.state import CarriedState
-from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee_by_cairo_usage
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Transaction
@@ -22,11 +21,7 @@ from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
 
 from .origin import NullOrigin, Origin
-from .util import (
-    DEFAULT_GENERAL_CONFIG,
-    Choice, StarknetDevnetException, TxStatus, DummyExecutionInfo,
-    fixed_length_hex, enable_pickling, generate_state_update
-)
+from .util import Choice, StarknetDevnetException, TxStatus, fixed_length_hex, DummyExecutionInfo, enable_pickling, generate_state_update
 from .contract_wrapper import ContractWrapper
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
 from .postman_wrapper import LocalPostmanWrapper
@@ -42,7 +37,7 @@ class StarknetWrapper:
     """
 
     def __init__(self):
-        self.origin: Origin = NullOrigin()
+        self.__origin: Origin = NullOrigin()
         """Origin chain that this devnet was forked from."""
 
         self.__address2contract_wrapper: Dict[int, ContractWrapper] = {}
@@ -90,7 +85,7 @@ class StarknetWrapper:
         Returns the underlying Starknet instance, creating it first if necessary.
         """
         if not self.__starknet:
-            self.__starknet = await Starknet.empty(general_config=DEFAULT_GENERAL_CONFIG)
+            self.__starknet = await Starknet.empty()
             await self.__preserve_current_state(self.__starknet.state.state)
         return self.__starknet
 
@@ -129,6 +124,10 @@ class StarknetWrapper:
             raise StarknetDevnetException(message=message)
 
         return self.__address2contract_wrapper[address]
+
+    def set_origin(self, origin: Origin):
+        """Set the origin chain."""
+        self.__origin = origin
 
     async def deploy(self, deploy_transaction: Deploy):
         """
@@ -188,13 +187,6 @@ class StarknetWrapper:
         invoke_transaction: InternalInvokeFunction = InternalInvokeFunction.from_external(transaction, state.general_config)
 
         try:
-            # This check might not be needed in future versions which will interact with the token contract
-            if invoke_transaction.max_fee: # handle only if non-zero
-                actual_fee = await self.calculate_actual_fee(transaction)
-                if actual_fee > invoke_transaction.max_fee:
-                    message = f"Actual fee exceeded max fee.\n{actual_fee} > {invoke_transaction.max_fee}"
-                    raise StarknetDevnetException(message=message)
-
             contract_wrapper = self.__get_contract_wrapper(invoke_transaction.contract_address)
             adapted_result, execution_info = await contract_wrapper.call_or_invoke(
                 Choice.INVOKE,
@@ -258,9 +250,10 @@ class StarknetWrapper:
             # first it must be checked if the object contains an element with that key
             if FAILURE_REASON_KEY in transaction:
                 ret["tx_failure_reason"] = transaction[FAILURE_REASON_KEY]
-            print(f"Transaction status is {ret['tx_status']}")
+
             return ret
-        return self.origin.get_transaction_status(transaction_hash)
+
+        return self.__origin.get_transaction_status(transaction_hash)
 
     def get_transaction(self, transaction_hash: str):
         """Returns the transaction identified by `transaction_hash`."""
@@ -269,7 +262,7 @@ class StarknetWrapper:
         if tx_hash_int in self.__transaction_wrappers:
             return self.__transaction_wrappers[tx_hash_int].transaction
 
-        return self.origin.get_transaction(transaction_hash)
+        return self.__origin.get_transaction(transaction_hash)
 
     def get_transaction_receipt(self, transaction_hash: str):
         """Returns the transaction receipt of the transaction identified by `transaction_hash`."""
@@ -278,7 +271,7 @@ class StarknetWrapper:
         if tx_hash_int in self.__transaction_wrappers:
             return self.__transaction_wrappers[tx_hash_int].receipt
 
-        return self.origin.get_transaction_receipt(transaction_hash)
+        return self.__origin.get_transaction_receipt(transaction_hash)
 
     def get_transaction_trace(self, transaction_hash:str):
         """Returns the transaction trace of the tranasction indetified by `transaction_hash`"""
@@ -295,11 +288,11 @@ class StarknetWrapper:
 
             return transaction_wrapper.trace
 
-        return self.origin.get_transaction_trace(transaction_hash)
+        return self.__origin.get_transaction_trace(transaction_hash)
 
     def get_number_of_blocks(self) -> int:
         """Returns the number of blocks stored so far."""
-        return len(self.__num2block) + self.origin.get_number_of_blocks()
+        return len(self.__num2block) + self.__origin.get_number_of_blocks()
 
     async def __generate_block(self, tx_wrapper: TransactionWrapper):
         """
@@ -317,6 +310,7 @@ class StarknetWrapper:
             signature = [int(sig_part) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
 
         parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
+
         block_hash = await calculate_block_hash(
             general_config=state.general_config,
             parent_hash=int(parent_block_hash, 16),
@@ -327,6 +321,7 @@ class StarknetWrapper:
             tx_signatures=[signature],
             event_hashes=[]
         )
+
         block_hash_hexed = fixed_length_hex(block_hash)
         block = {
             "block_hash": block_hash_hexed,
@@ -356,14 +351,14 @@ class StarknetWrapper:
         block_hash_int = int(block_hash, 16)
         if block_hash_int in self.__hash2block:
             return self.__hash2block[block_hash_int]
-        return self.origin.get_block_by_hash(block_hash=block_hash)
+        return self.__origin.get_block_by_hash(block_hash=block_hash)
 
     def get_block_by_number(self, block_number: int):
         """Returns the block whose block_number is provided"""
         if block_number is None:
             if self.__num2block:
                 return self.__get_last_block()
-            return self.origin.get_block_by_number(block_number)
+            return self.__origin.get_block_by_number(block_number)
 
         if block_number < 0:
             message = f"Block number must be a non-negative integer; got: {block_number}."
@@ -376,7 +371,7 @@ class StarknetWrapper:
         if block_number in self.__num2block:
             return self.__num2block[block_number]
 
-        return self.origin.get_block_by_number(block_number)
+        return self.__origin.get_block_by_number(block_number)
 
     # pylint: disable=too-many-arguments
     async def __store_transaction(self, transaction: Transaction, contract_address: int, tx_hash: int, status: TxStatus,
@@ -411,7 +406,7 @@ class StarknetWrapper:
         if self.__is_contract_deployed(contract_address):
             contract_wrapper = self.__get_contract_wrapper(contract_address)
             return contract_wrapper.code
-        return self.origin.get_code(contract_address)
+        return self.__origin.get_code(contract_address)
 
     def get_full_contract(self, contract_address: int) -> dict:
         """Returns a `dict` contract definition of the contract at `contract_address`."""
@@ -429,7 +424,7 @@ class StarknetWrapper:
         contract_state = contract_states[contract_address]
         if key in contract_state.storage_updates:
             return hex(contract_state.storage_updates[key].value)
-        return self.origin.get_storage_at(contract_address, key)
+        return self.__origin.get_storage_at(self, contract_address, key)
 
     async def load_messaging_contract_in_l1(self, network_url: str, contract_address: str, network_id: str) -> dict:
         """Creates a Postman Wrapper instance and loads an already deployed Messaging contract in the L1 network"""
@@ -510,7 +505,7 @@ Exception:
             if numeric_hash in self.__hash2block:
                 return self.__hash2state_update[numeric_hash]
 
-            return self.origin.get_state_update(block_hash=block_hash)
+            return self.__origin.get_state_update(block_hash=block_hash)
 
         if block_number is not None:
             if block_number in self.__num2block:
@@ -519,22 +514,6 @@ Exception:
 
                 return self.__hash2state_update[numeric_hash]
 
-            return self.origin.get_state_update(block_number=block_number)
+            return self.__origin.get_state_update(block_number=block_number)
 
-        return self.__last_state_update or self.origin.get_state_update()
-
-    async def calculate_actual_fee(self, transaction: InvokeFunction):
-        """Calculates actual fee"""
-        state = await self.__get_state()
-        internal_tx = InternalInvokeFunction.from_external(transaction, state.general_config)
-
-        state_copy = state.state._copy() # pylint: disable=protected-access
-        execution_info = await internal_tx.apply_state_updates(state_copy, state.general_config)
-
-        cairo_resource_usage = execution_info.call_info.execution_resources.to_dict()
-
-        return calculate_tx_fee_by_cairo_usage(
-            general_config=state.general_config,
-            cairo_resource_usage=cairo_resource_usage,
-            l1_gas_usage=0
-        )
+        return self.__last_state_update or self.__origin.get_state_update()
