@@ -179,6 +179,12 @@ class StarknetWrapper:
         invoke_transaction: InternalInvokeFunction = InternalInvokeFunction.from_external(transaction, state.general_config)
 
         try:
+            if invoke_transaction.max_fee: # handle only if non-zero
+                actual_fee = await self.calculate_actual_fee(transaction)
+                if actual_fee > invoke_transaction.max_fee:
+                    message = f"Actual fee exceeded max fee.\n{actual_fee} > {invoke_transaction.max_fee}"
+                    raise StarknetDevnetException(message=message)
+
             contract_wrapper = self.__get_contract_wrapper(invoke_transaction.contract_address)
             adapted_result, execution_info = await contract_wrapper.call_or_invoke(
                 Choice.INVOKE,
@@ -515,9 +521,8 @@ Exception:
         state = await self.__get_state()
         internal_tx = InternalInvokeFunction.from_external(transaction, state.general_config)
 
-        # TODO this doesn't work as expected, the change "simulated" here is actually applied to the state
-        with state.state.copy_and_apply() as state_copy:
-            execution_info = await internal_tx.apply_state_updates(state_copy, state.general_config)
+        state_copy = state.state._copy() # pylint: disable=protected-access
+        execution_info = await internal_tx.apply_state_updates(state_copy, state.general_config)
 
         cairo_resource_usage = execution_info.call_info.execution_resources.to_dict()
         return calculate_tx_fee_by_cairo_usage(
