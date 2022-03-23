@@ -98,7 +98,7 @@ class StarknetWrapper:
         return starknet.state
 
     async def __update_state(self):
-        if self.lite_mode:
+        if not self.lite_mode:
             previous_state = self.__current_carried_state
             assert previous_state is not None
             current_carried_state = (await self.__get_state()).state
@@ -325,6 +325,8 @@ class StarknetWrapper:
                 tx_signatures=[signature],
                 event_hashes=[]
             )
+            self.__last_state_update["block_hash"] = hex(block_hash)
+            self.__hash2state_update[block_hash] = self.__last_state_update
 
         block_hash_hexed = fixed_length_hex(block_hash)
         block = {
@@ -340,8 +342,6 @@ class StarknetWrapper:
 
         self.__num2block[block_number] = block
         self.__hash2block[block_hash] = block
-        self.__last_state_update["block_hash"] = hex(block_hash)
-        self.__hash2state_update[block_hash] = self.__last_state_update
 
         return block_hash_hexed, block_number
 
