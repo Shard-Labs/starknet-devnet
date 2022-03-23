@@ -311,7 +311,7 @@ def main():
 
     # Uncomment this once fork support is added
     # origin = Origin(args.fork) if args.fork else NullOrigin()
-    # starknet_wrapper.set_origin(origin)
+    # starknet_wrapper.origin = origin
 
     if args.load_path:
         try:
