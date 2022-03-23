@@ -36,5 +36,6 @@ markers = [
     "state_update",
     "transaction_trace",
     "web3_deploy",
-    "web3_messaging"
+    "web3_messaging",
+    "cli"
 ]

@@ -23,7 +23,7 @@ def run_devnet_in_background(*args, sleep_seconds=3):
     Accepts extra args to pass to `starknet-devnet` command.
     Returns the process handle.
     """
-    command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT, "--lite-mode", *args]
+    command = ["poetry", "run", "starknet-devnet", "--lite-mode", "--host", HOST, "--port", PORT, *args]
     # pylint: disable=consider-using-with
     proc = subprocess.Popen(command, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     time.sleep(sleep_seconds)

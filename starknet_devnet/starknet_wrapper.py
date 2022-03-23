@@ -98,18 +98,19 @@ class StarknetWrapper:
         return starknet.state
 
     async def __update_state(self):
-        previous_state = self.__current_carried_state
-        assert previous_state is not None
-        current_carried_state = (await self.__get_state()).state
-        updated_shared_state = await current_carried_state.shared_state.apply_state_updates(
-            ffc=current_carried_state.ffc,
-            previous_carried_state=previous_state,
-            current_carried_state=current_carried_state
-        )
-        self.__starknet.state.state.shared_state = updated_shared_state
-        await self.__preserve_current_state(self.__starknet.state.state)
+        if self.lite_mode:
+            previous_state = self.__current_carried_state
+            assert previous_state is not None
+            current_carried_state = (await self.__get_state()).state
+            updated_shared_state = await current_carried_state.shared_state.apply_state_updates(
+                ffc=current_carried_state.ffc,
+                previous_carried_state=previous_state,
+                current_carried_state=current_carried_state
+            )
+            self.__starknet.state.state.shared_state = updated_shared_state
+            await self.__preserve_current_state(self.__starknet.state.state)
 
-        self.__last_state_update = generate_state_update(previous_state, current_carried_state)
+            self.__last_state_update = generate_state_update(previous_state, current_carried_state)
 
     async def __get_state_root(self):
         state = await self.__get_state()
@@ -311,16 +312,19 @@ class StarknetWrapper:
 
         parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
 
-        block_hash = await calculate_block_hash(
-            general_config=state.general_config,
-            parent_hash=int(parent_block_hash, 16),
-            block_number=block_number,
-            global_state_root=state_root,
-            block_timestamp=timestamp,
-            tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
-            tx_signatures=[signature],
-            event_hashes=[]
-        )
+        if self.lite_mode:
+            block_hash = block_number
+        else:
+            block_hash = await calculate_block_hash(
+                general_config=state.general_config,
+                parent_hash=int(parent_block_hash, 16),
+                block_number=block_number,
+                global_state_root=state_root,
+                block_timestamp=timestamp,
+                tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
+                tx_signatures=[signature],
+                event_hashes=[]
+            )
 
         block_hash_hexed = fixed_length_hex(block_hash)
         block = {
@@ -394,7 +398,7 @@ class StarknetWrapper:
         if status == TxStatus.REJECTED:
             assert error_message, "error_message must be present if tx rejected"
             tx_wrapper.set_failure_reason(error_message)
-        elif not self.lite_mode:
+        else:
             block_hash, block_number = await self.__generate_block(tx_wrapper)
             tx_wrapper.set_block_data(block_hash, block_number)
 
