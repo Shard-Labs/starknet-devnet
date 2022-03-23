@@ -5,6 +5,7 @@ The main testing script. Runs the devnet and calls its endpoints.
 import pytest
 
 from .util import (
+    ReturnCodeAssertionError,
     assert_contract_definition,
     assert_negative_block_input,
     assert_transaction_not_received,
@@ -59,7 +60,9 @@ def test_starknet_cli():
     assert_storage(deploy_info["address"], BALANCE_KEY, "0x0")
 
     # check block and receipt after deployment
-    assert_negative_block_input()
+    with pytest.raises(ReturnCodeAssertionError):
+        assert_negative_block_input()
+
     assert_block(0, deploy_info["tx_hash"])
     assert_receipt(deploy_info["tx_hash"], "test/expected/deploy_receipt.json")
     assert_transaction_receipt_not_received(NONEXISTENT_TX_HASH)

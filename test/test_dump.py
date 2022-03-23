@@ -15,18 +15,11 @@ from .shared import CONTRACT_PATH, ABI_PATH
 
 DUMP_PATH = "dump.pkl"
 
-@pytest.fixture(autouse=True)
-def run_before_and_after_test():
-    """Cleanup after tests finish."""
 
+def pytest_sessionstart():
+    """Run devnet before the test run"""
     # before test
-    # nothing
-
-    yield
-
-    # after test
-    if os.path.isfile(DUMP_PATH):
-        os.remove(DUMP_PATH)
+    pytest.devnet_proc = run_devnet_in_background(sleep_seconds=1)
 
 def send_dump_request(dump_path: str=None):
     """Send HTTP request to trigger dumping."""
@@ -182,3 +175,9 @@ def test_dumping_on_each_tx():
 
     assert_load(dump_after_deploy_path, contract_address, "0")
     assert_load(dump_after_invoke_path, contract_address, "10")
+
+def pytest_sessionfinish():
+    """Kill devnet after the test run"""
+    pytest.devnet_proc.kill()
+    if os.path.isfile(DUMP_PATH):
+        os.remove(DUMP_PATH)
