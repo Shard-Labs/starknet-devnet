@@ -49,8 +49,8 @@ def run_before_and_after_test():
     devnet_proc.kill()
 
 
-@pytest.mark.state_update
-def test_initial_state_update():
+@pytest.mark.cli
+def test_starknet_cli():
     """Test devnet with CLI"""
     deploy_info = deploy(CONTRACT_PATH, ["0"])
 
