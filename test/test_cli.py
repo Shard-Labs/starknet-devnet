@@ -5,7 +5,6 @@ The main testing script. Runs the devnet and calls its endpoints.
 import pytest
 
 from .util import (
-    ReturnCodeAssertionError,
     assert_contract_definition,
     assert_negative_block_input,
     assert_transaction_not_received,
@@ -48,6 +47,7 @@ def run_before_and_after_test():
 @pytest.mark.cli
 def test_starknet_cli():
     """Test devnet with CLI"""
+    devnet_proc = run_devnet_in_background(sleep_seconds=15)
     deploy_info = deploy(CONTRACT_PATH, ["0"])
 
     print("Deployment:", deploy_info)
@@ -60,8 +60,7 @@ def test_starknet_cli():
     assert_storage(deploy_info["address"], BALANCE_KEY, "0x0")
 
     # check block and receipt after deployment
-    with pytest.raises(ReturnCodeAssertionError):
-        assert_negative_block_input()
+    assert_negative_block_input()
 
     assert_block(0, deploy_info["tx_hash"])
     assert_receipt(deploy_info["tx_hash"], "test/expected/deploy_receipt.json")
@@ -120,7 +119,4 @@ def test_starknet_cli():
     assert_events(salty_invoke_tx_hash, "test/expected/invoke_receipt_event.json")
 
     assert_failing_deploy(contract_path=FAILING_CONTRACT_PATH)
-
-def pytest_sessionfinish():
-    """Kill devnet after the test run"""
-    pytest.devnet_proc.kill()
+    devnet_proc.kill()

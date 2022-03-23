@@ -11,11 +11,16 @@ from .util import deploy, invoke, load_contract_definition, run_devnet_in_backgr
 from .settings import FEEDER_GATEWAY_URL
 from .shared import CONTRACT_PATH, ABI_PATH, BALANCE_KEY
 
-
-def pytest_sessionstart():
-    """Run devnet before the test run"""
+@pytest.fixture(autouse=True)
+def run_before_and_after_test():
+    """Run devnet before and kill it after the test run"""
     # before test
-    pytest.devnet_proc = run_devnet_in_background(sleep_seconds=1)
+    devnet_proc = run_devnet_in_background()
+
+    yield
+
+    # after test
+    devnet_proc.kill()
 
 def get_state_update_response(block_hash=None, block_number=None):
     """Get state update response"""
@@ -159,7 +164,3 @@ def test_roots():
     old_root = state_update["old_root"]
 
     assert old_root == new_root
-
-def pytest_sessionfinish():
-    """Kill devnet after the test run"""
-    pytest.devnet_proc.kill()

@@ -25,10 +25,6 @@ SIGNATURE = [
 ]
 BALANCE_KEY = "142452623821144136554572927896792266630776240502820879601186867231282346767"
 
-def pytest_sessionstart():
-    """Run devnet before the test run"""
-    # before test
-    pytest.devnet_proc = run_devnet_in_background(sleep_seconds=1)
 
     yield
 
@@ -51,6 +47,7 @@ assert_equal(value, "5321", "Invoke+call failed!")
 @pytest.mark.cli
 def test_starknet_cli_auth():
     """Test CLI auth in devnet"""
+    devnet_proc = run_devnet_in_background(sleep_seconds=1)
     deploy_info = deploy(CONTRACT_PATH, [PUBLIC_KEY, INITIAL_BALANCE])
     print("Deployment:", deploy_info)
 
@@ -83,6 +80,4 @@ def test_starknet_cli_auth():
     assert_transaction(invoke_tx_hash, "ACCEPTED_ON_L2", expected_signature=SIGNATURE)
     assert_receipt(invoke_tx_hash, "test/expected/invoke_receipt_auth.json")
 
-def pytest_sessionfinish():
-    """Kill devnet after the test run"""
-    pytest.devnet_proc.kill()
+    devnet_proc.kill()
