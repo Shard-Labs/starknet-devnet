@@ -32,6 +32,7 @@ markers = [
     "call",
     "deploy",
     "invoke",
+    "restart",
     "state_update",
     "web3_deploy",
     "web3_messaging"
