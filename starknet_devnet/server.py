@@ -209,7 +209,7 @@ def get_transaction_trace():
     transaction_hash = request.args.get("transactionHash")
 
     try:
-        transaction_trace = starknet_wrapper.get_transaction_trace(transaction_hash)
+        transaction_trace = state.starknet_wrapper.get_transaction_trace(transaction_hash)
     except StarkException as err:
         abort(Response(err, 500))
 
