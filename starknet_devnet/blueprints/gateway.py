@@ -8,7 +8,7 @@ from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode
 
 from starknet_devnet.util import DumpOn,fixed_length_hex
-
+from starknet_devnet.constants import CAIRO_LANG_VERSION
 from starknet_devnet.state import state
 
 gateway = Blueprint("gateay", __name__, url_prefix="/gateway")
