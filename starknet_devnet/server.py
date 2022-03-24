@@ -18,7 +18,6 @@ from starkware.starkware_utils.error_handling import StarkErrorCode, StarkExcept
 from werkzeug.datastructures import MultiDict
 
 from .constants import CAIRO_LANG_VERSION
-from .starknet_wrapper import StarknetWrapper
 from .util import DumpOn, StarknetDevnetException, custom_int, fixed_length_hex, parse_args
 from .state import state
 
@@ -31,6 +30,12 @@ CORS(app)
 def is_alive():
     """Health check endpoint."""
     return "Alive!!!"
+
+@app.route("/restart", methods=["GET"])
+def restart():
+    """Restart endpoint."""
+    state.reset()
+    return "Restarted"
 
 @app.route("/gateway/add_transaction", methods=["POST"])
 async def add_transaction():

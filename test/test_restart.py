@@ -29,9 +29,3 @@ def test_restart_on_initial_state():
     """Checks restart endpoint when there were no changes"""
     res = get_restart_response()
     assert res.status_code == 200
-
-@pytest.mark.restart
-def test_restart_deployed_contracts():
-    """Checks restart endpoint when there were no changes"""
-    res = get_restart_response()
-    assert res.status_code == 200
