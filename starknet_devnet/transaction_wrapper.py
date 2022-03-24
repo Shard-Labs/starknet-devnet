@@ -81,6 +81,12 @@ class TransactionWrapper(ABC):
             "transaction_index": 0 # always the first (and only) tx in the block
         }
 
+        if status is not TxStatus.REJECTED:
+            self.trace = {
+                "function_invocation": execution_info.call_info.dump(),
+                "signature": tx_details.to_dict().get("signature", [])
+            }
+
     def set_block_data(self, block_hash: str, block_number: int):
         """Sets `block_hash` and `block_number` to the wrapped transaction and receipt."""
         self.transaction["block_hash"] = self.receipt["block_hash"] = block_hash

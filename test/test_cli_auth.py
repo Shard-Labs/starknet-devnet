@@ -9,7 +9,8 @@ from .util import (
     call, deploy, invoke
 )
 
-ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
+from .shared import ARTIFACTS_PATH, SIGNATURE
+
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/auth_contract.cairo/auth_contract.json"
 ABI_PATH = f"{ARTIFACTS_PATH}/auth_contract.cairo/auth_contract_abi.json"
 
@@ -28,10 +29,6 @@ assert_transaction(deploy_info["tx_hash"], "ACCEPTED_ON_L2")
 assert_block(0, deploy_info["tx_hash"])
 assert_receipt(deploy_info["tx_hash"], "test/expected/deploy_receipt_auth.json")
 
-SIGNATURE = [
-    "1225578735933442828068102633747590437426782890965066746429241472187377583468",
-    "3568809569741913715045370357918125425757114920266578211811626257903121825123"
-]
 # increase and assert balance
 invoke_tx_hash = invoke(
     function="increase_balance",

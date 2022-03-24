@@ -21,6 +21,10 @@ class Origin:
         """Returns the transaction receipt object."""
         raise NotImplementedError
 
+    def get_transaction_trace(self, transaction_hash: str):
+        """Returns the transaction trace object."""
+        raise NotImplementedError
+
     def get_block_by_hash(self, block_hash: str):
         """Returns the block identified with either its hash."""
         raise NotImplementedError
@@ -75,6 +79,11 @@ class NullOrigin(Origin):
             "events": []
         }
 
+    def get_transaction_trace(self, transaction_hash: str):
+        tx_hash_int = int(transaction_hash, 16)
+        message=f"Transaction corresponding to hash {tx_hash_int} is not found."
+        raise StarknetDevnetException(message=message)
+
     def get_block_by_hash(self, block_hash: str):
         message=f"Block hash not found; got: {block_hash}."
         raise StarknetDevnetException(message=message)
@@ -124,6 +133,9 @@ class ForkedOrigin(Origin):
         raise NotImplementedError
 
     def get_transaction(self, transaction_hash: str):
+        raise NotImplementedError
+
+    def get_transaction_trace(self, transaction_hash: str):
         raise NotImplementedError
 
     def get_block_by_hash(self, block_hash: str):

@@ -264,6 +264,23 @@ class StarknetWrapper:
 
         return self.__origin.get_transaction_receipt(transaction_hash)
 
+    def get_transaction_trace(self, transaction_hash:str):
+        """Returns the transaction trace of the tranasction indetified by `transaction_hash`"""
+
+        tx_hash_int = int(transaction_hash, 16)
+        if tx_hash_int in self.__transaction_wrappers:
+            status = self.__transaction_wrappers[tx_hash_int].transaction["status"]
+            transaction_wrapper = self.__transaction_wrappers[tx_hash_int]
+
+            if not hasattr(transaction_wrapper, "trace"):
+                raise StarknetDevnetException(
+                    f"Transaction corresponding to hash {tx_hash_int} has no trace; status: {status}."
+                )
+
+            return transaction_wrapper.trace
+
+        return self.__origin.get_transaction_trace(transaction_hash)
+
     def get_number_of_blocks(self) -> int:
         """Returns the number of blocks stored so far."""
         return len(self.__num2block) + self.__origin.get_number_of_blocks()

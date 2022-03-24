@@ -9,11 +9,7 @@ from starkware.starknet.core.os.contract_hash import compute_contract_hash
 
 from .util import deploy, invoke, load_contract_definition, run_devnet_in_background, get_block
 from .settings import FEEDER_GATEWAY_URL
-
-ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
-CONTRACT_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract.json"
-ABI_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract_abi.json"
-BALANCE_KEY = "916907772491729262376534102982219947830828984996257231353398618781993312401"
+from .shared import CONTRACT_PATH, ABI_PATH, BALANCE_KEY
 
 @pytest.fixture(autouse=True)
 def run_before_and_after_test():

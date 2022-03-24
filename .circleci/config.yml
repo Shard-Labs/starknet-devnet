@@ -48,6 +48,9 @@ jobs:
           name: Test get state update endpoint
           command: poetry run pytest -s -vv test/test_state_update.py
       - run:
+          name: Test get transaction trace endpoint
+          command: poetry run pytest -s -vv test/test_transaction_trace.py
+      - run:
           name: Test plugin - dockerized
           command: ./test/test_plugin.sh
           no_output_timeout: 1m

@@ -86,13 +86,14 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `deploy`
   - `get_block`
   - `get_code`
+  - `get_full_contract`
+  - `get_state_update`
   - `get_storage_at`
+  - `get_transaction_receipt`
+  - `get_transaction_trace`
   - `get_transaction`
   - `invoke`
   - `tx_status`
-  - `get_transaction_receipt`
-  - `get_full_contract`
-  - `get_state_update`
 - The following Starknet CLI commands are **not** supported:
   - `get_contract_addresses`
   - `estimate_fee` (currently always returning 0)

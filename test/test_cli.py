@@ -13,16 +13,17 @@ from .util import (
     call, deploy, invoke
 )
 
-ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
-CONTRACT_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract.json"
-ABI_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract_abi.json"
-EVENTS_CONTRACT_PATH = f"{ARTIFACTS_PATH}/events.cairo/events.json"
-EVENTS_ABI_PATH = f"{ARTIFACTS_PATH}/events.cairo/events_abi.json"
-FAILING_CONTRACT_PATH = f"{ARTIFACTS_PATH}/always_fail.cairo/always_fail.json"
-
-EXPECTED_SALTY_DEPLOY_ADDRESS = "0x07c3a0c91048930f0258601db4211a3aa0578d9e746f15526a74eaabd38c56a4"
-EXPECTED_SALTY_DEPLOY_HASH = "0x11ea05c61d78383e95cf44b70cfe15e74a55c7ceb1186c0c2ed743219f1f2ca"
-NONEXISTENT_TX_HASH = "0x1"
+from .shared import (
+    ABI_PATH,
+    BALANCE_KEY,
+    CONTRACT_PATH,
+    EVENTS_ABI_PATH,
+    EVENTS_CONTRACT_PATH,
+    EXPECTED_SALTY_DEPLOY_ADDRESS,
+    EXPECTED_SALTY_DEPLOY_HASH,
+    FAILING_CONTRACT_PATH,
+    NONEXISTENT_TX_HASH
+)
 
 run_devnet_in_background(sleep_seconds=1)
 deploy_info = deploy(CONTRACT_PATH, ["0"])
@@ -33,7 +34,6 @@ assert_transaction(deploy_info["tx_hash"], "ACCEPTED_ON_L2")
 assert_transaction_not_received(NONEXISTENT_TX_HASH)
 
 # check storage after deployment
-BALANCE_KEY = "916907772491729262376534102982219947830828984996257231353398618781993312401"
 assert_storage(deploy_info["address"], BALANCE_KEY, "0x0")
 
 # check block and receipt after deployment

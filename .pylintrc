@@ -3,3 +3,7 @@ max-line-length=150
 
 [BASIC]
 min-public-methods=1
+
+[SIMILARITIES]
+min-similarity-lines=20
+ignore-imports=no

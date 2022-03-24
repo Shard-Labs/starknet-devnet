@@ -1,0 +1,24 @@
+{
+    "calldata": ["0xa", "0x14"],
+    "caller_address": "0x0",
+    "code_address": "0x3ffc1d4aca9668dfd9b5b6d374367b9dc52daed0ae23c54cb93ea2ea6e2dc72",
+    "contract_address": "0x3ffc1d4aca9668dfd9b5b6d374367b9dc52daed0ae23c54cb93ea2ea6e2dc72",
+    "entry_point_type": "EXTERNAL",
+    "events": [],
+    "execution_resources": {
+        "builtin_instance_counter": {
+            "bitwise_builtin": 0,
+            "ec_op_builtin": 0,
+            "ecdsa_builtin": 0,
+            "output_builtin": 0,
+            "pedersen_builtin": 0,
+            "range_check_builtin": 0
+        },
+        "n_memory_holes": 0,
+        "n_steps": 67
+    },
+    "internal_calls": [],
+    "messages": [],
+    "result": [],
+    "selector": "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320"
+}
