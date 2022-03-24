@@ -45,7 +45,8 @@ def test_init_local_testnet():
     time.sleep(25)
     pytest.WEB3 = Web3(Web3.HTTPProvider(L1_URL))
     pytest.WEB3.eth.default_account = pytest.WEB3.eth.accounts[0]
-    run_devnet_in_background(sleep_seconds=5)
+    devnet_proc = run_devnet_in_background(sleep_seconds=5)
+    atexit.register(devnet_proc.kill)
     deploy_messaging_contract_request = {
         "networkUrl": L1_URL
     }
