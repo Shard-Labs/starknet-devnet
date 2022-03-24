@@ -25,10 +25,20 @@ FAILING_CONTRACT_PATH = f"{ARTIFACTS_PATH}/always_fail.cairo/always_fail.json"
 NONEXISTENT_TX_HASH = "0x12345678910111213"
 BALANCE_KEY = "916907772491729262376534102982219947830828984996257231353398618781993312401"
 
+@pytest.fixture(autouse=True)
+def run_before_and_after_test():
+    """Run devnet before and kill it after the test run"""
+    # before test
+    devnet_proc = run_devnet_in_background(sleep_seconds=20)
+
+    yield
+
+    # after test
+    devnet_proc.kill()
+
 @pytest.mark.cli
 def test_starknet_cli():
     """Test devnet with CLI"""
-    devnet_proc = run_devnet_in_background(sleep_seconds=1)
     deploy_info = deploy(CONTRACT_PATH, ["0"])
 
     print("Deployment:", deploy_info)
@@ -81,5 +91,3 @@ def test_starknet_cli():
     assert_equal(value, "40 60", "Checking complex input failed!")
 
     assert_failing_deploy(contract_path=FAILING_CONTRACT_PATH)
-
-    devnet_proc.kill()

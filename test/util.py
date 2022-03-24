@@ -26,6 +26,7 @@ def run_devnet_in_background(*args, sleep_seconds=3):
     command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT, *args]
     # pylint: disable=consider-using-with
     proc = subprocess.Popen(command, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
     time.sleep(sleep_seconds)
     atexit.register(proc.kill)
     return proc
