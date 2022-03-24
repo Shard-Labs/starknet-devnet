@@ -286,7 +286,7 @@ def main():
 
     if args.load_path:
         try:
-            state.starknet_wrapper = StarknetWrapper.load(args.load_path)
+            state.load(args.load_path)
         except (FileNotFoundError, pickle.UnpicklingError):
             sys.exit(f"Error: Cannot load from {args.load_path}. Make sure the file exists and contains a Devnet dump.")
 
