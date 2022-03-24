@@ -31,7 +31,7 @@ from .shared import (
 def run_before_and_after_test():
     """Run devnet before and kill it after the test run"""
     # before test
-    devnet_proc = run_devnet_in_background(sleep_seconds=1)
+    devnet_proc = run_devnet_in_background(sleep_seconds=20)
 
     yield
 
