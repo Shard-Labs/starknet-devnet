@@ -27,16 +27,11 @@ from .shared import (
     NONEXISTENT_TX_HASH
 )
 
-EXPECTED_SALTY_DEPLOY_ADDRESS = "0x07c3a0c91048930f0258601db4211a3aa0578d9e746f15526a74eaabd38c56a4"
-EXPECTED_SALTY_DEPLOY_HASH = "0x11ea05c61d78383e95cf44b70cfe15e74a55c7ceb1186c0c2ed743219f1f2ca"
-NONEXISTENT_TX_HASH = "0x12345678910111213"
-BALANCE_KEY = "916907772491729262376534102982219947830828984996257231353398618781993312401"
-
 @pytest.fixture(autouse=True)
 def run_before_and_after_test():
     """Run devnet before and kill it after the test run"""
     # before test
-    devnet_proc = run_devnet_in_background(sleep_seconds=20)
+    devnet_proc = run_devnet_in_background(sleep_seconds=1)
 
     yield
 

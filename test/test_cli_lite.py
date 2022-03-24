@@ -15,12 +15,12 @@ from .util import (
     call, deploy, invoke
 )
 
-ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
-CONTRACT_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract.json"
-ABI_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract_abi.json"
-EVENTS_CONTRACT_PATH = f"{ARTIFACTS_PATH}/events.cairo/events.json"
-EVENTS_ABI_PATH = f"{ARTIFACTS_PATH}/events.cairo/events_abi.json"
-FAILING_CONTRACT_PATH = f"{ARTIFACTS_PATH}/always_fail.cairo/always_fail.json"
+from .shared import (
+    ABI_PATH,
+    BALANCE_KEY,
+    CONTRACT_PATH,
+    FAILING_CONTRACT_PATH
+)
 
 NONEXISTENT_TX_HASH = "0x12345678910111213"
 BALANCE_KEY = "916907772491729262376534102982219947830828984996257231353398618781993312401"
@@ -29,7 +29,7 @@ BALANCE_KEY = "91690777249172926237653410298221994783082898499625723135339861878
 def run_before_and_after_test():
     """Run devnet before and kill it after the test run"""
     # before test
-    devnet_proc = run_devnet_in_background(sleep_seconds=20)
+    devnet_proc = run_devnet_in_background(sleep_seconds=1)
 
     yield
 

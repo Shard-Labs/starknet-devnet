@@ -29,7 +29,7 @@ BALANCE_KEY = "14245262382114413655457292789679226663077624050282087960118686723
 def run_before_and_after_test():
     """Run devnet before and kill it after the test run"""
     # before test
-    devnet_proc = run_devnet_in_background(sleep_seconds=20)
+    devnet_proc = run_devnet_in_background(sleep_seconds=1)
 
     yield
 
@@ -37,22 +37,6 @@ def run_before_and_after_test():
     devnet_proc.kill()
 
     yield
-
-# increase and assert balance
-invoke_tx_hash = invoke(
-    function="increase_balance",
-    address=deploy_info["address"],
-    abi_path=ABI_PATH,
-    inputs=[PUBLIC_KEY, "4321"],
-    signature=SIGNATURE
-)
-value = call(
-    function="get_balance",
-    address=deploy_info["address"],
-    abi_path=ABI_PATH,
-    inputs=[PUBLIC_KEY]
-)
-assert_equal(value, "5321", "Invoke+call failed!")
 
 @pytest.mark.cli
 def test_starknet_cli_auth():
