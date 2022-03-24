@@ -18,9 +18,9 @@ from starkware.starkware_utils.error_handling import StarkErrorCode, StarkExcept
 from werkzeug.datastructures import MultiDict
 
 from .constants import CAIRO_LANG_VERSION
-from .dump import Dumper
 from .starknet_wrapper import StarknetWrapper
 from .util import DumpOn, StarknetDevnetException, custom_int, fixed_length_hex, parse_args
+from .state import state
 
 app = Flask(__name__)
 CORS(app)
@@ -40,16 +40,16 @@ async def add_transaction():
     tx_type = transaction.tx_type.name
 
     if tx_type == TransactionType.DEPLOY.name:
-        contract_address, transaction_hash = await starknet_wrapper.deploy(transaction)
+        contract_address, transaction_hash = await state.starknet_wrapper.deploy(transaction)
         result_dict = {}
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:
-        contract_address, transaction_hash, result_dict = await starknet_wrapper.invoke(transaction)
+        contract_address, transaction_hash, result_dict = await state.starknet_wrapper.invoke(transaction)
     else:
         abort(Response(f"Invalid tx_type: {tx_type}.", 400))
 
     # after tx
-    if dumper.dump_on == DumpOn.TRANSACTION:
-        dumper.dump()
+    if state.dumper.dump_on == DumpOn.TRANSACTION:
+        state.dumper.dump()
 
     return jsonify({
         "code": StarkErrorCode.TRANSACTION_RECEIVED.name,
@@ -81,7 +81,7 @@ async def call_contract():
     call_specifications = validate_call(request.data)
 
     try:
-        result_dict = await starknet_wrapper.call(call_specifications)
+        result_dict = await state.starknet_wrapper.call(call_specifications)
     except StarkException as err:
         # code 400 would make more sense, but alpha returns 500
         abort(Response(err.message, 500))
@@ -118,9 +118,9 @@ async def get_block():
 
     try:
         if block_hash is not None:
-            result_dict = starknet_wrapper.get_block_by_hash(block_hash)
+            result_dict = state.starknet_wrapper.get_block_by_hash(block_hash)
         else:
-            result_dict = starknet_wrapper.get_block_by_number(block_number)
+            result_dict = state.starknet_wrapper.get_block_by_number(block_number)
     except StarkException as err:
         abort(Response(err.message, 500))
     return jsonify(result_dict)
@@ -134,7 +134,7 @@ def get_code():
     _check_block_hash(request.args)
 
     contract_address = request.args.get("contractAddress", type=custom_int)
-    result_dict = starknet_wrapper.get_code(contract_address)
+    result_dict = state.starknet_wrapper.get_code(contract_address)
     return jsonify(result_dict)
 
 @app.route("/feeder_gateway/get_full_contract", methods=["GET"])
@@ -147,7 +147,7 @@ def get_full_contract():
     contract_address = request.args.get("contractAddress", type=custom_int)
 
     try:
-        result_dict = starknet_wrapper.get_full_contract(contract_address)
+        result_dict = state.starknet_wrapper.get_full_contract(contract_address)
     except StarknetDevnetException as error:
         # alpha throws 500 for unitialized contracts
         abort(Response(error.message, 500))
@@ -161,7 +161,7 @@ async def get_storage_at():
     contract_address = request.args.get("contractAddress", type=custom_int)
     key = request.args.get("key", type=custom_int)
 
-    storage = await starknet_wrapper.get_storage_at(contract_address, key)
+    storage = await state.starknet_wrapper.get_storage_at(contract_address, key)
     return jsonify(storage)
 
 @app.route("/feeder_gateway/get_transaction_status", methods=["GET"])
@@ -171,7 +171,7 @@ def get_transaction_status():
     """
 
     transaction_hash = request.args.get("transactionHash")
-    ret = starknet_wrapper.get_transaction_status(transaction_hash)
+    ret = state.starknet_wrapper.get_transaction_status(transaction_hash)
     return jsonify(ret)
 
 @app.route("/feeder_gateway/get_transaction", methods=["GET"])
@@ -181,7 +181,7 @@ def get_transaction():
     """
 
     transaction_hash = request.args.get("transactionHash")
-    ret = starknet_wrapper.get_transaction(transaction_hash)
+    ret = state.starknet_wrapper.get_transaction(transaction_hash)
     return jsonify(ret)
 
 @app.route("/feeder_gateway/get_transaction_receipt", methods=["GET"])
@@ -191,7 +191,7 @@ def get_transaction_receipt():
     """
 
     transaction_hash = request.args.get("transactionHash")
-    ret = starknet_wrapper.get_transaction_receipt(transaction_hash)
+    ret = state.starknet_wrapper.get_transaction_receipt(transaction_hash)
     return jsonify(ret)
 
 @app.route("/feeder_gateway/get_state_update", methods=["GET"])
@@ -205,7 +205,7 @@ def get_state_update():
     block_number = request.args.get("blockNumber", type=custom_int)
 
     try:
-        state_update = starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
+        state_update = state.starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
     except StarkException as err:
         abort(Response(err.message, 500))
 
@@ -232,7 +232,7 @@ async def load_l1_messaging_contract():
     contract_address = request_dict.get("address")
     network_id = request_dict.get("networkId")
 
-    result_dict = await starknet_wrapper.load_messaging_contract_in_l1(network_url, contract_address, network_id)
+    result_dict = await state.starknet_wrapper.load_messaging_contract_in_l1(network_url, contract_address, network_id)
     return jsonify(result_dict)
 
 @app.route("/postman/flush", methods=["POST"])
@@ -241,7 +241,7 @@ async def flush():
     Handles all pending L1 <> L2 messages and sends them to the other layer
     """
 
-    result_dict= await starknet_wrapper.postman_flush()
+    result_dict= await state.starknet_wrapper.postman_flush()
     return jsonify(result_dict)
 
 def validate_load_messaging_contract(request_dict: dict):
@@ -258,26 +258,22 @@ def dump():
     """Dumps the starknet_wrapper"""
 
     request_dict = request.json or {}
-    dump_path = request_dict.get("path") or dumper.dump_path
+    dump_path = request_dict.get("path") or state.dumper.dump_path
     if not dump_path:
         abort(Response("No path provided", 400))
 
-    dumper.dump(dump_path)
+    state.dumper.dump(dump_path)
     return Response(status=200)
 
 def dump_on_exit(_signum, _frame):
     """Dumps on exit."""
-    dumper.dump(dumper.dump_path)
+    state.dumper.dump(state.dumper.dump_path)
     sys.exit(0)
-
-starknet_wrapper = StarknetWrapper()
-dumper = Dumper(starknet_wrapper)
 
 def main():
     """Runs the server."""
 
     # pylint: disable=global-statement, invalid-name
-    global starknet_wrapper
 
     # reduce startup logging
     os.environ["WERKZEUG_RUN_MAIN"] = "true"
@@ -290,7 +286,7 @@ def main():
 
     if args.load_path:
         try:
-            starknet_wrapper = StarknetWrapper.load(args.load_path)
+            state.starknet_wrapper = StarknetWrapper.load(args.load_path)
         except (FileNotFoundError, pickle.UnpicklingError):
             sys.exit(f"Error: Cannot load from {args.load_path}. Make sure the file exists and contains a Devnet dump.")
 
@@ -298,8 +294,8 @@ def main():
         for sig in [signal.SIGTERM, signal.SIGINT]:
             signal.signal(sig, dump_on_exit)
 
-    dumper.dump_path = args.dump_path
-    dumper.dump_on = args.dump_on
+    state.dumper.dump_path = args.dump_path
+    state.dumper.dump_on = args.dump_on
 
     app.run(host=args.host, port=args.port)
 
