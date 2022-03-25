@@ -2,13 +2,12 @@
 A server exposing Starknet functionalities as API endpoints.
 """
 
-import json
 import os
 import signal
 import sys
 import dill as pickle
 
-from flask import Flask, abort, Response, jsonify, request
+from flask import Flask
 from flask_cors import CORS
 
 from .blueprints.base import base
