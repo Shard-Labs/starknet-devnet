@@ -10,6 +10,15 @@ from starknet_devnet.state import state
 
 postman = Blueprint("postman", __name__, url_prefix="/postman")
 
+def validate_load_messaging_contract(request_dict: dict):
+    """Ensure `data` is valid Starknet function call. Returns an `InvokeFunction`."""
+
+    network_url = request_dict.get("networkUrl")
+    if network_url is None:
+        error_message = "L1 network or StarknetMessaging contract address not specified"
+        abort(Response(error_message, 400))
+    return network_url
+
 @postman.route("/postman/load_l1_messaging_contract", methods=["POST"])
 async def load_l1_messaging_contract():
     """
@@ -34,12 +43,3 @@ async def flush():
 
     result_dict= await state.starknet_wrapper.postman_flush()
     return jsonify(result_dict)
-
-def validate_load_messaging_contract(request_dict: dict):
-    """Ensure `data` is valid Starknet function call. Returns an `InvokeFunction`."""
-
-    network_url = request_dict.get("networkUrl")
-    if network_url is None:
-        error_message = "L1 network or StarknetMessaging contract address not specified"
-        abort(Response(error_message, 400))
-    return network_url
