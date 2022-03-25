@@ -19,7 +19,7 @@ def validate_load_messaging_contract(request_dict: dict):
         abort(Response(error_message, 400))
     return network_url
 
-@postman.route("/postman/load_l1_messaging_contract", methods=["POST"])
+@postman.route("/load_l1_messaging_contract", methods=["POST"])
 async def load_l1_messaging_contract():
     """
     Loads a MockStarknetMessaging contract. If one is already deployed in the L1 network specified by the networkUrl argument,
@@ -35,7 +35,7 @@ async def load_l1_messaging_contract():
     result_dict = await state.starknet_wrapper.load_messaging_contract_in_l1(network_url, contract_address, network_id)
     return jsonify(result_dict)
 
-@postman.route("/postman/flush", methods=["POST"])
+@postman.route("/flush", methods=["POST"])
 async def flush():
     """
     Handles all pending L1 <> L2 messages and sends them to the other layer
