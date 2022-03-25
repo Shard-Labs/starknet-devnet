@@ -163,7 +163,6 @@ def assert_tx_status(tx_hash, expected_tx_status):
         "starknet", "tx_status",
         "--hash", tx_hash
     ])
-    print(output.stdout)
     tx_status = json.loads(output.stdout)["tx_status"]
     assert_equal(tx_status, expected_tx_status)
 
@@ -270,6 +269,13 @@ def assert_block(latest_block_number, latest_tx_hash):
     assert_equal(len(latest_block_transactions), 1)
     latest_transaction = latest_block_transactions[0]
     assert_equal(latest_transaction["transaction_hash"], latest_tx_hash)
+
+def assert_block_hash(latest_block_number, expected_block_hash):
+    """Asserts the content of the block with block_number."""
+
+    block = get_block(block_number=latest_block_number, parse=True)
+    assert_equal(block["block_hash"], expected_block_hash)
+    assert_equal(block["status"], "ACCEPTED_ON_L2")
 
 def assert_salty_deploy(contract_path, inputs, salt, expected_address, expected_tx_hash):
     """Run twice deployment with salt. Expect the same output."""

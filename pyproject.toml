@@ -35,6 +35,6 @@ markers = [
     "invoke",
     "state_update",
     "transaction_trace",
-    "web3_messaging",
-    "cli"
+    "general_workflow",
+    "web3_messaging"
 ]

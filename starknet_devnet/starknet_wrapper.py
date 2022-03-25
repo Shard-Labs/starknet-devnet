@@ -71,9 +71,11 @@ class StarknetWrapper:
 
         self.__last_state_update = None
 
-        self.__tx_hash = 0
+        self.lite_mode_block_hash = False
 
-        self.lite_mode = False
+        self.lite_mode_tx_hash = False
+
+        self.lite_mode_state_update = False
 
     @staticmethod
     def load(path: str) -> "StarknetWrapper":
@@ -103,7 +105,7 @@ class StarknetWrapper:
         return starknet.state
 
     async def __update_state(self):
-        if not self.lite_mode:
+        if not self.lite_mode_state_update:
             previous_state = self.__current_carried_state
             assert previous_state is not None
             current_carried_state = (await self.__get_state()).state
@@ -139,9 +141,8 @@ class StarknetWrapper:
 
         state = await self.__get_state()
         contract_definition = deploy_transaction.contract_definition
-        if self.lite_mode:
-            tx_hash = self.__tx_hash
-            self.__tx_hash += 1
+        if self.lite_mode_tx_hash:
+            tx_hash = len(self.__transaction_wrappers)
         else:
             tx_hash = deploy_transaction.calculate_hash(state.general_config)
 
@@ -189,11 +190,13 @@ class StarknetWrapper:
         invoke_transaction: InternalInvokeFunction = InternalInvokeFunction.from_external(transaction, state.general_config)
 
         try:
+            # This check might not be needed in future versions which will interact with the token contract
             if invoke_transaction.max_fee: # handle only if non-zero
                 actual_fee = await self.calculate_actual_fee(transaction)
                 if actual_fee > invoke_transaction.max_fee:
                     message = f"Actual fee exceeded max fee.\n{actual_fee} > {invoke_transaction.max_fee}"
                     raise StarknetDevnetException(message=message)
+
             contract_wrapper = self.__get_contract_wrapper(invoke_transaction.contract_address)
             adapted_result, execution_info = await contract_wrapper.call_or_invoke(
                 Choice.INVOKE,
@@ -318,7 +321,7 @@ class StarknetWrapper:
 
         parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
 
-        if self.lite_mode:
+        if self.lite_mode_block_hash:
             block_hash = block_number
         else:
             block_hash = await calculate_block_hash(

@@ -29,15 +29,15 @@ BALANCE_KEY = "14245262382114413655457292789679226663077624050282087960118686723
 def run_before_and_after_test():
     """Run devnet before and kill it after the test run"""
     # before test
-    devnet_proc = run_devnet_in_background(sleep_seconds=20)
+    devnet_proc = run_devnet_in_background()
 
     yield
 
     # after test
     devnet_proc.kill()
 
-@pytest.mark.cli
-def test_starknet_cli_auth():
+@pytest.mark.general_workflow
+def test_general_workflow_auth():
     """Test CLI auth in devnet"""
 
     deploy_info = deploy(CONTRACT_PATH, [PUBLIC_KEY, INITIAL_BALANCE])
