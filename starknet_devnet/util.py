@@ -10,6 +10,7 @@ import sys
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.business_logic.state import CarriedState
+from starkware.starknet.definitions.general_config import StarknetGeneralConfig
 
 from . import __version__
 
@@ -226,3 +227,26 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
             "storage_diffs": storage_diffs
         }
     }
+
+DEFAULT_GENERAL_CONFIG = StarknetGeneralConfig.load({
+    "event_commitment_tree_height": 64,
+    "global_state_commitment_tree_height": 251,
+    'gas_price': 100000000000,
+    'starknet_os_config': {
+        'chain_id': 'TESTNET',
+        'fee_token_address': '0x20abcf49dad3e9813d65bf1b8d54c5a0c9e6049a3027bd8c2ab315475c0a5c1'
+    },
+    'contract_storage_commitment_tree_height': 251,
+    'cairo_resource_fee_weights': {
+        'n_steps': 0.05,
+        'pedersen_builtin': 0.4,
+        'range_check_builtin': 0.4,
+        'ecdsa_builtin': 25.6,
+        'bitwise_builtin': 12.8,
+        'output_builtin': 0.0,
+        'ec_op_builtin': 0.0
+    }, 'invoke_tx_max_n_steps': 1000000,
+    'sequencer_address': '0x37b2cd6baaa515f520383bee7b7094f892f4c770695fc329a8973e841a971ae',
+    'tx_version': 0,
+    'tx_commitment_tree_height': 64
+})

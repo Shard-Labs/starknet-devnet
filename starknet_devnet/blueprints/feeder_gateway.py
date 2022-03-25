@@ -11,6 +11,7 @@ from werkzeug.datastructures import MultiDict
 
 from starknet_devnet.state import state
 from starknet_devnet.util import custom_int, StarknetDevnetException
+from .shared import validate_transaction
 
 feeder_gateway = Blueprint("feeder_gateway", __name__, url_prefix="/feeder_gateway")
 
@@ -180,9 +181,15 @@ def get_state_update():
     return jsonify(state_update)
 
 @feeder_gateway.route("/estimate_fee", methods=["POST"])
-def estimate_fee():
+async def estimate_fee():
     """Currently a dummy implementation, always returning 0."""
+    transaction = validate_transaction(request.data, InvokeFunction)
+    try:
+        actual_fee = await state.starknet_wrapper.calculate_actual_fee(transaction)
+    except StarkException as stark_exception:
+        abort(Response(stark_exception.message, 500))
+
     return jsonify({
-        "amount": 0,
+        "amount": actual_fee,
         "unit": "wei"
     })

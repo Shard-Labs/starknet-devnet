@@ -30,7 +30,7 @@ def send_call(req_dict: dict):
     )
 
 def assert_deploy_resp(resp: bytes):
-    """Asserts the validity of invoke response body."""
+    """Asserts the validity of deploy response body."""
     resp_dict = json.loads(resp.data.decode("utf-8"))
     assert set(resp_dict.keys()) == set(["address", "code", "transaction_hash"])
     assert resp_dict["code"] == "TRANSACTION_RECEIVED"

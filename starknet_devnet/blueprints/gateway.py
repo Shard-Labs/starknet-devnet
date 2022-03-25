@@ -2,14 +2,12 @@
 Gateway routes
 """
 from flask import Blueprint, abort, Response, request, jsonify
-from marshmallow import ValidationError
-from starkware.starknet.services.api.gateway.transaction import Transaction
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode
 
 from starknet_devnet.util import DumpOn,fixed_length_hex
-from starknet_devnet.constants import CAIRO_LANG_VERSION
 from starknet_devnet.state import state
+from .shared import validate_transaction
 
 gateway = Blueprint("gateay", __name__, url_prefix="/gateway")
 
@@ -44,11 +42,4 @@ async def add_transaction():
         **result_dict
     })
 
-def validate_transaction(data: bytes, loader: Transaction=Transaction):
-    """Ensure `data` is a valid Starknet transaction. Returns the parsed `Transaction`."""
-    try:
-        transaction = loader.loads(data)
-    except (TypeError, ValidationError) as err:
-        msg = f"Invalid tx: {err}\nBe sure to use the correct compilation (json) artifact. Devnet-compatible cairo-lang version: {CAIRO_LANG_VERSION}"
-        abort(Response(msg, 400))
-    return transaction
+
