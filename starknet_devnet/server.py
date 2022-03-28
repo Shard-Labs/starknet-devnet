@@ -65,8 +65,7 @@ def main():
         meinheld.run(app)
     finally:
         if args.dump_on == DumpOn.EXIT:
-            state.dumper.dump(state.dumper.dump_path)
-            sys.exit(0)
+            dump_on_exit()
 
 if __name__ == "__main__":
     main()
