@@ -25,11 +25,6 @@ app.register_blueprint(gateway)
 app.register_blueprint(feeder_gateway)
 app.register_blueprint(postman)
 
-def dump_on_exit(_signum, _frame):
-    """Dumps on exit."""
-    state.dumper.dump(state.dumper.dump_path)
-    sys.exit(0)
-
 def main():
     """Runs the server."""
 
@@ -65,7 +60,8 @@ def main():
         meinheld.run(app)
     finally:
         if args.dump_on == DumpOn.EXIT:
-            dump_on_exit()
+            state.dumper.dump(state.dumper.dump_path)
+            sys.exit(0)
 
 if __name__ == "__main__":
     main()
