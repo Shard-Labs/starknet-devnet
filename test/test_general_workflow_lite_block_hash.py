@@ -1,5 +1,5 @@
 """
-The main testing script, run with the lite block hash calculation mode.
+The general workflow testing script, run with the lite block hash calculation mode.
 """
 
 import pytest

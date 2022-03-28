@@ -1,5 +1,5 @@
 """
-Lite run of the main test script. Tests that main functionalities don't have issues when running lite mode
+Lite run of the general workflow. Tests that main functionalities don't have issues when running lite mode
 """
 
 import pytest

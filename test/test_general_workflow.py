@@ -1,5 +1,5 @@
 """
-The main testing script. Runs the devnet and calls its endpoints.
+Tests the general workflow of the devnet.
 """
 
 import pytest
