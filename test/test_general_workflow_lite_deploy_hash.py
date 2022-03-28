@@ -1,5 +1,5 @@
 """
-The main testing script. Runs the devnet and calls its endpoints.
+The main testing script, run with the lite deploy hash calculation mode.
 """
 
 import pytest
@@ -22,7 +22,7 @@ BALANCE_KEY = "91690777249172926237653410298221994783082898499625723135339861878
 def run_before_and_after_test():
     """Run devnet before and kill it after the test run"""
     # before test
-    devnet_proc = run_devnet_in_background("--lite-mode-tx-hash")
+    devnet_proc = run_devnet_in_background("--lite-mode-deploy-hash")
 
     yield
 

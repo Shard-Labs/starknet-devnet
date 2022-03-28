@@ -319,12 +319,10 @@ def main():
 
     if args.lite_mode:
         starknet_wrapper.lite_mode_block_hash = True
-        starknet_wrapper.lite_mode_tx_hash = True
-        starknet_wrapper.lite_mode_state_update = True
+        starknet_wrapper.lite_mode_deploy_hash = True
     else:
         starknet_wrapper.lite_mode_block_hash = args.lite_mode_block_hash
-        starknet_wrapper.lite_mode_tx_hash = args.lite_mode_tx_hash
-        starknet_wrapper.lite_mode_state_update = args.lite_mode_state_update
+        starknet_wrapper.lite_mode_deploy_hash = args.lite_mode_deploy_hash
 
     try:
         meinheld.listen((args.host, args.port))

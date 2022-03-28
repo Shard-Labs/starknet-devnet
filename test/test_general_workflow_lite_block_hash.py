@@ -1,5 +1,5 @@
 """
-The main testing script. Runs the devnet and calls its endpoints.
+The main testing script, run with the lite block hash calculation mode.
 """
 
 import pytest

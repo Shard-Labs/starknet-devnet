@@ -73,9 +73,7 @@ class StarknetWrapper:
 
         self.lite_mode_block_hash = False
 
-        self.lite_mode_tx_hash = False
-
-        self.lite_mode_state_update = False
+        self.lite_mode_deploy_hash = False
 
     @staticmethod
     def load(path: str) -> "StarknetWrapper":
@@ -105,7 +103,7 @@ class StarknetWrapper:
         return starknet.state
 
     async def __update_state(self):
-        if not self.lite_mode_state_update:
+        if not self.lite_mode_block_hash:
             previous_state = self.__current_carried_state
             assert previous_state is not None
             current_carried_state = (await self.__get_state()).state
@@ -141,7 +139,7 @@ class StarknetWrapper:
 
         state = await self.__get_state()
         contract_definition = deploy_transaction.contract_definition
-        if self.lite_mode_tx_hash:
+        if self.lite_mode_deploy_hash:
             tx_hash = len(self.__transaction_wrappers)
         else:
             tx_hash = deploy_transaction.calculate_hash(state.general_config)

@@ -1,5 +1,5 @@
 """
-The main testing script. Runs the devnet and calls its endpoints.
+Lite run of the main test script. Tests that main functionalities don't have issues when running lite mode
 """
 
 import pytest

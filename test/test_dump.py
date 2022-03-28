@@ -126,7 +126,7 @@ def test_dumping_via_endpoint():
 
 def test_dumping_on_exit():
     """Test dumping on exit."""
-    devnet_proc = run_devnet_in_background("--dump-on", "exit", "--dump-path", DUMP_PATH,sleep_seconds=15)
+    devnet_proc = run_devnet_in_background("--dump-on", "exit", "--dump-path", DUMP_PATH,sleep_seconds=3)
     contract_address = deploy_empty_contract()
 
     invoke("increase_balance", ["10", "20"], contract_address, ABI_PATH)
@@ -135,7 +135,7 @@ def test_dumping_on_exit():
 
     assert_no_dump_present(DUMP_PATH)
     devnet_proc.send_signal(signal.SIGINT) # simulate Ctrl+C because devnet can't handle kill
-    assert_dump_present(DUMP_PATH, sleep_seconds=20)
+    assert_dump_present(DUMP_PATH, sleep_seconds=3)
 
 def test_invalid_dump_on_option():
     """Test behavior when invalid dump-on is provided."""

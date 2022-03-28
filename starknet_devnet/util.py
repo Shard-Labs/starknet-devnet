@@ -134,14 +134,9 @@ def parse_args():
         help="Disables block hash calculation"
     )
     parser.add_argument(
-        "--lite-mode-tx-hash",
+        "--lite-mode-deploy-hash",
         action='store_true',
         help="Disables deploy tx hash calculation"
-    )
-    parser.add_argument(
-        "--lite-mode-state-update",
-        action='store_true',
-        help="Disables state update"
     )
     # Uncomment this once fork support is added
     # parser.add_argument(
