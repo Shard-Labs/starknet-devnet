@@ -178,6 +178,13 @@ docker run \
 ## Block explorer
 To see how to setup a local block explorer (Voyager) check this [post](https://twitter.com/kasiazerosiedem/status/1501492129264123911).
 
+## Lite modes
+To help increase performance of the devnet, a few flags can be passed to the CLI startup command:
+
+  - `--lite-mode` enables all of the optimizations described below (same as using all of the following flags);
+  - `--lite-mode-deploy-hash` disables the calculation of the transaction hash for deploy transactions. It will instead be a simple sequence of numbers;
+  - `--lite-mode-block-hash` disables the calculation of the block hash. It will instead be a simple sequence of numbers;
+
 ## Development
 If you're a developer willing to contribute, be sure to have installed [Poetry](https://pypi.org/project/poetry/).
 

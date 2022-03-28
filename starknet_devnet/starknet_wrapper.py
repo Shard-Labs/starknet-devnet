@@ -71,6 +71,10 @@ class StarknetWrapper:
 
         self.__last_state_update = None
 
+        self.lite_mode_block_hash = False
+
+        self.lite_mode_deploy_hash = False
+
     @staticmethod
     def load(path: str) -> "StarknetWrapper":
         """Load a serialized instance of this class from `path`."""
@@ -99,18 +103,19 @@ class StarknetWrapper:
         return starknet.state
 
     async def __update_state(self):
-        previous_state = self.__current_carried_state
-        assert previous_state is not None
-        current_carried_state = (await self.__get_state()).state
-        updated_shared_state = await current_carried_state.shared_state.apply_state_updates(
-            ffc=current_carried_state.ffc,
-            previous_carried_state=previous_state,
-            current_carried_state=current_carried_state
-        )
-        self.__starknet.state.state.shared_state = updated_shared_state
-        await self.__preserve_current_state(self.__starknet.state.state)
+        if not self.lite_mode_block_hash:
+            previous_state = self.__current_carried_state
+            assert previous_state is not None
+            current_carried_state = (await self.__get_state()).state
+            updated_shared_state = await current_carried_state.shared_state.apply_state_updates(
+                ffc=current_carried_state.ffc,
+                previous_carried_state=previous_state,
+                current_carried_state=current_carried_state
+            )
+            self.__starknet.state.state.shared_state = updated_shared_state
+            await self.__preserve_current_state(self.__starknet.state.state)
 
-        self.__last_state_update = generate_state_update(previous_state, current_carried_state)
+            self.__last_state_update = generate_state_update(previous_state, current_carried_state)
 
     async def __get_state_root(self):
         state = await self.__get_state()
@@ -134,7 +139,11 @@ class StarknetWrapper:
 
         state = await self.__get_state()
         contract_definition = deploy_transaction.contract_definition
-        tx_hash = deploy_transaction.calculate_hash(state.general_config)
+        if self.lite_mode_deploy_hash:
+            tx_hash = len(self.__transaction_wrappers)
+        else:
+            tx_hash = deploy_transaction.calculate_hash(state.general_config)
+
         contract_address = calculate_contract_address(
             caller_address=0,
             constructor_calldata=deploy_transaction.constructor_calldata,
@@ -310,16 +319,21 @@ class StarknetWrapper:
 
         parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
 
-        block_hash = await calculate_block_hash(
-            general_config=state.general_config,
-            parent_hash=int(parent_block_hash, 16),
-            block_number=block_number,
-            global_state_root=state_root,
-            block_timestamp=timestamp,
-            tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
-            tx_signatures=[signature],
-            event_hashes=[]
-        )
+        if self.lite_mode_block_hash:
+            block_hash = block_number
+        else:
+            block_hash = await calculate_block_hash(
+                general_config=state.general_config,
+                parent_hash=int(parent_block_hash, 16),
+                block_number=block_number,
+                global_state_root=state_root,
+                block_timestamp=timestamp,
+                tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
+                tx_signatures=[signature],
+                event_hashes=[]
+            )
+            self.__last_state_update["block_hash"] = hex(block_hash)
+            self.__hash2state_update[block_hash] = self.__last_state_update
 
         block_hash_hexed = fixed_length_hex(block_hash)
         block = {
@@ -335,8 +349,6 @@ class StarknetWrapper:
 
         self.__num2block[block_number] = block
         self.__hash2block[block_hash] = block
-        self.__last_state_update["block_hash"] = hex(block_hash)
-        self.__hash2state_update[block_hash] = self.__last_state_update
 
         return block_hash_hexed, block_number
 

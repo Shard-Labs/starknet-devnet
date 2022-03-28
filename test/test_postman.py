@@ -1,5 +1,5 @@
 """
-Test endpoints directly.
+Test postman usage. This test has one single pytest case, because the whole flow needs to be tested, and requires all steps to be performed
 """
 
 
@@ -8,7 +8,6 @@ from test.settings import L1_URL, GATEWAY_URL
 from test.util import call, deploy, invoke, run_devnet_in_background, load_file_content
 from test.web3_util import web3_call, web3_deploy, web3_transact
 
-import atexit
 import time
 import json
 import subprocess
@@ -26,26 +25,25 @@ ETH_CONTRACTS_PATH = "../starknet-hardhat-example/artifacts/contracts"
 STARKNET_MESSAGING_PATH = f"{ETH_CONTRACTS_PATH}/MockStarknetMessaging.sol/MockStarknetMessaging.json"
 L1L2_EXAMPLE_PATH = f"{ETH_CONTRACTS_PATH}/L1L2.sol/L1L2Example.json"
 
-def pytest_configure():
-    """Set globals"""
-    pytest.L1L2_EXAMPLE_CONTRACT = None
-    pytest.STARKNET_MESSAGING_CONTRACT = None
-    pytest.L2_CONTRACT_ADDRESS = None
-    pytest.WEB3 = None
-
-@pytest.mark.web3_deploy
-def test_init_local_testnet():
-    """Initializes a new local Hardhat testnet instance and a new Mock Messaging contract"""
-
+@pytest.fixture(autouse=True)
+def run_before_and_after_test():
+    """Run devnet before and kill it after the test run"""
+    # Setup devnet
+    devnet_proc = run_devnet_in_background(sleep_seconds=5)
     # Setup L1 testnet
     command = ["npx", "hardhat", "node"]
     # pylint: disable=consider-using-with
-    proc = subprocess.Popen(command,cwd="starknet-hardhat-example", close_fds=True, stdout=subprocess.PIPE)
-    atexit.register(proc.kill)
+    l1_proc = subprocess.Popen(command,cwd="starknet-hardhat-example", close_fds=True, stdout=subprocess.PIPE)
     time.sleep(25)
-    pytest.WEB3 = Web3(Web3.HTTPProvider(L1_URL))
-    pytest.WEB3.eth.default_account = pytest.WEB3.eth.accounts[0]
-    run_devnet_in_background(sleep_seconds=5)
+    yield
+
+    # after test
+    devnet_proc.kill()
+    l1_proc.kill()
+
+def init_messaging_contract():
+    """Initializes the messaging contract"""
+
     deploy_messaging_contract_request = {
         "networkUrl": L1_URL
     }
@@ -53,27 +51,27 @@ def test_init_local_testnet():
         f"{GATEWAY_URL}/postman/load_l1_messaging_contract",
         json=deploy_messaging_contract_request
     )
-    resp_dict = json.loads(resp.text)
-    assert "address" in resp_dict
-    assert resp_dict["l1_provider"] == L1_URL
+    return json.loads(resp.text)
 
-@pytest.mark.web3_deploy
-def test_deploy_l1_contracts():
+
+def deploy_l1_contracts(web3):
     """Deploys Ethereum contracts in the Hardhat testnet instance, including the L1L2Example and MockStarknetMessaging contracts"""
 
     messaging_contract = json.loads(load_file_content(STARKNET_MESSAGING_PATH))
     l1l2_example_contract = json.loads(load_file_content(L1L2_EXAMPLE_PATH))
 
-    pytest.STARKNET_MESSAGING_CONTRACT = web3_deploy(pytest.WEB3,messaging_contract)
-    pytest.L1L2_EXAMPLE_CONTRACT = web3_deploy(pytest.WEB3,l1l2_example_contract,pytest.STARKNET_MESSAGING_CONTRACT.address)
+    starknet_messaging_contract = web3_deploy(web3,messaging_contract)
+    l1l2_example = web3_deploy(web3,l1l2_example_contract,starknet_messaging_contract.address)
 
-@pytest.mark.web3_deploy
-def test_load_messaging_contract():
+    return starknet_messaging_contract, l1l2_example
+
+
+def load_messaging_contract(starknet_messaging_contract_address):
     """Loads a Mock Messaging contract already deployed in the local testnet instance"""
 
     load_messaging_contract_request = {
         "networkUrl": L1_URL,
-        "address": pytest.STARKNET_MESSAGING_CONTRACT.address
+        "address": starknet_messaging_contract_address
     }
 
     resp = requests.post(
@@ -81,13 +79,10 @@ def test_load_messaging_contract():
         json=load_messaging_contract_request
     )
 
-    resp_dict = json.loads(resp.text)
-    assert resp_dict["address"] == pytest.STARKNET_MESSAGING_CONTRACT.address
-    assert resp_dict["l1_provider"] == L1_URL
+    return json.loads(resp.text)
 
-@pytest.mark.deploy
-def test_init_l2_contract():
-    """Deploys the L1L2Example cairo contract"""
+def init_l2_contract(l1l2_example_contract_address):
+    """Deploys the L1L2Example cairo contract, returns the result of calling 'get_balance' """
 
     deploy_info = deploy(CONTRACT_PATH)
 
@@ -102,7 +97,7 @@ def test_init_l2_contract():
         function="withdraw",
         address=deploy_info["address"],
         abi_path=ABI_PATH,
-        inputs=["1","1000",pytest.L1L2_EXAMPLE_CONTRACT.address]
+        inputs=["1","1000",l1l2_example_contract_address]
     )
 
     # flush postman messages
@@ -118,37 +113,36 @@ def test_init_l2_contract():
         inputs=["1"]
     )
 
-    pytest.L2_CONTRACT_ADDRESS=deploy_info["address"]
     assert value == "2333"
+    return deploy_info["address"]
 
-@pytest.mark.web3_messaging
-def test_l1_l2_message_exchange():
+def l1_l2_message_exchange(web3, l1l2_example_contract, l2_contract_address):
     """Tests message exchange"""
 
     # assert contract balance when starting
     balance = web3_call(
         "userBalances",
-        pytest.L1L2_EXAMPLE_CONTRACT,
+        l1l2_example_contract,
         1)
     assert balance == 0
 
     # withdraw in l1 and assert contract balance
     web3_transact(
-        pytest.WEB3,
+        web3,
         "withdraw",
-        pytest.L1L2_EXAMPLE_CONTRACT,
-        int(pytest.L2_CONTRACT_ADDRESS,base=16), 1, 1000)
+        l1l2_example_contract,
+        int(l2_contract_address,base=16), 1, 1000)
 
     balance = web3_call(
         "userBalances",
-        pytest.L1L2_EXAMPLE_CONTRACT,
+        l1l2_example_contract,
         1)
     assert balance == 1000
 
     # assert l2 contract balance
     l2_balance = call(
         function="get_balance",
-        address=pytest.L2_CONTRACT_ADDRESS,
+        address=l2_contract_address,
         abi_path=ABI_PATH,
         inputs=["1"]
     )
@@ -157,14 +151,14 @@ def test_l1_l2_message_exchange():
 
     # deposit in l1 and assert contract balance
     web3_transact(
-        pytest.WEB3,
+        web3,
         "deposit",
-        pytest.L1L2_EXAMPLE_CONTRACT,
-        int(pytest.L2_CONTRACT_ADDRESS,base=16), 1, 600)
+        l1l2_example_contract,
+        int(l2_contract_address,base=16), 1, 600)
 
     balance = web3_call(
         "userBalances",
-        pytest.L1L2_EXAMPLE_CONTRACT,
+        l1l2_example_contract,
         1)
 
     assert balance == 400
@@ -177,9 +171,36 @@ def test_l1_l2_message_exchange():
     # assert l2 contract balance
     l2_balance = call(
         function="get_balance",
-        address=pytest.L2_CONTRACT_ADDRESS,
+        address=l2_contract_address,
         abi_path=ABI_PATH,
         inputs=["1"]
     )
 
     assert l2_balance == "2933"
+
+@pytest.mark.web3_messaging
+def test_postman():
+    """Test postman with a complete L1<>L2 flow"""
+    l1l2_example_contract = None
+    starknet_messaging_contract = None
+    l2_contract_address = None
+    web3 = None
+
+    # Test initializing a local L1 network
+    init_resp = init_messaging_contract()
+    web3 = Web3(Web3.HTTPProvider(L1_URL))
+    web3.eth.default_account = web3.eth.accounts[0]
+    assert "address" in init_resp
+    assert init_resp["l1_provider"] == L1_URL
+
+    starknet_messaging_contract, l1l2_example_contract = deploy_l1_contracts(web3)
+
+    # Test loading the messaging contract
+    load_resp = load_messaging_contract(starknet_messaging_contract.address)
+    assert load_resp["address"] == starknet_messaging_contract.address
+    assert load_resp["l1_provider"] == L1_URL
+
+    # Test initializing the l2 example contract
+    l2_contract_address = init_l2_contract(l1l2_example_contract.address)
+
+    l1_l2_message_exchange(web3,l1l2_example_contract,l2_contract_address)

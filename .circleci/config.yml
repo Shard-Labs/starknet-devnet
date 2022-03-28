@@ -30,26 +30,8 @@ jobs:
           name: Setup example
           command: ./scripts/setup_example.sh
       - run:
-          name: Test interaction with Starknet CLI
-          command: python3 -m test.test_cli
-      - run:
-          name: Test interaction with Starknet CLI (with authentication)
-          command: python3 -m test.test_cli_auth
-      - run:
-          name: Test endpoints directly
-          command: poetry run pytest -s -vv test/test_endpoints.py
-      - run:
-          name: Test postman
-          command: poetry run pytest -s -vv test/test_postman.py
-      - run:
-          name: Test dumping/loading
-          command: poetry run pytest -s -vv test/test_dump.py
-      - run:
-          name: Test get state update endpoint
-          command: poetry run pytest -s -vv test/test_state_update.py
-      - run:
-          name: Test get transaction trace endpoint
-          command: poetry run pytest -s -vv test/test_transaction_trace.py
+          name: Run pytest tests
+          command: poetry run pytest -s -vv test
       - run:
           name: Test plugin - dockerized
           command: ./test/test_plugin.sh

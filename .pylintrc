@@ -5,5 +5,12 @@ max-line-length=150
 min-public-methods=1
 
 [SIMILARITIES]
-min-similarity-lines=20
+min-similarity-lines=50
 ignore-imports=no
+
+[TYPECHECK]
+
+# List of members which are set dynamically and missed by pylint inference
+# system, and so shouldn't trigger E1101 when accessed. Python regular
+# expressions are accepted.
+generated-members=meinheld.*

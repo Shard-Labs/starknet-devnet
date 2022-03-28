@@ -123,6 +123,21 @@ def parse_args():
         help=f"Specify when to dump; can dump on: {DUMP_ON_OPTIONS_STRINGIFIED}",
         type=parse_dump_on
     )
+    parser.add_argument(
+        "--lite-mode",
+        action='store_true',
+        help="Applies all optimizations by disabling some features. These can be applied individually by using other flags instead of this one."
+    )
+    parser.add_argument(
+        "--lite-mode-block-hash",
+        action='store_true',
+        help="Disables block hash calculation"
+    )
+    parser.add_argument(
+        "--lite-mode-deploy-hash",
+        action='store_true',
+        help="Disables deploy tx hash calculation"
+    )
     # Uncomment this once fork support is added
     # parser.add_argument(
     #     "--fork", "-f",

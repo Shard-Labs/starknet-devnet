@@ -126,7 +126,7 @@ def test_dumping_via_endpoint():
 
 def test_dumping_on_exit():
     """Test dumping on exit."""
-    devnet_proc = run_devnet_in_background("--dump-on", "exit", "--dump-path", DUMP_PATH)
+    devnet_proc = run_devnet_in_background("--dump-on", "exit", "--dump-path", DUMP_PATH,sleep_seconds=3)
     contract_address = deploy_empty_contract()
 
     invoke("increase_balance", ["10", "20"], contract_address, ABI_PATH)

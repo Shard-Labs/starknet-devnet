@@ -26,6 +26,7 @@ def run_devnet_in_background(*args, sleep_seconds=3):
     command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT, *args]
     # pylint: disable=consider-using-with
     proc = subprocess.Popen(command, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
     time.sleep(sleep_seconds)
     atexit.register(proc.kill)
     return proc
@@ -268,6 +269,13 @@ def assert_block(latest_block_number, latest_tx_hash):
     assert_equal(len(latest_block_transactions), 1)
     latest_transaction = latest_block_transactions[0]
     assert_equal(latest_transaction["transaction_hash"], latest_tx_hash)
+
+def assert_block_hash(latest_block_number, expected_block_hash):
+    """Asserts the content of the block with block_number."""
+
+    block = get_block(block_number=latest_block_number, parse=True)
+    assert_equal(block["block_hash"], expected_block_hash)
+    assert_equal(block["status"], "ACCEPTED_ON_L2")
 
 def assert_salty_deploy(contract_path, inputs, salt, expected_address, expected_tx_hash):
     """Run twice deployment with salt. Expect the same output."""
