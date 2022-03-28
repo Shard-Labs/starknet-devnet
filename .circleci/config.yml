@@ -9,50 +9,118 @@ aliases:
           - master
     requires:
       - test
+  - &restore_cairo_cache
+      - restore_cache:
+          name: "Restore cairo-lang Cache"
+          key: cairo-lang-cache-{{ arch }}-v2-{{ checksum "/tmp/cairo-lang-version" }}
+  - &save_cairo_cache
+      - save_cache:
+          name: "Save cairo-lang Cache"
+          key: cairo-lang-cache-{{ arch }}-v2-{{ checksum "/tmp/cairo-lang-version" }}
+          paths:
+              - /opt/circleci/.pyenv/versions/3.8.9/lib/python3.8/site-packages/cairo-lang
+              - /usr/local/bin/starknet
+              - /usr/local/bin/starknet-compile
+  - &restore_python_cache
+      - restore_cache:
+          name: "Restore python Cache"
+          key: python-cache-{{ arch }}-v2-{{ checksum "/tmp/python-version" }}
+  - &save_python_cache
+      - save_cache:
+          name: "Save python Cache"
+          key: python-cache-{{ arch }}-v2-{{ checksum "/tmp/python-version" }}
+          paths:
+              - /opt/circleci/.pyenv/versions/3.8.9
+  - &restore_poetry_cache
+      - restore_cache:
+          name: "Restore poetry dependency cache"
+          key: poetry-cache-{{ arch }}-v1-{{ checksum "poetry.lock" }}
+  - &save_poetry_cache
+      - save_cache:
+          name: "Save poetry dependency cache"
+          key: poetry-cache-{{ arch }}-v1-{{ checksum "poetry.lock" }}
+          paths:
+              - /home/circleci/.cache/pypoetry/virtualenvs/starknet-devnet-3aSsmiER-py3.8
+
+commands:
+    fetch_dependecies_version:
+        description: "Fetch the dependencies version"
+        steps:
+            - run:
+                  name: "Set cairo-lang version"
+                  command: echo 0.8.0 > /tmp/cairo-lang-version
+            - run:
+                  name: "Set python version"
+                  command: echo 3.8.9 > /tmp/python-version
+    restore_dependency_cache:
+        description: "Restore the dependencies from cache"
+        steps:
+          - <<: *restore_cairo_cache
+          - <<: *restore_python_cache
+          - <<: *restore_poetry_cache
+    save_dependency_cache:
+        description: "Save the dependencies to cache"
+        steps:
+            - <<: *save_cairo_cache
+            - <<: *save_python_cache
+            - <<: *save_poetry_cache
 
 jobs:
   test:
     machine:
       image: ubuntu-2004:202107-02
     resource_class: medium
+    parallelism: 2
     steps:
       - checkout
+      - fetch_dependecies_version
+      - restore_dependency_cache
       - run:
           name: Install development tools
           command: ./scripts/install_dev_tools.sh
       - run:
           name: Install dependencies
           command: ./scripts/install_dependencies.sh
-      - run:
-          name: Lint
-          command: poetry run pylint starknet_devnet test
-      - run:
-          name: Setup example
-          command: ./scripts/setup_example.sh
-      - run:
-          name: Run pytest tests
-          command: poetry run pytest -s -vv test
-      - run:
-          name: Test plugin - dockerized
-          command: ./test/test_plugin.sh
-          no_output_timeout: 1m
-          environment:
-            HARDHAT_CONFIG_FILE: ../test/hardhat.config.dockerized.ts
-            TEST_FILE: test/quick-test.ts
-      - run:
-          name: Test plugin - venv (tests various cases in sample-test)
-          command: ./test/test_plugin.sh
-          no_output_timeout: 1m
-          environment:
-            HARDHAT_CONFIG_FILE: ../test/hardhat.config.venv.ts
-            TEST_FILE: test/sample-test.ts
-      - run:
-          name: Test account+fee interaction (through plugin with venv)
-          command: ./test/test_plugin.sh
-          no_output_timeout: 1m
-          environment:
-            HARDHAT_CONFIG_FILE: ../test/hardhat.config.venv.ts
-            TEST_FILE: test/oz-account-test.ts
+      # - run:
+      #     name: Lint
+      #     command: poetry run pylint starknet_devnet test
+      # - run:
+      #     name: Setup example
+      #     command: ./scripts/setup_example.sh
+      # - run:
+      #     name: Run pytest tests
+      #     parallel: true
+      #     command: |
+      #       cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+      #       shopt -s globstar
+      #       TESTFILES=$(circleci tests glob test/test*.py | circleci tests split --split-by=timings)
+      #       mkdir -p test-results
+      #       shopt -u globstar
+      #       poetry run pytest -s --junitxml=test-results/junit.xml -vv $TESTFILES
+      # - run:
+      #     name: Test plugin - dockerized
+      #     command: ./test/test_plugin.sh
+      #     no_output_timeout: 1m
+      #     environment:
+      #       HARDHAT_CONFIG_FILE: ../test/hardhat.config.dockerized.ts
+      #       TEST_FILE: test/quick-test.ts
+      # - run:
+      #     name: Test plugin - venv (tests various cases in sample-test)
+      #     command: ./test/test_plugin.sh
+      #     no_output_timeout: 1m
+      #     environment:
+      #       HARDHAT_CONFIG_FILE: ../test/hardhat.config.venv.ts
+      #       TEST_FILE: test/sample-test.ts
+      # - run:
+      #     name: Test account+fee interaction (through plugin with venv)
+      #     command: ./test/test_plugin.sh
+      #     no_output_timeout: 1m
+      #     environment:
+      #       HARDHAT_CONFIG_FILE: ../test/hardhat.config.venv.ts
+      #       TEST_FILE: test/oz-account-test.ts
+      # - store_test_results:
+      #     path: test-results
+      - save_dependency_cache
   package_build_and_publish:
     docker:
       - image: cimg/python:3.7
