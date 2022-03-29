@@ -16,10 +16,10 @@ from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT
 class ReturnCodeAssertionError(AssertionError):
     """Error to be raised when the return code of an executed process is not as expected."""
 
-def run_devnet_in_background(*args, sleep_seconds=3):
+def run_devnet_in_background(*args, sleep_seconds=5):
     """
     Runs starknet-devnet in background.
-    By default sleeps 3 second after spawning devnet.
+    By default sleeps 5 second after spawning devnet.
     Accepts extra args to pass to `starknet-devnet` command.
     Returns the process handle.
     """
