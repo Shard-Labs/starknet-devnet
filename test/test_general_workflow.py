@@ -38,7 +38,7 @@ def run_before_and_after_test():
     # after test
     devnet_proc.kill()
 
-@pytest.mark.test_general_workflow
+@pytest.mark.general_workflow
 def test_general_workflow():
     """Test devnet with CLI"""
     deploy_info = deploy(CONTRACT_PATH, ["0"])

@@ -38,3 +38,5 @@ markers = [
     "general_workflow",
     "web3_messaging"
 ]
+junit_family="xunit1"
+asyncio_mode="strict"
