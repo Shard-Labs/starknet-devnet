@@ -45,12 +45,14 @@ jobs:
   package_build_and_publish:
     docker:
       - image: cimg/python:3.7
+    resource_class: medium
     steps:
       - checkout
       - run: ./scripts/package_build_and_publish.sh
   image_build_and_push:
     docker:
       - image: cimg/base:2021.04
+    resource_class: medium
     steps:
       - checkout
       - setup_remote_docker:
