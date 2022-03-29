@@ -2,7 +2,6 @@
 A server exposing Starknet functionalities as API endpoints.
 """
 
-import os
 import sys
 import meinheld
 import dill as pickle
@@ -28,11 +27,6 @@ app.register_blueprint(postman)
 def main():
     """Runs the server."""
 
-    # pylint: disable=global-statement, invalid-name
-
-    # reduce startup logging
-    os.environ["WERKZEUG_RUN_MAIN"] = "true"
-
     args = parse_args()
 
     # Uncomment this once fork support is added
@@ -57,7 +51,10 @@ def main():
 
     try:
         meinheld.listen((args.host, args.port))
+        print(f" * Listening on http://{args.host}:{args.port}/ (Press CTRL+C to quit)")
         meinheld.run(app)
+    except KeyboardInterrupt:
+        pass
     finally:
         if args.dump_on == DumpOn.EXIT:
             state.dumper.dump()
