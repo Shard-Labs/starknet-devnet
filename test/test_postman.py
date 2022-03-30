@@ -29,7 +29,7 @@ L1L2_EXAMPLE_PATH = f"{ETH_CONTRACTS_PATH}/L1L2.sol/L1L2Example.json"
 def run_before_and_after_test():
     """Run devnet before and kill it after the test run"""
     # Setup devnet
-    devnet_proc = run_devnet_in_background(sleep_seconds=10)
+    devnet_proc = run_devnet_in_background(sleep_seconds=5)
     # Setup L1 testnet
     command = ["npx", "hardhat", "node"]
     # pylint: disable=consider-using-with
@@ -51,7 +51,6 @@ def init_messaging_contract():
         f"{GATEWAY_URL}/postman/load_l1_messaging_contract",
         json=deploy_messaging_contract_request
     )
-    print(resp.text)
     return json.loads(resp.text)
 
 
