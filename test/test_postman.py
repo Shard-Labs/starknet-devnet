@@ -29,7 +29,7 @@ L1L2_EXAMPLE_PATH = f"{ETH_CONTRACTS_PATH}/L1L2.sol/L1L2Example.json"
 def run_before_and_after_test():
     """Run devnet before and kill it after the test run"""
     # Setup devnet
-    devnet_proc = run_devnet_in_background(sleep_seconds=5)
+    devnet_proc = run_devnet_in_background(sleep_seconds=10)
     # Setup L1 testnet
     command = ["npx", "hardhat", "node"]
     # pylint: disable=consider-using-with
@@ -51,6 +51,7 @@ def init_messaging_contract():
         f"{GATEWAY_URL}/postman/load_l1_messaging_contract",
         json=deploy_messaging_contract_request
     )
+    print(resp.text)
     return json.loads(resp.text)
 
 
@@ -60,7 +61,8 @@ def deploy_l1_contracts(web3):
     messaging_contract = json.loads(load_file_content(STARKNET_MESSAGING_PATH))
     l1l2_example_contract = json.loads(load_file_content(L1L2_EXAMPLE_PATH))
 
-    starknet_messaging_contract = web3_deploy(web3,messaging_contract)
+    # Deploys a new mock contract so that the feature for loading an already deployed messaging contract can be tested
+    starknet_messaging_contract = web3_deploy(web3,messaging_contract ,0)
     l1l2_example = web3_deploy(web3,l1l2_example_contract,starknet_messaging_contract.address)
 
     return starknet_messaging_contract, l1l2_example

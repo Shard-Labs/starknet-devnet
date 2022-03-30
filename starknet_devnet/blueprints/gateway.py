@@ -41,5 +41,3 @@ async def add_transaction():
         "address": fixed_length_hex(contract_address),
         **result_dict
     })
-
-

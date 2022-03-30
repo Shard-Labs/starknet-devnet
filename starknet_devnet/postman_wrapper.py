@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 from web3 import HTTPProvider, Web3
 from starkware.contracts.utils import load_nearby_contract
 
-from .postman.postman import Postman
-from .postman.eth_test_utils import EthAccount, EthContract
+from starkware.starknet.testing.postman import Postman
+from starkware.eth.eth_test_utils import EthAccount, EthContract
 
 from .constants import TIMEOUT_FOR_WEB3_REQUESTS
 
@@ -41,7 +41,7 @@ class LocalPostmanWrapper(PostmanWrapper):
 
     def load_mock_messaging_contract_in_l1(self, starknet, contract_address):
         if contract_address is None:
-            self.mock_starknet_messaging_contract = self.eth_account.deploy(load_nearby_contract("MockStarknetMessaging"))
+            self.mock_starknet_messaging_contract = self.eth_account.deploy(load_nearby_contract("MockStarknetMessaging"), 0)
         else:
             address = Web3.toChecksumAddress(contract_address)
             contract_json = load_nearby_contract("MockStarknetMessaging")
