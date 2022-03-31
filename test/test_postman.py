@@ -16,6 +16,7 @@ import pytest
 
 from web3 import Web3
 
+from constants import L1_MESSAGE_CANCELLATION_DELAY
 from .shared import ARTIFACTS_PATH
 
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/l1l2.cairo/l1l2.json"
@@ -61,7 +62,7 @@ def deploy_l1_contracts(web3):
     l1l2_example_contract = json.loads(load_file_content(L1L2_EXAMPLE_PATH))
 
     # Deploys a new mock contract so that the feature for loading an already deployed messaging contract can be tested
-    starknet_messaging_contract = web3_deploy(web3,messaging_contract ,0)
+    starknet_messaging_contract = web3_deploy(web3, messaging_contract , L1_MESSAGE_CANCELLATION_DELAY)
     l1l2_example = web3_deploy(web3,l1l2_example_contract,starknet_messaging_contract.address)
 
     return starknet_messaging_contract, l1l2_example
