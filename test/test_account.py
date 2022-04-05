@@ -4,23 +4,26 @@ Test account functionality.
 
 import pytest
 
+from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.crypto.signature.signature import private_to_stark_key, sign
 from starkware.starknet.public.abi import get_selector_from_name
-from starkware.cairo.common.hash_state import compute_hash_on_elements
 
+from .shared import ABI_PATH, CONTRACT_PATH
 from .util import assert_tx_status, deploy, run_devnet_in_background, call, invoke
-from .shared import ABI_PATH, ARTIFACTS_PATH, CONTRACT_PATH
+
+ACCOUNT_ARTIFACTS_PATH = "starknet_devnet/accounts_artifacts"
+ACCOUNT_AUTHOR = "OpenZeppelin"
+ACCOUNT_VERSION = "0.1.0"
+
+ACCOUNT_PATH = f"{ACCOUNT_ARTIFACTS_PATH}/{ACCOUNT_AUTHOR}/{ACCOUNT_VERSION}/Account.cairo/Account.json"
+ACCOUNT_ABI_PATH = f"{ACCOUNT_ARTIFACTS_PATH}/{ACCOUNT_AUTHOR}/{ACCOUNT_VERSION}/Account.cairo/Account_abi.json"
+SALT = "0x99"
+ACCOUNT_ADDRESS = "0x066a91d591d5ba09d37f21fd526242c1ddc6dc6b0ce72b2482a4c6c033114e3a"
+
+TRANSACTION_VERSION = 0
 
 PRIVATE_KEY = 123456789987654321
 PUBLIC_KEY = private_to_stark_key(PRIVATE_KEY)
-OTHER_PRIVATE_KEY = 987654321123456789
-OTHER_PUBLIC_KEY = private_to_stark_key(OTHER_PRIVATE_KEY)
-
-SALT = "0x99"
-ACCOUNT_ADDRESS = "0x066a91d591d5ba09d37f21fd526242c1ddc6dc6b0ce72b2482a4c6c033114e3a"
-TRANSACTION_VERSION = 0
-ACCOUNT_ARTIFACT_PATH = f"{ARTIFACTS_PATH}/Account.cairo/Account.json"
-ACCOUNT_ABI_PATH = f"{ARTIFACTS_PATH}/Account.cairo/Account_abi.json"
 
 @pytest.fixture(autouse=True)
 def run_before_and_after_test():
@@ -40,7 +43,7 @@ def deploy_empty_contract():
 
 def deploy_account_contract():
     """Deploy account contract."""
-    return deploy(ACCOUNT_ARTIFACT_PATH, inputs=[str(PUBLIC_KEY)], salt=SALT)
+    return deploy(ACCOUNT_PATH, inputs=[str(PUBLIC_KEY)], salt=SALT)
 
 def get_nonce():
     """Get nonce."""
