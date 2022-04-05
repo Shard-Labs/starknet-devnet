@@ -11,7 +11,7 @@ from web3 import Web3
 
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
-from starkware.starknet.business_logic.state import CarriedState
+from starkware.starknet.business_logic.state.state import CarriedState
 from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee_by_cairo_usage
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address

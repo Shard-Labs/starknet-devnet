@@ -9,7 +9,7 @@ import sys
 
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.testing.contract import StarknetContract
-from starkware.starknet.business_logic.state import CarriedState
+from starkware.starknet.business_logic.state.state import CarriedState
 from starkware.starknet.definitions.general_config import StarknetGeneralConfig
 
 from . import __version__
