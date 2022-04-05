@@ -537,10 +537,4 @@ Exception:
         state_copy = state.state._copy() # pylint: disable=protected-access
         execution_info = await internal_tx.apply_state_updates(state_copy, state.general_config)
 
-        cairo_resource_usage = execution_info.call_info.execution_resources.to_dict()
-
-        return calculate_tx_fee_by_cairo_usage(
-            general_config=state.general_config,
-            cairo_resource_usage=cairo_resource_usage,
-            l1_gas_usage=0
-        )
+        return execution_info.actual_fee

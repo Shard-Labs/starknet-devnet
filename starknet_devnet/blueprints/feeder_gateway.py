@@ -182,7 +182,7 @@ def get_state_update():
 
 @feeder_gateway.route("/estimate_fee", methods=["POST"])
 async def estimate_fee():
-    """Currently a dummy implementation, always returning 0."""
+    """Returns the estimated fee for a transaction."""
     transaction = validate_transaction(request.data, InvokeFunction)
     try:
         actual_fee = await state.starknet_wrapper.calculate_actual_fee(transaction)
