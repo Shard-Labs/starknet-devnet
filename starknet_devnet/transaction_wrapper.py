@@ -32,6 +32,7 @@ class DeployTransactionDetails(TransactionDetails):
     """Transaction details of `DeployTransaction`."""
     constructor_calldata: List[str]
     contract_address_salt: str
+    class_hash: str
 
 
 @dataclass
@@ -118,7 +119,15 @@ class DeployTransactionWrapper(TransactionWrapper):
     """Wrapper of Deploy Transaction."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, transaction: Deploy, contract_address: int, tx_hash: int, status: TxStatus, execution_info: StarknetTransactionExecutionInfo):
+    def __init__(
+        self,
+        transaction: Deploy,
+        contract_address: int,
+        tx_hash: int,
+        status: TxStatus,
+        execution_info: StarknetTransactionExecutionInfo,
+        contract_hash: bytes
+    ):
         super().__init__(
             status,
             execution_info,
@@ -127,7 +136,8 @@ class DeployTransactionWrapper(TransactionWrapper):
                 contract_address=fixed_length_hex(contract_address),
                 transaction_hash=fixed_length_hex(tx_hash),
                 constructor_calldata=[hex(arg) for arg in transaction.constructor_calldata],
-                contract_address_salt=hex(transaction.contract_address_salt)
+                contract_address_salt=hex(transaction.contract_address_salt),
+                class_hash=fixed_length_hex(int.from_bytes(contract_hash, "big"))
             )
         )
 

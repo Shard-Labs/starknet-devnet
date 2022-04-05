@@ -12,7 +12,6 @@ from web3 import Web3
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
 from starkware.starknet.business_logic.state.state import CarriedState
-from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee_by_cairo_usage
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Transaction
@@ -177,7 +176,8 @@ class StarknetWrapper:
                 tx_hash=tx_hash,
                 status=status,
                 execution_info=execution_info,
-                error_message=error_message
+                error_message=error_message,
+                contract_hash=self.__current_carried_state.contract_states[contract_address].state.contract_hash
             )
 
         return contract_address, tx_hash
@@ -386,7 +386,7 @@ class StarknetWrapper:
 
     # pylint: disable=too-many-arguments
     async def __store_transaction(self, transaction: Transaction, contract_address: int, tx_hash: int, status: TxStatus,
-        execution_info: StarknetTransactionExecutionInfo, error_message: str=None
+        execution_info: StarknetTransactionExecutionInfo, error_message: str=None, contract_hash: bytes=None
     ):
         """Stores the provided data as a deploy transaction in `self.transactions`."""
         if transaction.tx_type == TransactionType.DEPLOY:
@@ -395,7 +395,8 @@ class StarknetWrapper:
                 contract_address=contract_address,
                 tx_hash=tx_hash,
                 status=status,
-                execution_info=execution_info
+                execution_info=execution_info,
+                contract_hash=contract_hash,
             )
         elif transaction.tx_type == TransactionType.INVOKE_FUNCTION:
             tx_wrapper = InvokeTransactionWrapper(transaction, status, execution_info)
