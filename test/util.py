@@ -71,7 +71,7 @@ def my_run(args, raise_on_nonzero=True, add_gateway_urls=True):
 def deploy(contract, inputs=None, salt=None):
     """Wrapper around starknet deploy"""
     args = [
-        "starknet", "deploy",
+        "poetry", "run", "starknet", "deploy",
         "--contract", contract,
     ]
     if inputs:
@@ -87,7 +87,7 @@ def deploy(contract, inputs=None, salt=None):
 def assert_transaction(tx_hash, expected_status, expected_signature=None):
     """Wrapper around starknet get_transaction"""
     output = my_run([
-        "starknet", "get_transaction",
+        "poetry", "run", "starknet", "get_transaction",
         "--hash", tx_hash,
     ])
     transaction = json.loads(output.stdout)
@@ -98,7 +98,7 @@ def assert_transaction(tx_hash, expected_status, expected_signature=None):
 def assert_transaction_not_received(tx_hash):
     """Assert correct tx response when there is no tx with `tx_hash`."""
     output = my_run([
-        "starknet", "get_transaction",
+        "poetry", "run", "starknet", "get_transaction",
         "--hash", tx_hash
     ])
     transaction = json.loads(output.stdout)
@@ -109,7 +109,7 @@ def assert_transaction_not_received(tx_hash):
 def assert_transaction_receipt_not_received(tx_hash):
     """Assert correct tx receipt response when there is no tx with `tx_hash`."""
     output = my_run([
-        "starknet", "get_transaction_receipt",
+        "poetry", "run", "starknet", "get_transaction_receipt",
         "--hash", tx_hash,
     ])
     receipt = json.loads(output.stdout)
@@ -123,7 +123,7 @@ def assert_transaction_receipt_not_received(tx_hash):
 def invoke(function, inputs, address, abi_path, signature=None):
     """Wrapper around starknet invoke. Returns tx hash."""
     args = [
-        "starknet", "invoke",
+        "poetry", "run", "starknet", "invoke",
         "--function", function,
         "--inputs", *inputs,
         "--address", address,
@@ -139,7 +139,7 @@ def invoke(function, inputs, address, abi_path, signature=None):
 def call(function, address, abi_path, inputs=None):
     """Wrapper around starknet call"""
     args = [
-        "starknet", "call",
+        "poetry", "run", "starknet", "call",
         "--function", function,
         "--address", address,
         "--abi", abi_path,
@@ -160,7 +160,7 @@ def load_contract_definition(contract_path: str):
 def assert_tx_status(tx_hash, expected_tx_status):
     """Asserts the tx_status of the tx with tx_hash."""
     output = my_run([
-        "starknet", "tx_status",
+        "poetry", "run", "starknet", "tx_status",
         "--hash", tx_hash
     ])
     tx_status = json.loads(output.stdout)["tx_status"]
@@ -169,7 +169,7 @@ def assert_tx_status(tx_hash, expected_tx_status):
 def assert_contract_code(address):
     """Asserts the content of the code of a contract at address."""
     output = my_run([
-        "starknet", "get_code",
+        "poetry", "run", "starknet", "get_code",
         "--contract_address", address
     ])
     code = json.loads(output.stdout)
@@ -179,7 +179,7 @@ def assert_contract_code(address):
 def assert_contract_definition(address, contract_path):
     """Asserts the content of the contract definition of a contract at address."""
     output = my_run([
-        "starknet", "get_full_contract",
+        "poetry", "run", "starknet", "get_full_contract",
         "--contract_address", address
     ])
     contract_definition: ContractDefinition = ContractDefinition.load(json.loads(output.stdout))
@@ -191,7 +191,7 @@ def assert_contract_definition(address, contract_path):
 def assert_storage(address, key, expected_value):
     """Asserts the storage value stored at (address, key)."""
     output = my_run([
-        "starknet", "get_storage_at",
+        "poetry", "run", "starknet", "get_storage_at",
         "--contract_address", address,
         "--key", key
     ])
@@ -205,7 +205,7 @@ def load_json_from_path(path):
 def assert_receipt(tx_hash, expected_path):
     """Asserts the content of the receipt of tx with tx_hash."""
     output = my_run([
-        "starknet", "get_transaction_receipt",
+        "poetry", "run", "starknet", "get_transaction_receipt",
         "--hash", tx_hash
     ])
     receipt = json.loads(output.stdout)
@@ -221,7 +221,7 @@ def assert_receipt(tx_hash, expected_path):
 def assert_events(tx_hash, expected_path):
     """Asserts the content of the events element of the receipt of tx with tx_hash."""
     output = my_run([
-        "starknet", "get_transaction_receipt",
+        "poetry", "run", "starknet", "get_transaction_receipt",
         "--hash", tx_hash
     ])
     receipt = json.loads(output.stdout)
@@ -231,7 +231,7 @@ def assert_events(tx_hash, expected_path):
 def get_block(block_number=None, parse=False):
     """Get the block with block_number. If no number provided, return the last."""
     args = [
-        "starknet", "get_block",
+        "poetry", "run", "starknet", "get_block",
     ]
     if block_number:
         args.extend(["--number", str(block_number)])

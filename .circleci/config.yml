@@ -22,9 +22,6 @@ jobs:
           name: Install development tools
           command: ./scripts/install_dev_tools.sh
       - run:
-          name: Install dependencies
-          command: ./scripts/install_dependencies.sh
-      - run:
           name: Lint
           command: poetry run pylint starknet_devnet test
       - run:
