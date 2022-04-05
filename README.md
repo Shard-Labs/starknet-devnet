@@ -1,44 +1,54 @@
 ## Introduction
+
 A Flask wrapper of Starknet state. Similar in purpose to Ganache.
 
 Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 
 ## Contents
+
 - [Install](#install)
 - [Disclaimer](#disclaimer)
 - [Run](#run)
 - [Interaction](#interaction)
 - [Dumping and Loading](#dumping)
-- [Hardhat integration](#hardhat-integration)
-- [L1-L2 Postman communication](#postman-integration)
-- [Block explorer](#block-explorer)
+- [Hardhat Integration](#hardhat-integration)
+- [L1-L2 Postman Communication](#postman-integration)
+- [Block Explorer](#block-explorer)
+- [Lite Mode](#lite-mode)
 - [Development](#development)
 
 ## Install
+
 ```text
 pip install starknet-devnet
 ```
 
 ### Requirements
+
 Works with Python versions <=3.8.9.
 
 On Ubuntu/Debian, first run:
+
 ```text
 sudo apt install -y libgmp3-dev
 ```
 
 On Mac, you can use `brew`:
+
 ```text
 brew install gmp
 ```
 
 ## Disclaimer
+
 - Devnet should not be used as a replacement for Alpha testnet. After testing on Devnet, be sure to test on testnet!
 - Specifying a block by its hash/number is not supported. All interaction is done with the latest block.
 - Read more in [interaction](#interaction-api).
 
 ## Run
+
 Installing the package adds the `starknet-devnet` command.
+
 ```text
 usage: starknet-devnet [-h] [-v] [--host HOST] [--port PORT]
 
@@ -58,17 +68,21 @@ optional arguments:
 ```
 
 ### Run with Docker
+
 Devnet is available as a Docker container ([shardlabs/starknet-devnet](https://hub.docker.com/repository/docker/shardlabs/starknet-devnet)):
+
 ```text
 docker pull shardlabs/starknet-devnet
 ```
 
 The server inside the container listens to the port 5000, which you need to publish to a desired `<PORT>` on your host machine:
+
 ```text
 docker run -p [HOST:]<PORT>:5000 shardlabs/starknet-devnet
 ```
 
 E.g. if you want to use your host machine's `127.0.0.1:5000`, you need to run:
+
 ```text
 docker run -p 127.0.0.1:5000:5000 shardlabs/starknet-devnet
 ```
@@ -78,6 +92,7 @@ You may ignore any address-related output logged on container startup (e.g. `Run
 If you don't specify the `HOST` part, the server will indeed be available on all of your host machine's addresses (localhost, local network IP, etc.), which may present a security issue if you don't want anyone from the local network to access your Devnet instance.
 
 ## Interaction
+
 - Interact with Devnet as you would with the official Starknet [Alpha testnet](https://www.cairo-lang.org/docs/hello_starknet/amm.html?highlight=alpha#interaction-examples).
 - The exact underlying API is not exposed for the same reason Alpha testnet does not expose it.
 - To use Devnet with Starknet CLI, provide Devnet's URL to the `--gateway_url` and `--feeder_gateway_url` options of Starknet CLI commands.
@@ -99,26 +114,36 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `get_contract_addresses`
 
 ## Hardhat integration
+
 - If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin), see [here](https://github.com/Shard-Labs/starknet-hardhat-plugin#testing-network) on how to edit its config file to integrate Devnet.
 
 ## Postman integration
-Postman is a Starknet utility that allows testing L1 <> L2 interactions. To utilize functionality, you can use [`starknet-hardhat-plugin`](https://github.com/Shard-Labs/starknet-hardhat-plugin), as witnessed in [this example](https://github.com/Shard-Labs/starknet-hardhat-example/blob/master/test/postman.test.ts). Or you can directly interact with the two Postman-specific endpoints:
 
-- Load a `StarknetMockMessaging` contract. The `address` in the body is optional. If provided, the `StarknetMockMessaging` contract will be fetched from that address, otherwise a new one will be deployed:
-  - POST "/postman/load_l1_messaging_contract"
-  - body: `{ "networkUrl":"http://localhost:5005", "address":"0x83D76591560d9CD02CE16c060c92118d19F996b3" }`
+Postman is a Starknet utility that allows testing L1 <> L2 interactions. To utilize this, you can use [`starknet-hardhat-plugin`](https://github.com/Shard-Labs/starknet-hardhat-plugin), as witnessed in [this example](https://github.com/Shard-Labs/starknet-hardhat-example/blob/master/test/postman.test.ts). Or you can directly interact with the two Postman-specific endpoints:
+
+- Load a `StarknetMockMessaging` contract. The `address` parameter is optional; if provided, the `StarknetMockMessaging` contract will be fetched from that address, otherwise a new one will be deployed:
+
+  - `POST /postman/load_l1_messaging_contract`
+  - body: `{ "networkUrl": "http://localhost:5005", "address": "0x83D76591560d9CD02CE16c060c92118d19F996b3" }`
+  - `networkUrl` - the URL of the L1 network you've run locally or that already exists; possibilities include, and are not limited to:
+    - [Goerli testnet](https://goerli.net/)
+    - [Ganache node](https://www.npmjs.com/package/ganache)
+    - [Hardhat node](https://hardhat.org/hardhat-network/#running-stand-alone-in-order-to-support-wallets-and-other-software).
 
 - Flush. This will go through the new enqueued messages sent from L1 and send them to L2. This has to be done manually for L1 -> L2, but for L2 -> L1, it is done automatically:
-  - POST "/postman/flush"
-  - no body
+  - `POST /postman/flush`
+  - body: None
 
 This method of L1 <> L2 communication testing differs from Starknet Alpha networks. Taking the [L1L2Example.sol](https://www.cairo-lang.org/docs/_static/L1L2Example.sol) contract in the [starknet documentation](https://www.cairo-lang.org/docs/hello_starknet/l1l2.html):
+
 ```
 constructor(IStarknetCore starknetCore_) public {
         starknetCore = starknetCore_;
 }
 ```
-The constructor takes an `IStarknetCore` contract as argument, however for devnet L1 <> L2 communication testing, this will have to be replaced with the [MockStarknetMessaging.sol](https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/starknet/testing/MockStarknetMessaging.sol) contract:
+
+The constructor takes an `IStarknetCore` contract as argument, however for Devnet L1 <> L2 communication testing, this will have to be replaced with the [MockStarknetMessaging.sol](https://github.com/starkware-libs/cairo-lang/blob/master/src/starkware/starknet/testing/MockStarknetMessaging.sol) contract:
+
 ```
 constructor(MockStarknetMessaging mockStarknetMessaging_) public {
     starknetCore = mockStarknetMessaging_;
@@ -126,38 +151,47 @@ constructor(MockStarknetMessaging mockStarknetMessaging_) public {
 ```
 
 ## Dumping
+
 To preserve your Devnet instance for future use, there are several options:
 
 - Dumping on exit (handles Ctrl+C, i.e. SIGINT, doesn't handle SIGKILL):
+
 ```
 starknet-devnet --dump-on exit --dump-path <PATH>
 ```
 
 - Dumping after each transaction (done in background, doesn't block):
+
 ```
 starknet-devnet --dump-on transaction --dump-path <PATH>
 ```
 
 - Dumping on request (replace `<HOST>`, `<PORT>` and `<PATH>` with your own):
+
 ```
 curl -X POST http://<HOST>:<PORT>/dump -d '{ "path": <PATH> }' -H "Content-Type: application/json"
 ```
 
 ### Loading
+
 To load a preserved Devnet instance, run:
+
 ```
 starknet-devnet --load-path <PATH>
 ```
 
 ### Enabling dumping and loading with Docker
+
 To enable dumping and loading if running Devnet in a Docker container, you must bind the container path with the path on your host machine.
 
 This example:
+
 - Relies on [Docker bind mount](https://docs.docker.com/storage/bind-mounts/); try [Docker volume](https://docs.docker.com/storage/volumes/) instead.
 - Assumes that `/actual/dumpdir` exists. If unsure, use absolute paths.
 - Assumes you are listening on `127.0.0.1:5000`.
 
 If there is `dump.pkl` inside `/actual/dumpdir`, you can load it with:
+
 ```
 docker run \
   -p 127.0.0.1:5000:5000 \
@@ -167,6 +201,7 @@ docker run \
 ```
 
 To dump to `/actual/dumpdir/dump.pkl` on Devnet shutdown, run:
+
 ```
 docker run \
   -p 127.0.0.1:5000:5000 \
@@ -176,39 +211,48 @@ docker run \
 ```
 
 ## Block explorer
-To see how to setup a local block explorer (Voyager) check this [post](https://twitter.com/kasiazerosiedem/status/1501492129264123911).
 
-## Lite modes
-To help increase performance of the devnet, a few flags can be passed to the CLI startup command:
+To see how to setup a local block explorer (Voyager) check [here](https://voyager.online/local-version/).
 
-  - `--lite-mode` enables all of the optimizations described below (same as using all of the following flags);
-  - `--lite-mode-deploy-hash` disables the calculation of the transaction hash for deploy transactions. It will instead be a simple sequence of numbers;
-  - `--lite-mode-block-hash` disables the calculation of the block hash. It will instead be a simple sequence of numbers;
+## Lite mode
+
+To improve Devnet performance, consider passing these CLI flags on Devnet startup:
+
+- `--lite-mode` enables all of the optimizations described below (same as using all of the following flags);
+- `--lite-mode-deploy-hash` disables the calculation of the transaction hash for deploy transactions. It will instead be a simple sequence of numbers;
+- `--lite-mode-block-hash` disables the calculation of the block hash. It will instead be a simple sequence of numbers;
 
 ## Development
+
 If you're a developer willing to contribute, be sure to have installed [Poetry](https://pypi.org/project/poetry/).
 
 ### Development - Run
+
 ```text
 poetry run starknet-devnet
 ```
 
 ### Development - Test
+
 When running tests locally, do it from the project root.
 
 To see if Devnet can interact with starknet CLI commands, run:
+
 ```text
 python3 -m test.test_cli
 python3 -m test.test_cli_auth
 ```
 
 Other tests in the `test` directory use `pytest`, so run them with:
+
 ```text
 poetry run pytest <TEST_FILE>
 ```
 
 ### Development - Build
+
 You don't need to build anything to be able to run locally, but if you need the `*.whl` or `*.tar.gz` artifacts, run
+
 ```text
 poetry build
 ```

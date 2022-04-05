@@ -60,7 +60,10 @@ def deploy_l1_contracts(web3):
     messaging_contract = json.loads(load_file_content(STARKNET_MESSAGING_PATH))
     l1l2_example_contract = json.loads(load_file_content(L1L2_EXAMPLE_PATH))
 
-    starknet_messaging_contract = web3_deploy(web3,messaging_contract)
+    # Min amount of time in seconds for a message to be able to be cancelled
+    l1_message_cancellation_delay = 0
+    # Deploys a new mock contract so that the feature for loading an already deployed messaging contract can be tested
+    starknet_messaging_contract = web3_deploy(web3, messaging_contract, l1_message_cancellation_delay)
     l1l2_example = web3_deploy(web3,l1l2_example_contract,starknet_messaging_contract.address)
 
     return starknet_messaging_contract, l1l2_example
