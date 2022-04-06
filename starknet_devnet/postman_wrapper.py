@@ -4,7 +4,7 @@ This module wraps the usage of Postman for L1 <> L2 interaction.
 from abc import ABC, abstractmethod
 from web3 import HTTPProvider, Web3
 
-from starkware.contracts.utils import load_nearby_contract
+from starkware.solidity.utils import load_nearby_contract
 from starkware.starknet.testing.postman import Postman
 from starkware.eth.eth_test_utils import EthAccount, EthContract
 
