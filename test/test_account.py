@@ -96,9 +96,12 @@ def from_call_to_call_array(calls):
     for call_tuple in calls:
         assert len(call_tuple) == 3, "Invalid call parameters"
 
-        entry = (call_tuple[0], get_selector_from_name(
-            call_tuple[1]), len(calldata), len(call_tuple[2]))
-
+        entry = (
+            call_tuple[0],
+            get_selector_from_name(call_tuple[1]),
+            len(calldata),
+            len(call_tuple[2])
+        )
         call_array.append(entry)
         calldata.extend(call_tuple[2])
 
@@ -117,7 +120,8 @@ def execute(calls, account=ACCOUNT_ADDRESS, nonce=None, max_fee=0):
     calls_with_selector = [
         (call[0], get_selector_from_name(call[1]), call[2]) for call in calls]
     message_hash = hash_multicall(
-        int(account, 16), calls_with_selector, int(nonce), max_fee)
+        int(account, 16), calls_with_selector, int(nonce), max_fee
+    )
     signature = get_signature(message_hash)
 
     # get execute calldata
@@ -138,7 +142,9 @@ def test_account_contract_deploy():
     deploy_info = deploy_account_contract()
     assert deploy_info["address"] == ACCOUNT_ADDRESS
 
-    deployed_public_key = call("get_public_key", ACCOUNT_ADDRESS, ACCOUNT_ABI_PATH)
+    deployed_public_key = call(
+        "get_public_key", ACCOUNT_ADDRESS, ACCOUNT_ABI_PATH
+    )
     assert int(deployed_public_key, 16) == PUBLIC_KEY
 
     nonce = get_nonce()
@@ -174,7 +180,10 @@ def test_multicall():
     to_address = int(deploy_info["address"], 16)
 
     # execute increase_balance calls
-    calls = [(to_address, "increase_balance", [10, 20]), (to_address, "increase_balance", [30, 40])]
+    calls = [
+        (to_address, "increase_balance", [10, 20]),
+        (to_address, "increase_balance", [30, 40])
+    ]
     tx_hash = execute(calls)
 
     assert_tx_status(tx_hash, "ACCEPTED_ON_L2")
