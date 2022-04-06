@@ -87,7 +87,10 @@ def test_invoke_transaction_hash_with_signature():
     assert res.status_code == 200
 
     transaction_trace = res.json()
-    assert transaction_trace["signature"] == SIGNATURE
+
+    expected_signature = [hex(int(s)) for s in SIGNATURE]
+    assert transaction_trace["signature"] == expected_signature
+
     assert_function_invocation(
         transaction_trace["function_invocation"],
         "test/expected/invoke_function_invocation.json"

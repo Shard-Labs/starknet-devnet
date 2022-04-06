@@ -156,6 +156,6 @@ class InvokeTransactionWrapper(TransactionWrapper):
                 calldata=[hex(arg) for arg in internal_tx.calldata],
                 entry_point_selector=fixed_length_hex(internal_tx.entry_point_selector),
                 entry_point_type=internal_tx.entry_point_type.name,
-                signature=[str(sig_part) for sig_part in internal_tx.signature]
+                signature=[hex(sig_part) for sig_part in internal_tx.signature]
             )
         )

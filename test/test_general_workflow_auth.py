@@ -69,5 +69,6 @@ def test_general_workflow_auth():
 
     # check storage after deployment
     assert_storage(deploy_info["address"], BALANCE_KEY, "0x14c9")
-    assert_transaction(invoke_tx_hash, "ACCEPTED_ON_L2", expected_signature=SIGNATURE)
+    expected_signature = [hex(int(s)) for s in SIGNATURE]
+    assert_transaction(invoke_tx_hash, "ACCEPTED_ON_L2", expected_signature=expected_signature)
     assert_receipt(invoke_tx_hash, "test/expected/invoke_receipt_auth.json")
