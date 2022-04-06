@@ -17,11 +17,11 @@ npx hardhat compile
 # compile Cairo test contracts
 echo "Compiling Cairo contracts with $(poetry run starknet-compile --version)"
 
-NUMBER_OF_CONTRACTS=0
+number_of_contracts=0
 for contract in "$TEST_DIRECTORY"/cairo/*.cairo; do
 
     # create contract directory
-    directory=$ARTIFACTS_DIRECTORY/contracts/cairo/"${contract##*/}"
+    directory="$ARTIFACTS_DIRECTORY/contracts/cairo/${contract##*/}"
     mkdir -p "$directory"
 
 
@@ -30,7 +30,7 @@ for contract in "$TEST_DIRECTORY"/cairo/*.cairo; do
     abi=$directory/"${basename%.*}_abi.json"
 
     poetry run starknet-compile --output "$output" --abi "$abi" "$contract"
-    NUMBER_OF_CONTRACTS=$((NUMBER_OF_CONTRACTS+1))
+    number_of_contracts=$((number_of_contracts+1))
 done
 
-echo "Compiled $NUMBER_OF_CONTRACTS Cairo files successfully"
+echo "Compiled $number_of_contracts Cairo files successfully"
