@@ -1,0 +1,6 @@
+{
+  "name": "hardhat-project",
+  "devDependencies": {
+    "hardhat": "^2.9.2"
+  }
+}

@@ -53,9 +53,9 @@ def extract_address(stdout):
     """Extract address from stdout."""
     return extract(r"Contract address: (\w*)", stdout)
 
-def my_run(args, raise_on_nonzero=True, add_gateway_urls=True):
+def run_starknet(args, raise_on_nonzero=True, add_gateway_urls=True):
     """Wrapper around subprocess.run"""
-    my_args = [*args]
+    my_args = ["poetry", "run", "starknet", *args]
     if add_gateway_urls:
         my_args.extend([
             "--gateway_url", GATEWAY_URL,
@@ -70,15 +70,12 @@ def my_run(args, raise_on_nonzero=True, add_gateway_urls=True):
 
 def deploy(contract, inputs=None, salt=None):
     """Wrapper around starknet deploy"""
-    args = [
-        "starknet", "deploy",
-        "--contract", contract,
-    ]
+    args = ["deploy", "--contract", contract]
     if inputs:
         args.extend(["--inputs", *inputs])
     if salt:
         args.extend(["--salt", salt])
-    output = my_run(args)
+    output = run_starknet(args)
     return {
         "tx_hash": extract_hash(output.stdout),
         "address": extract_address(output.stdout)
@@ -86,10 +83,7 @@ def deploy(contract, inputs=None, salt=None):
 
 def assert_transaction(tx_hash, expected_status, expected_signature=None):
     """Wrapper around starknet get_transaction"""
-    output = my_run([
-        "starknet", "get_transaction",
-        "--hash", tx_hash,
-    ])
+    output = run_starknet(["get_transaction", "--hash", tx_hash])
     transaction = json.loads(output.stdout)
     assert_equal(transaction["status"], expected_status)
     if expected_signature:
@@ -97,10 +91,7 @@ def assert_transaction(tx_hash, expected_status, expected_signature=None):
 
 def assert_transaction_not_received(tx_hash):
     """Assert correct tx response when there is no tx with `tx_hash`."""
-    output = my_run([
-        "starknet", "get_transaction",
-        "--hash", tx_hash
-    ])
+    output = run_starknet(["get_transaction", "--hash", tx_hash])
     transaction = json.loads(output.stdout)
     assert_equal(transaction, {
         "status": "NOT_RECEIVED"
@@ -108,10 +99,7 @@ def assert_transaction_not_received(tx_hash):
 
 def assert_transaction_receipt_not_received(tx_hash):
     """Assert correct tx receipt response when there is no tx with `tx_hash`."""
-    output = my_run([
-        "starknet", "get_transaction_receipt",
-        "--hash", tx_hash,
-    ])
+    output = run_starknet(["get_transaction_receipt", "--hash", tx_hash])
     receipt = json.loads(output.stdout)
     assert_equal(receipt, {
         "events": [],
@@ -123,7 +111,7 @@ def assert_transaction_receipt_not_received(tx_hash):
 def invoke(function, inputs, address, abi_path, signature=None):
     """Wrapper around starknet invoke. Returns tx hash."""
     args = [
-        "starknet", "invoke",
+        "invoke",
         "--function", function,
         "--inputs", *inputs,
         "--address", address,
@@ -131,7 +119,7 @@ def invoke(function, inputs, address, abi_path, signature=None):
     ]
     if signature:
         args.extend(["--signature", *signature])
-    output = my_run(args)
+    output = run_starknet(args)
 
     print("Invoke successful!")
     return extract_hash(output.stdout)
@@ -139,14 +127,14 @@ def invoke(function, inputs, address, abi_path, signature=None):
 def call(function, address, abi_path, inputs=None):
     """Wrapper around starknet call"""
     args = [
-        "starknet", "call",
+        "call",
         "--function", function,
         "--address", address,
         "--abi", abi_path,
     ]
     if inputs:
         args.extend(["--inputs", *inputs])
-    output = my_run(args)
+    output = run_starknet(args)
 
     print("Call successful!")
     return output.stdout.rstrip()
@@ -159,29 +147,20 @@ def load_contract_definition(contract_path: str):
 
 def assert_tx_status(tx_hash, expected_tx_status):
     """Asserts the tx_status of the tx with tx_hash."""
-    output = my_run([
-        "starknet", "tx_status",
-        "--hash", tx_hash
-    ])
+    output = run_starknet(["tx_status", "--hash", tx_hash])
     tx_status = json.loads(output.stdout)["tx_status"]
     assert_equal(tx_status, expected_tx_status)
 
 def assert_contract_code(address):
     """Asserts the content of the code of a contract at address."""
-    output = my_run([
-        "starknet", "get_code",
-        "--contract_address", address
-    ])
+    output = run_starknet(["get_code", "--contract_address", address])
     code = json.loads(output.stdout)
     # just checking key equality
     assert_equal(sorted(code.keys()), ["abi", "bytecode"])
 
 def assert_contract_definition(address, contract_path):
     """Asserts the content of the contract definition of a contract at address."""
-    output = my_run([
-        "starknet", "get_full_contract",
-        "--contract_address", address
-    ])
+    output = run_starknet(["get_full_contract", "--contract_address", address])
     contract_definition: ContractDefinition = ContractDefinition.load(json.loads(output.stdout))
 
     loaded_contract_definition = load_contract_definition(contract_path)
@@ -190,8 +169,8 @@ def assert_contract_definition(address, contract_path):
 
 def assert_storage(address, key, expected_value):
     """Asserts the storage value stored at (address, key)."""
-    output = my_run([
-        "starknet", "get_storage_at",
+    output = run_starknet([
+        "get_storage_at",
         "--contract_address", address,
         "--key", key
     ])
@@ -204,10 +183,7 @@ def load_json_from_path(path):
 
 def assert_receipt(tx_hash, expected_path):
     """Asserts the content of the receipt of tx with tx_hash."""
-    output = my_run([
-        "starknet", "get_transaction_receipt",
-        "--hash", tx_hash
-    ])
+    output = run_starknet(["get_transaction_receipt", "--hash", tx_hash])
     receipt = json.loads(output.stdout)
     expected_receipt = load_json_from_path(expected_path)
 
@@ -220,26 +196,21 @@ def assert_receipt(tx_hash, expected_path):
 
 def assert_events(tx_hash, expected_path):
     """Asserts the content of the events element of the receipt of tx with tx_hash."""
-    output = my_run([
-        "starknet", "get_transaction_receipt",
-        "--hash", tx_hash
-    ])
+    output = run_starknet(["get_transaction_receipt", "--hash", tx_hash])
     receipt = json.loads(output.stdout)
     expected_receipt = load_json_from_path(expected_path)
     assert_equal(receipt["events"], expected_receipt["events"])
 
 def get_block(block_number=None, parse=False):
     """Get the block with block_number. If no number provided, return the last."""
-    args = [
-        "starknet", "get_block",
-    ]
+    args = ["get_block"]
     if block_number:
         args.extend(["--number", str(block_number)])
     if parse:
-        output = my_run(args, raise_on_nonzero=True)
+        output = run_starknet(args, raise_on_nonzero=True)
         return json.loads(output.stdout)
 
-    return my_run(args, raise_on_nonzero=False)
+    return run_starknet(args, raise_on_nonzero=False)
 
 def assert_negative_block_input():
     """Test behavior if get_block provided with negative input."""

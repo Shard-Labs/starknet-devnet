@@ -234,31 +234,16 @@ poetry run starknet-devnet
 
 ### Development - Test
 
-When running tests locally, do it from the project root.
-
-Setup an example project by running:
+When running tests locally, do it from the project root:
 
 ```text
-./scripts/setup_example.sh
+poetry run pytest test/
 ```
 
-To see if Devnet can interact with starknet CLI commands, run:
+or for a single file
 
 ```text
-python3 -m test.test_cli
-python3 -m test.test_cli_auth
-```
-
-To see if Devnet can interact with the Hardhat plugin, set environment variables `HARDHAT_CONFIG_FILE` and `TEST_FILE` and run:
-
-```text
-./test/test_plugin.sh
-```
-
-Other tests in the `test` directory use `pytest`, so run them with:
-
-```text
-poetry run pytest <TEST_FILE>
+poetry run pytest test/<TEST_FILE>
 ```
 
 ### Development - Build

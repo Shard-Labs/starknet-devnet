@@ -22,14 +22,11 @@ jobs:
           name: Install development tools
           command: ./scripts/install_dev_tools.sh
       - run:
-          name: Install dependencies
-          command: ./scripts/install_dependencies.sh
-      - run:
           name: Lint
           command: poetry run pylint starknet_devnet test
       - run:
-          name: Setup example
-          command: ./scripts/setup_example.sh
+          name: Compile test contracts
+          command: ./scripts/compile_contracts.sh
       - run:
           name: Run pytest tests
           parallel: true
@@ -41,7 +38,7 @@ jobs:
           path: test-results
   package_build_and_publish:
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.7.12
     resource_class: medium
     steps:
       - checkout

@@ -1,8 +1,8 @@
 {
     "calldata": ["0x0"],
     "caller_address": "0x0",
-    "code_address": "0x3ffc1d4aca9668dfd9b5b6d374367b9dc52daed0ae23c54cb93ea2ea6e2dc72",
-    "contract_address": "0x3ffc1d4aca9668dfd9b5b6d374367b9dc52daed0ae23c54cb93ea2ea6e2dc72",
+    "code_address": "0x1850e072cd2e93c5a6fef566d2ed90f510c50410931235c4e32979f60838abd",
+    "contract_address": "0x1850e072cd2e93c5a6fef566d2ed90f510c50410931235c4e32979f60838abd",
     "entry_point_type": "CONSTRUCTOR",
     "events": [],
     "execution_resources": {

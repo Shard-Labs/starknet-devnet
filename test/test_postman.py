@@ -21,7 +21,7 @@ from .shared import ARTIFACTS_PATH
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/l1l2.cairo/l1l2.json"
 ABI_PATH = f"{ARTIFACTS_PATH}/l1l2.cairo/l1l2_abi.json"
 
-ETH_CONTRACTS_PATH = "../starknet-hardhat-example/artifacts/contracts"
+ETH_CONTRACTS_PATH = "artifacts/contracts/solidity"
 STARKNET_MESSAGING_PATH = f"{ETH_CONTRACTS_PATH}/MockStarknetMessaging.sol/MockStarknetMessaging.json"
 L1L2_EXAMPLE_PATH = f"{ETH_CONTRACTS_PATH}/L1L2.sol/L1L2Example.json"
 
@@ -33,7 +33,7 @@ def run_before_and_after_test():
     # Setup L1 testnet
     command = ["npx", "hardhat", "node"]
     # pylint: disable=consider-using-with
-    l1_proc = subprocess.Popen(command,cwd="starknet-hardhat-example", close_fds=True, stdout=subprocess.PIPE)
+    l1_proc = subprocess.Popen(command, close_fds=True, stdout=subprocess.PIPE)
     time.sleep(25)
     yield
 

@@ -1,6 +1,6 @@
 """Shared values between tests"""
 
-ARTIFACTS_PATH = "starknet-hardhat-example/starknet-artifacts/contracts"
+ARTIFACTS_PATH = "test/artifacts/contracts/cairo"
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract.json"
 ABI_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract_abi.json"
 EVENTS_CONTRACT_PATH = f"{ARTIFACTS_PATH}/events.cairo/events.json"
