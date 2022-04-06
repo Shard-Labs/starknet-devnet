@@ -19,13 +19,12 @@ echo "Compiling Cairo contracts with $(poetry run starknet-compile --version)"
 
 number_of_contracts=0
 for contract in "$TEST_DIRECTORY"/cairo/*.cairo; do
+    basename=$(basename "$contract")
 
     # create contract directory
-    directory="$ARTIFACTS_DIRECTORY/contracts/cairo/${contract##*/}"
+    directory="$ARTIFACTS_DIRECTORY/contracts/cairo/${basename}"
     mkdir -p "$directory"
 
-
-    basename=$(basename "$contract")
     output=$directory/"${basename%.*}.json"
     abi=$directory/"${basename%.*}_abi.json"
 
