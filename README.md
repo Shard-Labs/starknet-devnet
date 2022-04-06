@@ -234,19 +234,16 @@ poetry run starknet-devnet
 
 ### Development - Test
 
-When running tests locally, do it from the project root.
-
-To see if Devnet can interact with starknet CLI commands, run:
+When running tests locally, do it from the project root:
 
 ```text
-python3 -m test.test_cli
-python3 -m test.test_cli_auth
+poetry run pytest test/
 ```
 
-Other tests in the `test` directory use `pytest`, so run them with:
+or for a single file
 
 ```text
-poetry run pytest <TEST_FILE>
+poetry run pytest test/<TEST_FILE>
 ```
 
 ### Development - Build
