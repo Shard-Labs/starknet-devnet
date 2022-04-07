@@ -14,4 +14,4 @@ echo "poetry: $(poetry --version)"
 
 # install dependencies
 poetry install
-npm install
+npm ci
