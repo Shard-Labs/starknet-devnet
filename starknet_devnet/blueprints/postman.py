@@ -5,7 +5,7 @@ Postman routes.
 import json
 
 from flask import Blueprint, abort, Response, jsonify, request
-
+from starknet_devnet.util import JsonErrorHandler
 from starknet_devnet.state import state
 
 postman = Blueprint("postman", __name__, url_prefix="/postman")
@@ -16,7 +16,7 @@ def validate_load_messaging_contract(request_dict: dict):
     network_url = request_dict.get("networkUrl")
     if network_url is None:
         error_message = "L1 network or StarknetMessaging contract address not specified"
-        abort(Response(error_message, 400))
+        JsonErrorHandler(error_message, 400).handle()
     return network_url
 
 @postman.route("/load_l1_messaging_contract", methods=["POST"])

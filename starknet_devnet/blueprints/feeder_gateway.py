@@ -10,7 +10,7 @@ from starkware.starkware_utils.error_handling import StarkException
 from werkzeug.datastructures import MultiDict
 
 from starknet_devnet.state import state
-from starknet_devnet.util import custom_int, StarknetDevnetException
+from starknet_devnet.util import custom_int, StarknetDevnetException, JsonErrorHandler
 from .shared import validate_transaction
 
 feeder_gateway = Blueprint("feeder_gateway", __name__, url_prefix="/feeder_gateway")
@@ -21,7 +21,7 @@ def validate_call(data: bytes):
     try:
         call_specifications = InvokeFunction.loads(data)
     except (TypeError, ValidationError) as err:
-        abort(Response(f"Invalid Starknet function call: {err}", 400))
+        JsonErrorHandler(f"Invalid Starknet function call: {err}", 400).handle()
 
     return call_specifications
 
@@ -33,7 +33,7 @@ def _check_block_hash(request_args: MultiDict):
 def _check_block_arguments(block_hash, block_number):
     if block_hash is not None and block_number is not None:
         message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
-        abort(Response(message, 500))
+        JsonErrorHandler(message, 500).handle()
 
 @feeder_gateway.route("/is_alive", methods=["GET"])
 def is_alive():
@@ -57,7 +57,7 @@ async def call_contract():
         result_dict = await state.starknet_wrapper.call(call_specifications)
     except StarkException as err:
         # code 400 would make more sense, but alpha returns 500
-        abort(Response(err.message, 500))
+        JsonErrorHandler(err.message, 500).handle()
 
     return jsonify(result_dict)
 
@@ -75,7 +75,7 @@ async def get_block():
         else:
             result_dict = state.starknet_wrapper.get_block_by_number(block_number)
     except StarkException as err:
-        abort(Response(err.message, 500))
+        JsonErrorHandler(err.message, 500).handle()
 
     return jsonify(result_dict)
 
@@ -104,7 +104,7 @@ def get_full_contract():
         result_dict = state.starknet_wrapper.get_full_contract(contract_address)
     except StarknetDevnetException as error:
         # alpha throws 500 for unitialized contracts
-        abort(Response(error.message, 500))
+        JsonErrorHandler(error.message, 500).handle()
     return jsonify(result_dict)
 
 @feeder_gateway.route("/get_storage_at", methods=["GET"])
@@ -159,7 +159,7 @@ def get_transaction_trace():
     try:
         transaction_trace = state.starknet_wrapper.get_transaction_trace(transaction_hash)
     except StarkException as err:
-        abort(Response(err, 500))
+        JsonErrorHandler(err, 500).handle()
 
     return jsonify(transaction_trace)
 
@@ -176,7 +176,7 @@ def get_state_update():
     try:
         state_update = state.starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
     except StarkException as err:
-        abort(Response(err.message, 500))
+        JsonErrorHandler(err.message, 500).handle()
 
     return jsonify(state_update)
 
@@ -187,7 +187,7 @@ async def estimate_fee():
     try:
         actual_fee = await state.starknet_wrapper.calculate_actual_fee(transaction)
     except StarkException as stark_exception:
-        abort(Response(stark_exception.message, 500))
+        JsonErrorHandler(stark_exception.message, 500).handle()
 
     return jsonify({
         "amount": actual_fee,
