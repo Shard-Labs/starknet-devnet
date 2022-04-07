@@ -177,7 +177,7 @@ class StarknetWrapper:
                 status=status,
                 execution_info=execution_info,
                 error_message=error_message,
-                contract_hash=self.__current_carried_state.contract_states[contract_address].state.contract_hash
+                contract_hash=state.state.contract_states[contract_address].state.contract_hash
             )
 
         return contract_address, tx_hash
