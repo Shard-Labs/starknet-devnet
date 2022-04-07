@@ -21,8 +21,8 @@ from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
 
 from .origin import NullOrigin, Origin
+from .general_config import DEFAULT_GENERAL_CONFIG
 from .util import (
-    DEFAULT_GENERAL_CONFIG,
     Choice, StarknetDevnetException, TxStatus, DummyExecutionInfo,
     fixed_length_hex, enable_pickling, generate_state_update
 )
