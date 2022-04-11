@@ -1,7 +1,7 @@
 """
 Gateway routes
 """
-from flask import Blueprint, abort, Response, request, jsonify
+from flask import Blueprint, request, jsonify
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode
 

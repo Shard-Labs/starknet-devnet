@@ -4,7 +4,7 @@ Postman routes.
 
 import json
 
-from flask import Blueprint, abort, Response, jsonify, request
+from flask import Blueprint, jsonify, request
 from starknet_devnet.util import JsonErrorHandler
 from starknet_devnet.state import state
 

@@ -2,7 +2,6 @@
 Shared functions between blueprints
 """
 
-from flask import abort, Response
 from marshmallow import ValidationError
 from starkware.starknet.services.api.gateway.transaction import Transaction
 
