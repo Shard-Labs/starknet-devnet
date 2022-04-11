@@ -12,7 +12,7 @@ def is_alive():
     """Health check endpoint."""
     return "Alive!!!"
 
-@base.route("/restart", methods=["GET"])
+@base.route("/restart", methods=["POST"])
 def restart():
     """Restart the starknet_wrapper"""
     state.reset()
