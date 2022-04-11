@@ -19,6 +19,8 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
+from starkware.starknet.definitions.general_config import DEFAULT_GAS_PRICE
+from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee_by_cairo_usage
 
 from .origin import NullOrigin, Origin
 from .general_config import DEFAULT_GENERAL_CONFIG
@@ -538,4 +540,11 @@ Exception:
         state_copy = state.state._copy() # pylint: disable=protected-access
         execution_info = await internal_tx.apply_state_updates(state_copy, state.general_config)
 
-        return execution_info.actual_fee
+        actual_fee = calculate_tx_fee_by_cairo_usage(
+            general_config=state.general_config,
+            cairo_resource_usage=execution_info.call_info.execution_resources.to_dict(),
+            l1_gas_usage=0,
+            gas_price=DEFAULT_GAS_PRICE
+        )
+
+        return actual_fee
