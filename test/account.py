@@ -7,7 +7,7 @@ from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.crypto.signature.signature import private_to_stark_key, sign
 from starkware.starknet.public.abi import get_selector_from_name
 
-from .util import deploy, call, invoke
+from .util import deploy, call, invoke, estimate_fee
 
 ACCOUNT_ARTIFACTS_PATH = "starknet_devnet/accounts_artifacts"
 ACCOUNT_AUTHOR = "OpenZeppelin"
@@ -91,8 +91,9 @@ def adapt_inputs(execute_calldata):
     """Get stringified inputs from execute_calldata."""
     return [str(v) for v in execute_calldata]
 
-def execute(calls, account_address, nonce=None, max_fee=0):
-    """Invoke __execute__ with correct calldata and signature."""
+def get_execute_args(calls, account_address, nonce=None, max_fee=0):
+    """Returns signature and execute calldata"""
+
     if nonce is None:
         nonce = get_nonce(account_address)
 
@@ -108,10 +109,29 @@ def execute(calls, account_address, nonce=None, max_fee=0):
     (call_array, calldata) = from_call_to_call_array(calls)
     execute_calldata = get_execute_calldata(call_array, calldata, nonce)
 
+    return signature, execute_calldata
+
+def get_estimated_fee(calls, account_address, nonce=None):
+    """Get estmated fee."""
+    signature, execute_calldata = get_execute_args(calls, account_address, nonce)
+
+    return estimate_fee(
+        "__execute__",
+        inputs=adapt_inputs(execute_calldata),
+        address=account_address,
+        abi_path=ACCOUNT_ABI_PATH,
+        signature=signature,
+    )
+
+def execute(calls, account_address, nonce=None, max_fee=0):
+    """Invoke __execute__ with correct calldata and signature."""
+    signature, execute_calldata = get_execute_args(calls, account_address, nonce, max_fee)
+
     return invoke(
         "__execute__",
         inputs=adapt_inputs(execute_calldata),
         address=account_address,
         abi_path=ACCOUNT_ABI_PATH,
         signature=signature,
+        max_fee=str(max_fee)
     )

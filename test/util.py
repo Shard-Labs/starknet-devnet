@@ -49,6 +49,10 @@ def extract_hash(stdout):
     """Extract tx_hash from stdout."""
     return extract(r"Transaction hash: (\w*)", stdout)
 
+def extract_fee(stdout) -> int:
+    """Extract fee from stdout."""
+    return int(extract(r"(\d+)", stdout))
+
 def extract_address(stdout):
     """Extract address from stdout."""
     return extract(r"Contract address: (\w*)", stdout)
@@ -108,7 +112,7 @@ def assert_transaction_receipt_not_received(tx_hash):
         "transaction_hash": tx_hash
     })
 
-def invoke(function, inputs, address, abi_path, signature=None):
+def invoke(function, inputs, address, abi_path, signature=None, max_fee=None):
     """Wrapper around starknet invoke. Returns tx hash."""
     args = [
         "invoke",
@@ -119,10 +123,33 @@ def invoke(function, inputs, address, abi_path, signature=None):
     ]
     if signature:
         args.extend(["--signature", *signature])
+
+    if max_fee:
+        args.extend(["--max_fee", max_fee])
+
     output = run_starknet(args)
 
     print("Invoke successful!")
     return extract_hash(output.stdout)
+
+
+def estimate_fee(function, inputs, address, abi_path, signature=None):
+    """Wrapper around starknet estimate_fee. Returns fee in wei."""
+    args = [
+        "estimate_fee",
+        "--function", function,
+        "--inputs", *inputs,
+        "--address", address,
+        "--abi", abi_path,
+    ]
+    if signature:
+        args.extend(["--signature", *signature])
+
+    output = run_starknet(args)
+
+    print("Estimate fee successful!")
+    return extract_fee(output.stdout)
+
 
 def call(function, address, abi_path, inputs=None):
     """Wrapper around starknet call"""
