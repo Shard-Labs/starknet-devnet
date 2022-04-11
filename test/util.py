@@ -112,6 +112,7 @@ def assert_transaction_receipt_not_received(tx_hash):
         "transaction_hash": tx_hash
     })
 
+# pylint: disable=too-many-arguments
 def invoke(function, inputs, address, abi_path, signature=None, max_fee=None):
     """Wrapper around starknet invoke. Returns tx hash."""
     args = [
