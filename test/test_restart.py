@@ -22,8 +22,7 @@ def run_before_and_after_test():
 
 def restart():
     """Get restart response"""
-    print(f"{APP_URL}/restart")
-    return requests.get(f"{APP_URL}/restart")
+    return requests.post(f"{APP_URL}/restart")
 
 def get_state_update():
     """Get state update"""
