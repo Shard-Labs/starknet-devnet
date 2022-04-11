@@ -40,7 +40,7 @@ def deploy_empty_contract():
     """Deploy sample contract with balance = 0."""
     return deploy(CONTRACT_PATH, inputs=["0"], salt=SALT)
 
-@pytest.mark.skip
+@pytest.mark.account
 def test_account_contract_deploy():
     """Test account contract deploy, public key and initial nonce value."""
     deploy_info = deploy_account_contract(salt=SALT)
@@ -54,7 +54,7 @@ def test_account_contract_deploy():
     nonce = get_nonce(ACCOUNT_ADDRESS)
     assert nonce == "0"
 
-@pytest.mark.skip
+@pytest.mark.account
 def test_invoke_another_contract():
     """Test invoking another contract."""
     deploy_info = deploy_empty_contract()
@@ -82,7 +82,9 @@ def test_estimated_fee():
     deploy_account_contract(salt=SALT)
     to_address = int(deploy_info["address"], 16)
 
-    # execute increase_balance call
+    initial_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
+
+    # get estimated fee for increase_balance call
     calls = [(to_address, "increase_balance", [10, 20])]
     estimated_fee = get_estimated_fee(calls, ACCOUNT_ADDRESS)
 
@@ -98,8 +100,33 @@ def test_estimated_fee():
 
     assert estimated_fee_without_account < estimated_fee
 
+    # should not affect balance
+    balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
+    assert balance == initial_balance
 
-@pytest.mark.skip
+@pytest.mark.account
+def test_low_max_fee():
+    """Test if transaction is rejected with low max fee"""
+    deploy_info = deploy_empty_contract()
+    deploy_account_contract(salt=SALT)
+    to_address = int(deploy_info["address"], 16)
+
+    initial_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
+
+    # get estimated fee for increase_balance call
+    calls = [(to_address, "increase_balance", [10, 20])]
+    estimated_fee = get_estimated_fee(calls, ACCOUNT_ADDRESS)
+
+    max_fee = max(estimated_fee // 10, 1)
+    tx_hash = execute(calls, ACCOUNT_ADDRESS, max_fee=max_fee)
+
+    assert_tx_status(tx_hash, "REJECTED")
+
+    balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
+
+    assert balance == initial_balance
+
+@pytest.mark.account
 def test_multicall():
     """Test making multiple calls."""
     deploy_info = deploy_empty_contract()

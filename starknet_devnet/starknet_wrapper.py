@@ -19,9 +19,9 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
-from starkware.starknet.definitions.general_config import DEFAULT_GAS_PRICE
 from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee_by_cairo_usage
 from starkware.starknet.services.api.contract_definition import EntryPointType
+from starkware.starknet.definitions import constants
 
 from .origin import NullOrigin, Origin
 from .general_config import DEFAULT_GENERAL_CONFIG
@@ -545,7 +545,8 @@ Exception:
             signature=external_tx.signature,
             nonce=None,
             chain_id=state.general_config.chain_id.value,
-            version=0, # Hardcoded to 0 for now
+            # Need to set to 0 as it will be invoked in apply_state_updates
+            version=constants.TRANSACTION_VERSION,
         )
 
         state_copy = state.state._copy() # pylint: disable=protected-access
@@ -555,7 +556,7 @@ Exception:
             general_config=state.general_config,
             cairo_resource_usage=execution_info.call_info.execution_resources.to_dict(),
             l1_gas_usage=0,
-            gas_price=DEFAULT_GAS_PRICE
+            gas_price=state.general_config.min_gas_price
         )
 
         return actual_fee

@@ -63,8 +63,6 @@ def hash_multicall(sender, calls, nonce, max_fee):
 
 def get_signature(message_hash):
     """Get signature from message hash and private key."""
-    print(f"message hash {message_hash}")
-
     sig_r, sig_s = sign(message_hash, PRIVATE_KEY)
     return [str(sig_r), str(sig_s)]
 
