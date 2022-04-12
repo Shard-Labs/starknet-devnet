@@ -90,12 +90,14 @@ def load_l1_messaging_contract(req_dict: dict):
         data=json.dumps(req_dict)
     )
 
+@pytest.mark.error_response
 def test_error_response_code():
     """Assert response status code is expected."""
     resp = send_error_request()
 
     assert resp.status_code == 400
 
+@pytest.mark.error_response
 def test_error_response_message():
     """Assert response message is expected."""
     resp = send_error_request()
@@ -104,6 +106,7 @@ def test_error_response_message():
     msg = "No path provided"
     assert data["error"] == msg
 
+@pytest.mark.error_response
 def test_error_response_deploy_without_calldata():
     """Deploy with complete request data"""
     req_dict = json.loads(DEPLOY_CONTENT)
@@ -114,6 +117,7 @@ def test_error_response_deploy_without_calldata():
     msg = "Invalid tx:"
     assert json_error_message.startswith(msg)
 
+@pytest.mark.error_response
 def test_error_response_call_without_calldata():
     """Call without calldata"""
     req_dict = json.loads(CALL_CONTENT)
@@ -124,6 +128,7 @@ def test_error_response_call_without_calldata():
     assert resp.status_code == 400
     assert json_error_message is not None
 
+@pytest.mark.error_response
 def test_error_response_call_with_negative_block_number():
     """Call with negative block number"""
     resp = get_block_number({"blockNumber": -1})
@@ -132,6 +137,7 @@ def test_error_response_call_with_negative_block_number():
     assert resp.status_code == 500
     assert json_error_message is not None
 
+@pytest.mark.error_response
 def test_error_response_call_with_invalid_transaction_hash():
     """Call with invalid transaction hash"""
     resp = get_transaction_trace(INVALID_HASH)
@@ -141,6 +147,7 @@ def test_error_response_call_with_invalid_transaction_hash():
     assert resp.status_code == 500
     assert json_error_message.startswith(msg)
 
+@pytest.mark.error_response
 def test_error_response_call_with_unavailable_contract():
     """Call with unavailable contract"""
     resp = get_get_full_contract(INVALID_HASH)
@@ -149,6 +156,7 @@ def test_error_response_call_with_unavailable_contract():
     assert resp.status_code == 500
     assert json_error_message is not None
 
+@pytest.mark.error_response
 def test_error_response_call_with_state_update():
     """Call with unavailable state update"""
     resp = get_state_update(INVALID_HASH, -1)
@@ -157,6 +165,7 @@ def test_error_response_call_with_state_update():
     assert resp.status_code == 500
     assert json_error_message is not None
 
+@pytest.mark.error_response
 def test_error_response_call_estimate_fee_in_unknown_address():
     """Call with unknown invoke function"""
     req_dict = json.loads(INVOKE_CONTENT)
@@ -168,6 +177,7 @@ def test_error_response_call_estimate_fee_in_unknown_address():
     assert resp.status_code == 500
     assert json_error_message.startswith(msg)
 
+@pytest.mark.error_response
 def test_error_response_call_estimate_fee_with_invalid_data():
     """Call estimate fee with invalid data on body"""
     req_dict = json.loads(DEPLOY_CONTENT)
@@ -178,6 +188,7 @@ def test_error_response_call_estimate_fee_with_invalid_data():
     assert resp.status_code == 400
     assert json_error_message.startswith(msg)
 
+@pytest.mark.error_response
 def test_error_response_call_invalid_starknet_function_call_load_l1_messaging_contract():
     """Call with invalid data on starknet function call"""
     load_messaging_contract_request = {}
