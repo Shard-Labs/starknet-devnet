@@ -15,6 +15,7 @@ Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 - [L1-L2 Postman Communication](#postman-integration)
 - [Block Explorer](#block-explorer)
 - [Lite Mode](#lite-mode)
+- [Restart](#restart)
 - [Development](#development)
 
 ## Install
@@ -221,6 +222,10 @@ To improve Devnet performance, consider passing these CLI flags on Devnet startu
 - `--lite-mode` enables all of the optimizations described below (same as using all of the following flags);
 - `--lite-mode-deploy-hash` disables the calculation of the transaction hash for deploy transactions. It will instead be a simple sequence of numbers;
 - `--lite-mode-block-hash` disables the calculation of the block hash. It will instead be a simple sequence of numbers;
+
+## Restart
+
+Devnet can be restarted by making a `POST /restart` request. All of the deployed contracts, blocks and storage updates will be restarted to the empty state.
 
 ## Development
 
