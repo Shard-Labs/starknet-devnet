@@ -8,7 +8,7 @@
 
 ## Checklist:
 
-- [ ] I have performed a self-review of the code
-- [ ] I have rebased to the base branch
-- [ ] I have documented the changes
-- [ ] I have updated the tests
+- [ ] Performed a self-review of the code
+- [ ] Rebased to the base branch
+- [ ] Documented the changes
+- [ ] Updated the tests
