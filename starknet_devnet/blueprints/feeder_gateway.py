@@ -3,7 +3,6 @@ Feeder gateway routes.
 """
 
 from flask import request, jsonify, Blueprint
-from flask.wrappers import Response
 from marshmallow import ValidationError
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction
 from starkware.starkware_utils.error_handling import StarkException
