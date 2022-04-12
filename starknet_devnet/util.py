@@ -262,4 +262,10 @@ class JsonErrorHandler:
         self.error_message = error_message
 
     def handle(self):
+        """
+        Handles the error and responds in JSON.
+        """
+        if isinstance(self.error_message, StarknetDevnetException):
+            self.error_message = self.error_message.message
+
         return abort(make_response({"error": self.error_message}, self.error_code))
