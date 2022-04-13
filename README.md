@@ -16,6 +16,7 @@ Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 - [Block Explorer](#block-explorer)
 - [Lite Mode](#lite-mode)
 - [Restart](#restart)
+- [Contract debugging](#contract-debugging)
 - [Development](#development)
 
 ## Install
@@ -226,6 +227,19 @@ To improve Devnet performance, consider passing these CLI flags on Devnet startu
 ## Restart
 
 Devnet can be restarted by making a `POST /restart` request. All of the deployed contracts, blocks and storage updates will be restarted to the empty state.
+
+## Contract debugging
+
+If your contract is using `print` in cairo hints (it was compiled with the `--disable-hint-validation` flag), Devnet will output those lines together with its regular server output. To filter out just your debugging print lines, redirect stderr to /dev/null when starting Devnet:
+```
+starknet-devnet 2> /dev/null
+```
+
+To enable printing with a dockerized version of Devnet set `PYTHONBUFFERED=1`:
+```
+docker run -p 127.0.0.1:5000:5000 -e PYTHONUNBUFFERED=1 shardlabs/starknet-devnet
+```
+
 
 ## Development
 
