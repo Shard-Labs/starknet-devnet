@@ -231,15 +231,16 @@ Devnet can be restarted by making a `POST /restart` request. All of the deployed
 ## Contract debugging
 
 If your contract is using `print` in cairo hints (it was compiled with the `--disable-hint-validation` flag), Devnet will output those lines together with its regular server output. To filter out just your debugging print lines, redirect stderr to /dev/null when starting Devnet:
+
 ```
 starknet-devnet 2> /dev/null
 ```
 
-To enable printing with a dockerized version of Devnet set `PYTHONBUFFERED=1`:
+To enable printing with a dockerized version of Devnet set `PYTHONUNBUFFERED=1`:
+
 ```
 docker run -p 127.0.0.1:5000:5000 -e PYTHONUNBUFFERED=1 shardlabs/starknet-devnet
 ```
-
 
 ## Development
 
