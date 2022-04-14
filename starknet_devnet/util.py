@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 import argparse
 import sys
+from flask import abort, make_response
 
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.testing.contract import StarknetContract
@@ -250,3 +251,21 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
             "storage_diffs": storage_diffs
         }
     }
+
+class JsonErrorHandler:
+    """
+    Error handler that outputs errors in JSON format.
+    """
+
+    def __init__(self, error_message, error_code):
+        self.error_code = error_code
+        self.error_message = error_message
+
+    def handle(self):
+        """
+        Handles the error and responds in JSON.
+        """
+        if isinstance(self.error_message, StarknetDevnetException):
+            self.error_message = self.error_message.message
+
+        return abort(make_response({"error": self.error_message}, self.error_code))
