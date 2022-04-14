@@ -1,10 +1,9 @@
 """
 Base routes
 """
-from flask import Blueprint, Response, request
+from flask import Blueprint, Response, abort, request
 
 from starknet_devnet.state import state
-from starknet_devnet.util import JsonErrorHandler
 
 base = Blueprint("base", __name__)
 
@@ -26,7 +25,7 @@ def dump():
     request_dict = request.json or {}
     dump_path = request_dict.get("path") or state.dumper.dump_path
     if not dump_path:
-        JsonErrorHandler("No path provided", 400).handle()
+        abort(400, "No path provided.")
 
     state.dumper.dump(dump_path)
     return Response(status=200)
