@@ -165,7 +165,7 @@ def test_estimate_fee_in_unknown_address():
 
     json_error_message = json.loads(resp.data)["message"]
     msg = "Contract with address"
-    assert resp.status_code == 500
+    assert resp.status_code == 400
     assert json_error_message.startswith(msg)
 
 @devnet_in_background()

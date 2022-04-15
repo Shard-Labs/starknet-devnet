@@ -6,7 +6,7 @@ import sys
 import meinheld
 import dill as pickle
 
-from flask import Flask, jsonify
+from flask import Flask
 from flask_cors import CORS
 
 from starkware.starkware_utils.error_handling import StarkException
@@ -14,7 +14,7 @@ from .blueprints.base import base
 from .blueprints.gateway import gateway
 from .blueprints.feeder_gateway import feeder_gateway
 from .blueprints.postman import postman
-from .util import DumpOn, StarknetDevnetException, parse_args
+from .util import DumpOn, parse_args
 from .state import state
 
 app = Flask(__name__)
@@ -65,21 +65,6 @@ def main():
 def handle(error: StarkException):
     """Handles the error and responds in JSON. """
     return {"message": error.message, "status_code": error.status_code}, error.status_code
-
-@app.errorhandler(StarknetDevnetException)
-def handle_(error: StarknetDevnetException):
-    """Handles the error from stark and responds in JSON. """
-    return {"message": error.message, "status_code": error.status_code}, error.status_code
-
-@app.errorhandler(400)
-def handle_400_error(error: Exception):
-    """Handles the 400 error and responds in JSON. """
-    return jsonify({"message": str(error)}), 400
-
-@app.errorhandler(500)
-def handle_500_error(error: Exception):
-    """Handles the 500 error and responds in JSON. """
-    return jsonify({"message": str(error)}), 500
 
 if __name__ == "__main__":
     main()

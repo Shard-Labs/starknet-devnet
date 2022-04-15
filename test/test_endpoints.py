@@ -8,7 +8,6 @@ import json
 import pytest
 
 from starknet_devnet.server import app
-from .settings import GATEWAY_URL
 from .util import devnet_in_background, load_file_content
 
 DEPLOY_CONTENT = load_file_content("deploy.json")
@@ -115,15 +114,6 @@ def test_call_with_complete_request_data():
     assert_call_resp(resp)
 
 # Error response tests
-def send_error_request():
-    """Send HTTP request to trigger error response."""
-    json_body = { "dummy": "dummy_value" }
-    return app.test_client().post(
-        f"{GATEWAY_URL}/dump",
-        content_type="application/json",
-        data=json.dumps(json_body)
-    )
-
 def get_block_number(req_dict: dict):
     """Get block number from request dict"""
     block_number = req_dict["blockNumber"]
@@ -149,22 +139,6 @@ def get_state_update(block_hash, block_number):
     return app.test_client().get(
         f"/feeder_gateway/get_state_update?blockHash={block_hash}&blockNumber={block_number}"
     )
-
-@devnet_in_background()
-def test_error_response_code():
-    """Assert response status code is expected."""
-    resp = send_error_request()
-
-    assert resp.status_code == 400
-
-@devnet_in_background()
-def test_error_response_message():
-    """Assert response message is expected."""
-    resp = send_error_request()
-
-    json_error_message = json.loads(resp.data)["message"]
-    msg = "No path provided"
-    assert msg in json_error_message
 
 @devnet_in_background()
 def test_error_response_deploy_without_calldata():

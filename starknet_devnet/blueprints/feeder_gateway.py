@@ -2,13 +2,13 @@
 Feeder gateway routes.
 """
 
-from flask import abort, request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint
 from marshmallow import ValidationError
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction
 from werkzeug.datastructures import MultiDict
 
 from starknet_devnet.state import state
-from starknet_devnet.util import custom_int
+from starknet_devnet.util import StarknetDevnetException, custom_int
 from .shared import validate_transaction
 
 feeder_gateway = Blueprint("feeder_gateway", __name__, url_prefix="/feeder_gateway")
@@ -19,7 +19,7 @@ def validate_call(data: bytes):
     try:
         call_specifications = InvokeFunction.loads(data)
     except (TypeError, ValidationError) as err:
-        abort(400, f"Invalid Starknet function call: {err}")
+        raise StarknetDevnetException(message=f"Invalid Starknet function call: {err}", status_code=400) from err
 
     return call_specifications
 
@@ -31,7 +31,7 @@ def _check_block_hash(request_args: MultiDict):
 def _check_block_arguments(block_hash, block_number):
     if block_hash is not None and block_number is not None:
         message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
-        abort(500, message)
+        raise StarknetDevnetException(message=message, status_code=500)
 
 @feeder_gateway.route("/is_alive", methods=["GET"])
 def is_alive():

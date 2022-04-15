@@ -2,6 +2,7 @@
 Test server state serialization (dumping/loading).
 """
 
+import json
 import os
 import signal
 import time
@@ -9,7 +10,8 @@ import requests
 
 import pytest
 
-from .util import call, deploy, invoke, run_devnet_in_background
+from starknet_devnet.server import app
+from .util import call, deploy, devnet_in_background, invoke, run_devnet_in_background
 from .settings import GATEWAY_URL
 from .shared import CONTRACT_PATH, ABI_PATH
 
@@ -32,6 +34,15 @@ def send_dump_request(dump_path: str=None):
     """Send HTTP request to trigger dumping."""
     json_load = { "path": dump_path } if dump_path else None
     return requests.post(f"{GATEWAY_URL}/dump", json=json_load)
+
+def send_error_request():
+    """Send HTTP request to trigger error response."""
+    json_body = { "dummy": "dummy_value" }
+    return app.test_client().post(
+        f"{GATEWAY_URL}/dump",
+        content_type="application/json",
+        data=json.dumps(json_body)
+    )
 
 def assert_dump_present(dump_path: str, sleep_seconds=2):
     """Assert there is a non-empty dump file."""
@@ -182,3 +193,19 @@ def test_dumping_on_each_tx():
 
     assert_load(dump_after_deploy_path, contract_address, "0")
     assert_load(dump_after_invoke_path, contract_address, "10")
+
+@devnet_in_background()
+def test_error_response_code():
+    """Assert response status code is expected."""
+    resp = send_error_request()
+
+    assert resp.status_code == 400
+
+@devnet_in_background()
+def test_error_response_message():
+    """Assert response message is expected."""
+    resp = send_error_request()
+
+    json_error_message = json.loads(resp.data)["message"]
+    msg = "No path provided"
+    assert msg in json_error_message
