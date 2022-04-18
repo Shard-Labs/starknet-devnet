@@ -17,7 +17,6 @@ import pytest
 
 from web3 import Web3
 import requests
-from starknet_devnet.server import app
 
 
 from .shared import ARTIFACTS_PATH
@@ -271,10 +270,9 @@ def test_postman():
 
 def load_l1_messaging_contract(req_dict: dict):
     """Load L1 messaging contract"""
-    return app.test_client().post(
-        "/postman/load_l1_messaging_contract",
-        content_type="application/json",
-        data=json.dumps(req_dict)
+    return requests.post(
+        f"{GATEWAY_URL}/postman/load_l1_messaging_contract",
+        json=(req_dict)
     )
 
 @devnet_in_background()
@@ -283,7 +281,7 @@ def test_invalid_starknet_function_call_load_l1_messaging_contract():
     load_messaging_contract_request = {}
     resp = load_l1_messaging_contract(load_messaging_contract_request)
 
-    json_error_message = json.loads(resp.data)["message"]
+    json_error_message = resp.json()["message"]
     msg = "L1 network or StarknetMessaging contract address not specified"
     assert resp.status_code == 400
     assert msg in json_error_message

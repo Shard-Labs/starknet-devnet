@@ -1,10 +1,12 @@
 """
 Test account functionality.
 """
+from test.settings import GATEWAY_URL
+
 import json
+import requests
 import pytest
 
-from starknet_devnet.server import app
 from .shared import ABI_PATH, CONTRACT_PATH
 from .util import (
     assert_tx_status,
@@ -150,10 +152,9 @@ def test_multicall():
 
 def estimate_fee_local(req_dict: dict):
     """Estimate fee of a given transaction"""
-    return app.test_client().post(
-        "/feeder_gateway/estimate_fee",
-        content_type="application/json",
-        data=json.dumps(req_dict)
+    return requests.post(
+        f"{GATEWAY_URL}/feeder_gateway/estimate_fee",
+        json=json.dumps(req_dict)
     )
 
 @devnet_in_background()
@@ -163,7 +164,7 @@ def test_estimate_fee_in_unknown_address():
     del req_dict["type"]
     resp = estimate_fee_local(req_dict)
 
-    json_error_message = json.loads(resp.data)["message"]
+    json_error_message = resp.json()["message"]
     msg = "Contract with address"
     assert resp.status_code == 500
     assert json_error_message.startswith(msg)
@@ -174,7 +175,7 @@ def test_estimate_fee_with_invalid_data():
     req_dict = json.loads(DEPLOY_CONTENT)
     resp = estimate_fee_local(req_dict)
 
-    json_error_message = json.loads(resp.data)["message"]
+    json_error_message = resp.json()["message"]
     msg = "Invalid tx:"
     assert resp.status_code == 400
     assert msg in json_error_message
