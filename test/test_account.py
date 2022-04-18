@@ -154,7 +154,7 @@ def estimate_fee_local(req_dict: dict):
     """Estimate fee of a given transaction"""
     return requests.post(
         f"{GATEWAY_URL}/feeder_gateway/estimate_fee",
-        json=json.dumps(req_dict)
+        json=req_dict
     )
 
 @devnet_in_background()
