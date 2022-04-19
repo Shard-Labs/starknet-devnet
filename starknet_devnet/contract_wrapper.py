@@ -3,7 +3,7 @@ Contains code for wrapping StarknetContract instances.
 """
 
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List
 
 from starkware.starknet.services.api.contract_definition import ContractDefinition, EntryPointType
 from starkware.starknet.testing.contract import StarknetContract
@@ -16,10 +16,42 @@ from starkware.starknet.business_logic.execution.objects import (
     TransactionExecutionContext,
     TransactionExecutionInfo,
 )
+from starkware.starknet.testing.state import StarknetState
 
 from starknet_devnet.util import Choice
 
-CastableToAddress = Union[str, int]
+async def call_internal_tx(starknet_state: StarknetState, internal_tx: InternalInvokeFunction):
+    """
+    Executes an internal transaction.
+    """
+    with starknet_state.state.copy_and_apply() as state_copy:
+        tx_execution_context = TransactionExecutionContext.create(
+            account_contract_address=internal_tx.contract_address,
+            transaction_hash=internal_tx.hash_value,
+            signature=internal_tx.signature,
+            max_fee=internal_tx.max_fee,
+            n_steps=starknet_state.general_config.invoke_tx_max_n_steps,
+            version=internal_tx.version,
+        )
+        call = ExecuteEntryPoint(
+            contract_address=internal_tx.contract_address,
+            code_address=internal_tx.code_address,
+            entry_point_selector=internal_tx.entry_point_selector,
+            entry_point_type=internal_tx.entry_point_type,
+            calldata=internal_tx.calldata,
+            caller_address=internal_tx.caller_address,
+        )
+        call_info = await call.execute(
+            state=state_copy,
+            general_config=starknet_state.general_config,
+            tx_execution_context=tx_execution_context
+        )
+        fee_transfer_info = None
+        actual_fee = 0
+
+    return TransactionExecutionInfo(
+        call_info=call_info, fee_transfer_info=fee_transfer_info, actual_fee=actual_fee
+    )
 
 @dataclass
 class ContractWrapper:
@@ -34,6 +66,7 @@ class ContractWrapper:
             "abi": contract_definition.abi,
             "bytecode": self.contract_definition["program"]["data"]
         }
+
 
     # pylint: disable=too-many-arguments
     async def call_or_invoke(
@@ -57,7 +90,6 @@ class ContractWrapper:
         result = list(map(hex, execution_info.call_info.retdata))
         return result, execution_info
 
-    # pylint: disable=too-many-locals
     async def call(
         self,
         entry_point_selector: int,
@@ -98,36 +130,7 @@ class ContractWrapper:
             only_query=True,
         )
 
-        with starknet_state.state.copy_and_apply() as state_copy:
-            tx_execution_context = TransactionExecutionContext.create(
-                account_contract_address=internal_tx.contract_address,
-                transaction_hash=internal_tx.hash_value,
-                signature=internal_tx.signature,
-                max_fee=internal_tx.max_fee,
-                n_steps=starknet_state.general_config.invoke_tx_max_n_steps,
-                version=internal_tx.version,
-            )
-            call = ExecuteEntryPoint(
-                contract_address=internal_tx.contract_address,
-                code_address=internal_tx.code_address,
-                entry_point_selector=internal_tx.entry_point_selector,
-                entry_point_type=internal_tx.entry_point_type,
-                calldata=internal_tx.calldata,
-                caller_address=internal_tx.caller_address,
-            )
-            call_info = await call.execute(
-                state=state_copy,
-                general_config=starknet_state.general_config,
-                tx_execution_context=tx_execution_context
-            )
-            fee_transfer_info = None
-            actual_fee = 0
-
-            tx_execution_info = TransactionExecutionInfo(
-                call_info=call_info, fee_transfer_info=fee_transfer_info, actual_fee=actual_fee
-            )
-
-        return tx_execution_info
+        return await call_internal_tx(starknet_state, internal_tx)
 
     async def invoke(
         self,
