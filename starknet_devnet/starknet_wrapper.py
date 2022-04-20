@@ -29,7 +29,7 @@ from .util import (
     Choice, StarknetDevnetException, TxStatus, DummyExecutionInfo,
     fixed_length_hex, enable_pickling, generate_state_update
 )
-from .contract_wrapper import ContractWrapper
+from .contract_wrapper import ContractWrapper, call_internal_tx
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
 from .postman_wrapper import LocalPostmanWrapper
 from .constants import FAILURE_REASON_KEY
@@ -564,12 +564,11 @@ Exception:
             signature=external_tx.signature,
             nonce=None,
             chain_id=state.general_config.chain_id.value,
-            # Need to set to 0 as it will be invoked in apply_state_updates
-            version=constants.TRANSACTION_VERSION,
+            version=external_tx.version or constants.QUERY_VERSION,
+            only_query=True
         )
 
-        state_copy = state.state._copy() # pylint: disable=protected-access
-        execution_info = await internal_tx.apply_state_updates(state_copy, state.general_config)
+        execution_info = await call_internal_tx(state.copy(), internal_tx)
 
         actual_fee = calculate_tx_fee_by_cairo_usage(
             general_config=state.general_config,
