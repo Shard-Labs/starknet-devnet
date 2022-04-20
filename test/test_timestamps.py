@@ -27,7 +27,7 @@ def get_ts_from_last_block():
     """Returns the timestamp of the last block"""
     return get_block(parse=True)["timestamp"]
 
-@pytest.mark.web3_messaging
+@pytest.mark.timestamps
 @devnet_in_background()
 def test_timestamps():
     """Test timestamp"""

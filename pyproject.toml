@@ -40,6 +40,7 @@ markers = [
     "state_update",
     "transaction_trace",
     "general_workflow",
+    "timestamps",
     "web3_messaging"
 ]
 junit_family="xunit1"
