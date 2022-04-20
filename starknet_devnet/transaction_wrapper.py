@@ -68,7 +68,8 @@ class TransactionWrapper(ABC):
         function_invocation: FunctionInvocation,
         tx_details: TransactionDetails,
         events: List[Event],
-        l2_to_l1_messages: List[L2ToL1MessageInfo]
+        l2_to_l1_messages: List[L2ToL1MessageInfo],
+        actual_fee: int,
     ):
         self.transaction_hash = tx_details.transaction_hash
 
@@ -79,6 +80,7 @@ class TransactionWrapper(ABC):
         }
 
         self.receipt = {
+            "actual_fee": hex(actual_fee),
             "execution_resources": function_invocation.execution_resources,
             "l2_to_l1_messages": l2_to_l1_messages,
             "events": process_events(events),
@@ -145,7 +147,8 @@ class DeployTransactionWrapper(TransactionWrapper):
                 class_hash=fixed_length_hex(int.from_bytes(contract_hash, "big"))
             ),
             events=execution_info.raw_events,
-            l2_to_l1_messages=execution_info.l2_to_l1_messages
+            l2_to_l1_messages=execution_info.l2_to_l1_messages,
+            actual_fee=0
         )
 
 
@@ -169,5 +172,6 @@ class InvokeTransactionWrapper(TransactionWrapper):
                 signature=[hex(sig_part) for sig_part in internal_tx.signature]
             ),
             events=execution_info.get_sorted_events(),
-            l2_to_l1_messages=execution_info.get_sorted_l2_to_l1_messages()
+            l2_to_l1_messages=execution_info.get_sorted_l2_to_l1_messages(),
+            actual_fee=execution_info.actual_fee
         )
