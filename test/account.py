@@ -6,6 +6,7 @@ Account test functions and utilities.
 from starkware.cairo.common.hash_state import compute_hash_on_elements
 from starkware.crypto.signature.signature import private_to_stark_key, sign
 from starkware.starknet.public.abi import get_selector_from_name
+from starkware.starknet.definitions.constants import TRANSACTION_VERSION, QUERY_VERSION
 
 from .util import deploy, call, invoke, estimate_fee
 
@@ -15,8 +16,6 @@ ACCOUNT_VERSION = "0.1.0"
 
 ACCOUNT_PATH = f"{ACCOUNT_ARTIFACTS_PATH}/{ACCOUNT_AUTHOR}/{ACCOUNT_VERSION}/Account.cairo/Account.json"
 ACCOUNT_ABI_PATH = f"{ACCOUNT_ARTIFACTS_PATH}/{ACCOUNT_AUTHOR}/{ACCOUNT_VERSION}/Account.cairo/Account_abi.json"
-
-TRANSACTION_VERSION = 0
 
 PRIVATE_KEY = 123456789987654321
 PUBLIC_KEY = private_to_stark_key(PRIVATE_KEY)
@@ -43,7 +42,7 @@ def str_to_felt(text):
     """Converts string to felt."""
     return int.from_bytes(bytes(text, "ascii"), "big")
 
-def hash_multicall(sender, calls, nonce, max_fee):
+def hash_multicall(sender, calls, nonce, max_fee, version):
     """desc"""
     hash_array = []
 
@@ -57,7 +56,7 @@ def hash_multicall(sender, calls, nonce, max_fee):
         compute_hash_on_elements(hash_array),
         nonce,
         max_fee,
-        TRANSACTION_VERSION
+        version
     ])
 
 
@@ -89,7 +88,7 @@ def adapt_inputs(execute_calldata):
     """Get stringified inputs from execute_calldata."""
     return [str(v) for v in execute_calldata]
 
-def get_execute_args(calls, account_address, nonce=None, max_fee=0):
+def get_execute_args(calls, account_address, nonce=None, max_fee=0, version=TRANSACTION_VERSION):
     """Returns signature and execute calldata"""
 
     if nonce is None:
@@ -99,7 +98,11 @@ def get_execute_args(calls, account_address, nonce=None, max_fee=0):
     calls_with_selector = [
         (call[0], get_selector_from_name(call[1]), call[2]) for call in calls]
     message_hash = hash_multicall(
-        int(account_address, 16), calls_with_selector, int(nonce), max_fee
+        sender=int(account_address, 16),
+        calls=calls_with_selector,
+        nonce=int(nonce),
+        max_fee=max_fee,
+        version=version
     )
     signature = get_signature(message_hash)
 
@@ -111,7 +114,12 @@ def get_execute_args(calls, account_address, nonce=None, max_fee=0):
 
 def get_estimated_fee(calls, account_address, nonce=None):
     """Get estmated fee."""
-    signature, execute_calldata = get_execute_args(calls, account_address, nonce)
+    signature, execute_calldata = get_execute_args(
+        calls=calls,
+        account_address=account_address,
+        nonce=nonce,
+        version=QUERY_VERSION
+    )
 
     return estimate_fee(
         "__execute__",
