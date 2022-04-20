@@ -1,9 +1,10 @@
 """
 Base routes
 """
-from flask import Blueprint, abort, Response, request
+from flask import Blueprint, Response, request
 
 from starknet_devnet.state import state
+from starknet_devnet.util import StarknetDevnetException
 
 base = Blueprint("base", __name__)
 
@@ -25,7 +26,7 @@ def dump():
     request_dict = request.json or {}
     dump_path = request_dict.get("path") or state.dumper.dump_path
     if not dump_path:
-        abort(Response("No path provided", 400))
+        raise StarknetDevnetException(message="No path provided.", status_code=400)
 
     state.dumper.dump(dump_path)
     return Response(status=200)

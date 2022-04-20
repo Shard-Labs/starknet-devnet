@@ -9,7 +9,7 @@ import requests
 
 import pytest
 
-from .util import call, deploy, invoke, run_devnet_in_background
+from .util import call, deploy, devnet_in_background, invoke, run_devnet_in_background
 from .settings import GATEWAY_URL
 from .shared import CONTRACT_PATH, ABI_PATH
 
@@ -32,6 +32,11 @@ def send_dump_request(dump_path: str=None):
     """Send HTTP request to trigger dumping."""
     json_load = { "path": dump_path } if dump_path else None
     return requests.post(f"{GATEWAY_URL}/dump", json=json_load)
+
+def send_error_request():
+    """Send HTTP request to trigger error response."""
+    json_body = { "dummy": "dummy_value" }
+    return requests.post(f"{GATEWAY_URL}/dump", json=json_body)
 
 def assert_dump_present(dump_path: str, sleep_seconds=2):
     """Assert there is a non-empty dump file."""
@@ -182,3 +187,13 @@ def test_dumping_on_each_tx():
 
     assert_load(dump_after_deploy_path, contract_address, "0")
     assert_load(dump_after_invoke_path, contract_address, "10")
+
+@devnet_in_background()
+def test_dumping_call_with_invalid_body():
+    """Call with invalid body and test status code and message."""
+    resp = send_error_request()
+
+    json_error_message = resp.json()["message"]
+    msg = "No path provided."
+    assert msg == json_error_message
+    assert resp.status_code == 400

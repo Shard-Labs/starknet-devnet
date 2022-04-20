@@ -4,17 +4,20 @@ Test postman usage. This test has one single pytest case, because the whole flow
 
 
 
-from test.settings import L1_URL, GATEWAY_URL
-from test.util import call, deploy, devnet_in_background, invoke, load_file_content
-from test.web3_util import web3_call, web3_deploy, web3_transact
 
 import time
 import json
 import subprocess
-import requests
+
+from test.web3_util import web3_call, web3_deploy, web3_transact
+from test.settings import L1_URL, GATEWAY_URL
+from test.util import call, deploy, devnet_in_background, invoke, load_file_content
+
 import pytest
 
 from web3 import Web3
+import requests
+
 
 from .shared import ARTIFACTS_PATH
 
@@ -263,3 +266,22 @@ def test_postman():
     l2_contract_address = init_l2_contract(l1l2_example_contract.address)
 
     l1_l2_message_exchange(web3,l1l2_example_contract,l2_contract_address)
+
+
+def load_l1_messaging_contract(req_dict: dict):
+    """Load L1 messaging contract"""
+    return requests.post(
+        f"{GATEWAY_URL}/postman/load_l1_messaging_contract",
+        json=(req_dict)
+    )
+
+@devnet_in_background()
+def test_invalid_starknet_function_call_load_l1_messaging_contract():
+    """Call with invalid data on starknet function call"""
+    load_messaging_contract_request = {}
+    resp = load_l1_messaging_contract(load_messaging_contract_request)
+
+    json_error_message = resp.json()["message"]
+    msg = "L1 network or StarknetMessaging contract address not specified"
+    assert resp.status_code == 400
+    assert msg in json_error_message

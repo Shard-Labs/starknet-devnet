@@ -156,8 +156,9 @@ class StarknetDevnetException(StarkException):
     Exception raised across the project.
     Indicates the raised issue is devnet-related.
     """
-    def __init__(self, code=500, message=None):
+    def __init__(self, status_code=500, code=None, message=None):
         super().__init__(code=code, message=message)
+        self.status_code = status_code
 
 @dataclass
 class DummyCallInfo:
