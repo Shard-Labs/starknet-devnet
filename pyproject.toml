@@ -41,6 +41,7 @@ markers = [
     "transaction_trace",
     "general_workflow",
     "tx_version",
+    "timestamps",
     "web3_messaging"
 ]
 junit_family="xunit1"

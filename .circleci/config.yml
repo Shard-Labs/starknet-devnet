@@ -19,6 +19,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Check devnet versions
+          command: ./scripts/check_versions.sh
+      - run:
           name: Install development tools
           command: ./scripts/install_dev_tools.sh
       - run:

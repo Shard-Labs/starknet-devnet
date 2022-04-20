@@ -11,7 +11,7 @@ from web3 import Web3
 
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
-from starkware.starknet.business_logic.state.state import CarriedState
+from starkware.starknet.business_logic.state.state import CarriedState, BlockInfo
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Transaction
@@ -109,6 +109,13 @@ class StarknetWrapper:
             previous_state = self.__current_carried_state
             assert previous_state is not None
             current_carried_state = (await self.__get_state()).state
+
+            current_carried_state.block_info = BlockInfo(
+                block_number=current_carried_state.block_info.block_number,
+                gas_price=current_carried_state.block_info.gas_price,
+                block_timestamp=int(time.time()),
+            )
+
             updated_shared_state = await current_carried_state.shared_state.apply_state_updates(
                 ffc=current_carried_state.ffc,
                 previous_carried_state=previous_state,
@@ -319,7 +326,7 @@ class StarknetWrapper:
         state = await self.__get_state()
         state_root = await self.__get_state_root()
         block_number = self.get_number_of_blocks()
-        timestamp = int(time.time())
+        timestamp = state.state.block_info.block_timestamp
         signature = []
         if "signature" in tx_wrapper.transaction["transaction"]:
             signature = [int(sig_part, 16) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
