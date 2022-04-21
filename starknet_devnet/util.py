@@ -170,6 +170,7 @@ class DummyCallInfo:
 class DummyExecutionInfo:
     """Used temporarily until contracts received from starknet.deploy include their own execution_info."""
     def __init__(self):
+        self.actual_fee = 0
         self.call_info = DummyCallInfo()
         self.retdata = []
         self.internal_calls = []

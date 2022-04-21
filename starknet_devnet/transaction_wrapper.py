@@ -173,5 +173,5 @@ class InvokeTransactionWrapper(TransactionWrapper):
             ),
             events=execution_info.get_sorted_events(),
             l2_to_l1_messages=execution_info.get_sorted_l2_to_l1_messages(),
-            actual_fee=execution_info.actual_fee if hasattr(execution_info, "actual_fee") else 0
+            actual_fee=execution_info.actual_fee
         )
