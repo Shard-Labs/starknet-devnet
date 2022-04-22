@@ -7,7 +7,7 @@ IMAGE=shardlabs/starknet-devnet
 LOCAL_VERSION=$(./scripts/get_version.sh version)
 echo "Local version: $LOCAL_VERSION"
 
-LOCAL_VERSION_TAG="$LOCAL_VERSION${TAG_SUFFIX}"
+LOCAL_VERSION_TAG="${LOCAL_VERSION}${TAG_SUFFIX}"
 LATEST_VERSION_TAG="latest$TAG_SUFFIX"
 
 echo "Build image regardless of versioning"
