@@ -82,8 +82,4 @@ workflows:
       - image_build_and_push:
           <<: *on_master_after_test
       - image_build_and_push_arm:
-          context: shardlabs # TODO use on_master_after_test
-          filters:
-            branches:
-              only:
-                - multiarch
+          <<: *on_master_after_test
