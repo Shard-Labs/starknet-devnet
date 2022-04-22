@@ -54,7 +54,23 @@ jobs:
       - checkout
       - setup_remote_docker:
           version: 20.10.7
-      - run: ./scripts/image_build_and_push.sh
+      - run:
+          name: Build and push image
+          command: ./scripts/image_build_and_push.sh
+          environment:
+            REMOTE: true
+
+  image_build_and_push_arm:
+    machine:
+      image: ubuntu-2004:202111-02
+    resource_class: arm.medium
+    steps:
+      - checkout
+      - run:
+          name: Build and push image
+          command: ./scripts/image_build_and_push.sh
+          environment:
+            TAG_SUFFIX: -arm
 
 workflows:
   version: 2
@@ -65,3 +81,9 @@ workflows:
           <<: *on_master_after_test
       - image_build_and_push:
           <<: *on_master_after_test
+      - image_build_and_push_arm:
+          context: shardlabs # TODO use on_master_after_test
+          filters:
+            branches:
+              only:
+                - multiarch
