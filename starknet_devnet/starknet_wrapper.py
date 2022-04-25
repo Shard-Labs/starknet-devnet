@@ -151,42 +151,42 @@ class StarknetWrapper:
         else:
             tx_hash = deploy_transaction.calculate_hash(state.general_config)
 
-        contract_address = calculate_contract_address(
-            caller_address=0,
-            constructor_calldata=deploy_transaction.constructor_calldata,
-            salt=deploy_transaction.contract_address_salt,
-            contract_definition=deploy_transaction.contract_definition
-        )
-
         starknet = await self.get_starknet()
 
-        if contract_address not in self.__address2contract_wrapper:
-            try:
-                contract = await starknet.deploy(
-                    contract_def=contract_definition,
-                    constructor_calldata=deploy_transaction.constructor_calldata,
-                    contract_address_salt=deploy_transaction.contract_address_salt
-                )
-                execution_info = contract.deploy_execution_info
-                error_message = None
-                status = TxStatus.ACCEPTED_ON_L2
-
-                self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, contract_definition)
-                await self.__update_state()
-            except StarkException as err:
-                error_message = err.message
-                status = TxStatus.REJECTED
-                execution_info = DummyExecutionInfo()
-
-            await self.__store_transaction(
-                transaction=deploy_transaction,
-                contract_address=contract_address,
-                tx_hash=tx_hash,
-                status=status,
-                execution_info=execution_info,
-                error_message=error_message,
-                contract_hash=state.state.contract_states[contract_address].state.contract_hash
+        try:
+            contract = await starknet.deploy(
+                contract_def=contract_definition,
+                constructor_calldata=deploy_transaction.constructor_calldata,
+                contract_address_salt=deploy_transaction.contract_address_salt
             )
+            contract_address = contract.contract_address
+            execution_info = contract.deploy_execution_info
+            error_message = None
+            status = TxStatus.ACCEPTED_ON_L2
+
+            self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, contract_definition)
+            await self.__update_state()
+        except StarkException as err:
+            error_message = err.message
+            status = TxStatus.REJECTED
+            execution_info = DummyExecutionInfo()
+
+            contract_address = calculate_contract_address(
+                caller_address=0,
+                constructor_calldata=deploy_transaction.constructor_calldata,
+                salt=deploy_transaction.contract_address_salt,
+                contract_definition=deploy_transaction.contract_definition
+            )
+
+        await self.__store_transaction(
+            transaction=deploy_transaction,
+            contract_address=contract_address,
+            tx_hash=tx_hash,
+            status=status,
+            execution_info=execution_info,
+            error_message=error_message,
+            contract_hash=state.state.contract_states[contract_address].state.contract_hash
+        )
 
         return contract_address, tx_hash
 
