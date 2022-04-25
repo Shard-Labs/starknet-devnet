@@ -303,14 +303,13 @@ def assert_block_hash(latest_block_number, expected_block_hash):
     assert_equal(block["block_hash"], expected_block_hash)
     assert_equal(block["status"], "ACCEPTED_ON_L2")
 
-def assert_salty_deploy(contract_path, inputs, salt, expected_address, expected_tx_hash):
-    """Run twice deployment with salt. Expect the same output."""
-    for i in range(2):
-        print(f"Running deployment {i + 1})")
-        deploy_info = deploy(contract_path, inputs, salt=salt)
-        assert_tx_status(deploy_info["tx_hash"], "ACCEPTED_ON_L2")
-        assert_equal(deploy_info["address"], expected_address)
-        assert_equal(deploy_info["tx_hash"], expected_tx_hash)
+def assert_salty_deploy(contract_path, inputs, salt, expected_status, expected_address, expected_tx_hash):
+    """Deploy with salt and assert."""
+
+    deploy_info = deploy(contract_path, inputs, salt=salt)
+    assert_tx_status(deploy_info["tx_hash"], expected_status)
+    assert_equal(deploy_info["address"], expected_address)
+    assert_equal(deploy_info["tx_hash"], expected_tx_hash)
 
 def assert_failing_deploy(contract_path):
     """Run deployment for a contract that's expected to be rejected."""
