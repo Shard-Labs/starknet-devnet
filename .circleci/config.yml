@@ -34,7 +34,10 @@ jobs:
           name: Run pytest tests
           parallel: true
           command: |
-            TESTFILES=$(circleci tests glob test/test*.py | circleci tests split --split-by=timings --timings-type=classname)
+            TESTFILES=$(
+                circleci tests glob test/test*.py |
+                circleci tests split --split-by=timings --timings-type=classname
+            )
             mkdir -p test-results
             poetry run pytest -s --junitxml=test-results/junit.xml -vv $TESTFILES
       - store_test_results:
