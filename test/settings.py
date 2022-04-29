@@ -1,7 +1,7 @@
 """Constants used in test files."""
 
 HOST = "localhost"
-PORT = "5000"
+PORT = "8080"
 L1_HOST = "localhost"
 L1_PORT = "8545"
 
