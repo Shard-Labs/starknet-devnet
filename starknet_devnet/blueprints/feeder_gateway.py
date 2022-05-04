@@ -64,9 +64,9 @@ async def get_block():
     _check_block_arguments(block_hash, block_number)
 
     if block_hash is not None:
-        result_dict = state.starknet_wrapper.get_block_by_hash(block_hash)
+        result_dict = state.starknet_wrapper.blocks.get_by_hash(block_hash)
     else:
-        result_dict = state.starknet_wrapper.get_block_by_number(block_number)
+        result_dict = state.starknet_wrapper.blocks.get_by_number(block_number)
 
     return jsonify(result_dict)
 
@@ -157,7 +157,7 @@ def get_state_update():
     block_hash = request.args.get("blockHash")
     block_number = request.args.get("blockNumber", type=custom_int)
 
-    state_update = state.starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
+    state_update = state.starknet_wrapper.blocks.get_state_update(block_hash=block_hash, block_number=block_number)
 
     return jsonify(state_update)
 

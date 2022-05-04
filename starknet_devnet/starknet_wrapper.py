@@ -12,13 +12,10 @@ from web3 import Web3
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
 from starkware.starknet.business_logic.state.state import CarriedState, BlockInfo
-from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address
-from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Transaction
+from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy
 from starkware.starknet.testing.starknet import Starknet
-from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 from starkware.starkware_utils.error_handling import StarkException
-from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
 from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee_by_cairo_usage
 
 from .origin import NullOrigin, Origin
@@ -28,10 +25,11 @@ from .util import (
     fixed_length_hex, enable_pickling, generate_state_update
 )
 from .contract_wrapper import ContractWrapper, call_internal_tx
-from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
+from .transaction_wrapper import DeployTransactionWrapper, InvokeTransactionWrapper, TransactionWrapper
 from .postman_wrapper import LocalPostmanWrapper
 from .transactions import DevnetTransactions
 from .contracts import DevnetContracts
+from .blocks import DevnetBlocks
 
 enable_pickling()
 
@@ -50,25 +48,14 @@ class StarknetWrapper:
 
         self.contracts = DevnetContracts(self.origin)
 
-        self.__hash2block: Dict[int, dict] = {}
-        """Maps block hash to block."""
-
-        self.__num2block: Dict[int, Dict] = {}
-        """Maps block number to block (one transaction per block); holds only own blocks."""
-
-        self.__hash2state_update: Dict[int, dict] = {}
-        """Maps block hash to state update"""
+        self.blocks = DevnetBlocks(self.origin)
 
         self.__starknet = None
-
-        self.__current_carried_state = None
 
         self.__postman_wrapper = None
 
         self.__l1_provider = None
         """Saves the L1 URL being used for L1 <> L2 communication."""
-
-        self.__last_state_update = None
 
         self.lite_mode_block_hash = False
 
@@ -80,9 +67,13 @@ class StarknetWrapper:
         with open(path, "rb") as file:
             return pickle.load(file)
 
-    async def __preserve_current_state(self, state: CarriedState):
-        self.__current_carried_state = deepcopy(state)
-        self.__current_carried_state.shared_state = state.shared_state
+    async def __get_state_copy(self) -> CarriedState:
+        state = await self.__get_state()
+
+        copied_state = deepcopy(state.state)
+        copied_state.shared_state = state.state.shared_state
+
+        return copied_state
 
     async def get_starknet(self):
         """
@@ -90,7 +81,7 @@ class StarknetWrapper:
         """
         if not self.__starknet:
             self.__starknet = await Starknet.empty(general_config=DEFAULT_GENERAL_CONFIG)
-            await self.__preserve_current_state(self.__starknet.state.state)
+
         return self.__starknet
 
     async def __get_state(self):
@@ -103,7 +94,7 @@ class StarknetWrapper:
 
     async def __update_state(self):
         if not self.lite_mode_block_hash:
-            previous_state = self.__current_carried_state
+            previous_state = await self.__get_state_copy()
             assert previous_state is not None
             current_carried_state = (await self.__get_state()).state
 
@@ -119,9 +110,8 @@ class StarknetWrapper:
                 current_carried_state=current_carried_state
             )
             self.__starknet.state.state.shared_state = updated_shared_state
-            await self.__preserve_current_state(self.__starknet.state.state)
 
-            self.__last_state_update = generate_state_update(previous_state, current_carried_state)
+            return generate_state_update(previous_state, current_carried_state)
 
     async def __get_state_root(self):
         state = await self.__get_state()
@@ -161,20 +151,25 @@ class StarknetWrapper:
                 status = TxStatus.ACCEPTED_ON_L2
 
                 self.contracts.store(contract.contract_address, ContractWrapper(contract, contract_definition))
-                await self.__update_state()
+                state_update = await self.__update_state()
             except StarkException as err:
                 error_message = err.message
                 status = TxStatus.REJECTED
                 execution_info = DummyExecutionInfo()
 
-            await self.__store_transaction(
+            tx_wrapper = DeployTransactionWrapper(
                 transaction=deploy_transaction,
                 contract_address=contract_address,
                 tx_hash=tx_hash,
                 status=status,
                 execution_info=execution_info,
+                contract_hash=state.state.contract_states[contract_address].state.contract_hash,
+            )
+
+            await self.__store_transaction(
+                tx_wrapper=tx_wrapper,
+                state_update=state_update,
                 error_message=error_message,
-                contract_hash=state.state.contract_states[contract_address].state.contract_hash
             )
 
         return contract_address, tx_hash
@@ -203,19 +198,18 @@ class StarknetWrapper:
             )
             status = TxStatus.ACCEPTED_ON_L2
             error_message = None
-            await self.__update_state()
+            state_update = await self.__update_state()
         except StarkException as err:
             error_message = err.message
             status = TxStatus.REJECTED
             execution_info = DummyExecutionInfo()
             adapted_result = []
 
+        tx_wrapper = InvokeTransactionWrapper(invoke_transaction, status, execution_info)
+
         await self.__store_transaction(
-            transaction=invoke_transaction,
-            contract_address=transaction.contract_address,
-            tx_hash=invoke_transaction.hash_value,
-            status=status,
-            execution_info=execution_info,
+            tx_wrapper=tx_wrapper,
+            state_update=state_update,
             error_message=error_message
         )
 
@@ -236,116 +230,26 @@ class StarknetWrapper:
 
         return { "result": adapted_result }
 
-    def get_number_of_blocks(self) -> int:
-        """Returns the number of blocks stored so far."""
-        return len(self.__num2block) + self.origin.get_number_of_blocks()
-
-    async def __generate_block(self, tx_wrapper: TransactionWrapper):
-        """
-        Generates a block and stores it to blocks and hash2block. The block contains just the passed transaction.
-        The `tx_wrapper.transaction` dict should contain a key `transaction`.
-        Returns (block_hash, block_number).
-        """
-
-        state = await self.__get_state()
-        state_root = await self.__get_state_root()
-        block_number = self.get_number_of_blocks()
-        timestamp = state.state.block_info.block_timestamp
-        signature = []
-        if "signature" in tx_wrapper.transaction["transaction"]:
-            signature = [int(sig_part, 16) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
-
-        parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
-
-        if self.lite_mode_block_hash:
-            block_hash = block_number
-        else:
-            block_hash = await calculate_block_hash(
-                general_config=state.general_config,
-                parent_hash=int(parent_block_hash, 16),
-                block_number=block_number,
-                global_state_root=state_root,
-                block_timestamp=timestamp,
-                tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
-                tx_signatures=[signature],
-                event_hashes=[]
-            )
-            self.__last_state_update["block_hash"] = hex(block_hash)
-            self.__hash2state_update[block_hash] = self.__last_state_update
-
-        block_hash_hexed = fixed_length_hex(block_hash)
-        block = {
-            "block_hash": block_hash_hexed,
-            "block_number": block_number,
-            "parent_block_hash": parent_block_hash,
-            "state_root": state_root.hex(),
-            "status": TxStatus.ACCEPTED_ON_L2.name,
-            "timestamp": timestamp,
-            "transaction_receipts": [tx_wrapper.get_receipt_block_variant()],
-            "transactions": [tx_wrapper.transaction["transaction"]],
-        }
-
-        self.__num2block[block_number] = block
-        self.__hash2block[block_hash] = block
-
-        return block_hash_hexed, block_number
-
-    def __get_last_block(self):
-        number_of_blocks = self.get_number_of_blocks()
-        return self.get_block_by_number(number_of_blocks - 1)
-
-    def get_block_by_hash(self, block_hash: str):
-        """Returns the block identified either by its `block_hash`"""
-
-        block_hash_int = int(block_hash, 16)
-        if block_hash_int in self.__hash2block:
-            return self.__hash2block[block_hash_int]
-        return self.origin.get_block_by_hash(block_hash=block_hash)
-
-    def get_block_by_number(self, block_number: int):
-        """Returns the block whose block_number is provided"""
-        if block_number is None:
-            if self.__num2block:
-                return self.__get_last_block()
-            return self.origin.get_block_by_number(block_number)
-
-        if block_number < 0:
-            message = f"Block number must be a non-negative integer; got: {block_number}."
-            raise StarknetDevnetException(message=message)
-
-        if block_number >= self.get_number_of_blocks():
-            message = f"Block number too high. There are currently {len(self.__num2block)} blocks; got: {block_number}."
-            raise StarknetDevnetException(message=message)
-
-        if block_number in self.__num2block:
-            return self.__num2block[block_number]
-
-        return self.origin.get_block_by_number(block_number)
-
-    # pylint: disable=too-many-arguments
-    async def __store_transaction(self, transaction: Transaction, contract_address: int, tx_hash: int, status: TxStatus,
-        execution_info: StarknetTransactionExecutionInfo, error_message: str=None, contract_hash: bytes=None
+    async def __store_transaction(self, tx_wrapper: TransactionWrapper, state_update: Dict, error_message: str=None
     ):
-        """Stores the provided data as a deploy transaction in `self.transactions`."""
-        if transaction.tx_type == TransactionType.DEPLOY:
-            tx_wrapper = DeployTransactionWrapper(
-                transaction=transaction,
-                contract_address=contract_address,
-                tx_hash=tx_hash,
-                status=status,
-                execution_info=execution_info,
-                contract_hash=contract_hash,
-            )
-        elif transaction.tx_type == TransactionType.INVOKE_FUNCTION:
-            tx_wrapper = InvokeTransactionWrapper(transaction, status, execution_info)
-        else:
-            raise StarknetDevnetException(message=f"Illegal tx_type: {transaction.tx_type}")
+        """
+        Stores the provided data as a deploy transaction in `self.transactions`.
+        Generates a new block
+        """
 
-        if status == TxStatus.REJECTED:
+        if tx_wrapper.transaction["status"] == TxStatus.REJECTED:
             assert error_message, "error_message must be present if tx rejected"
             tx_wrapper.set_failure_reason(error_message)
         else:
-            block_hash, block_number = await self.__generate_block(tx_wrapper)
+            state = await self.__get_state()
+            state_root = await self.__get_state_root()
+
+            block_hash, block_number = await self.blocks.generate(
+                tx_wrapper,
+                state,
+                state_root,
+                state_update=state_update,
+            )
             tx_wrapper.set_block_data(block_hash, block_number)
 
         self.transactions.store(tx_wrapper)
@@ -438,30 +342,6 @@ Exception:
                 "from_l2": l2_messages
             }
         }
-
-    def get_state_update(self, block_hash=None, block_number=None):
-        """
-        Returns state update for the provided block hash or block number.
-        It will return the last state update if block is not provided.
-        """
-        if block_hash:
-            numeric_hash = int(block_hash, 16)
-
-            if numeric_hash in self.__hash2block:
-                return self.__hash2state_update[numeric_hash]
-
-            return self.origin.get_state_update(block_hash=block_hash)
-
-        if block_number is not None:
-            if block_number in self.__num2block:
-                block = self.__num2block[block_number]
-                numeric_hash = int(block["block_hash"], 16)
-
-                return self.__hash2state_update[numeric_hash]
-
-            return self.origin.get_state_update(block_number=block_number)
-
-        return self.__last_state_update or self.origin.get_state_update()
 
     async def calculate_actual_fee(self, external_tx: InvokeFunction):
         """Calculates actual fee"""
