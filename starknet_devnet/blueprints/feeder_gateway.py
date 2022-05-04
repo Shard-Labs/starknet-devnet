@@ -79,7 +79,7 @@ def get_code():
     _check_block_hash(request.args)
 
     contract_address = request.args.get("contractAddress", type=custom_int)
-    result_dict = state.starknet_wrapper.get_code(contract_address)
+    result_dict = state.starknet_wrapper.contracts.get_code(contract_address)
     return jsonify(result_dict)
 
 @feeder_gateway.route("/get_full_contract", methods=["GET"])
@@ -91,7 +91,7 @@ def get_full_contract():
 
     contract_address = request.args.get("contractAddress", type=custom_int)
 
-    result_dict = state.starknet_wrapper.get_full_contract(contract_address)
+    result_dict = state.starknet_wrapper.contracts.get_full_contract(contract_address)
 
     return jsonify(result_dict)
 

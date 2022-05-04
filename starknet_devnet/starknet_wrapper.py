@@ -31,6 +31,7 @@ from .contract_wrapper import ContractWrapper, call_internal_tx
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
 from .postman_wrapper import LocalPostmanWrapper
 from .transactions import DevnetTransactions
+from .contracts import DevnetContracts
 
 enable_pickling()
 
@@ -47,8 +48,7 @@ class StarknetWrapper:
 
         self.transactions = DevnetTransactions(self.origin)
 
-        self.__address2contract_wrapper: Dict[int, ContractWrapper] = {}
-        """Maps contract address to contract wrapper."""
+        self.contracts = DevnetContracts(self.origin)
 
         self.__hash2block: Dict[int, dict] = {}
         """Maps block hash to block."""
@@ -127,16 +127,6 @@ class StarknetWrapper:
         state = await self.__get_state()
         return state.state.shared_state.contract_states.root
 
-    def __is_contract_deployed(self, address: int) -> bool:
-        return address in self.__address2contract_wrapper
-
-    def __get_contract_wrapper(self, address: int) -> ContractWrapper:
-        if not self.__is_contract_deployed(address):
-            message = f"No contract at the provided address ({fixed_length_hex(address)})."
-            raise StarknetDevnetException(message=message)
-
-        return self.__address2contract_wrapper[address]
-
     async def deploy(self, deploy_transaction: Deploy):
         """
         Deploys the contract specified with `transaction`.
@@ -159,7 +149,7 @@ class StarknetWrapper:
 
         starknet = await self.get_starknet()
 
-        if contract_address not in self.__address2contract_wrapper:
+        if not self.contracts.is_deployed(contract_address):
             try:
                 contract = await starknet.deploy(
                     contract_def=contract_definition,
@@ -170,7 +160,7 @@ class StarknetWrapper:
                 error_message = None
                 status = TxStatus.ACCEPTED_ON_L2
 
-                self.__address2contract_wrapper[contract.contract_address] = ContractWrapper(contract, contract_definition)
+                self.contracts.store(contract.contract_address, ContractWrapper(contract, contract_definition))
                 await self.__update_state()
             except StarkException as err:
                 error_message = err.message
@@ -202,7 +192,7 @@ class StarknetWrapper:
                     message = f"Actual fee exceeded max fee.\n{actual_fee} > {invoke_transaction.max_fee}"
                     raise StarknetDevnetException(message=message)
 
-            contract_wrapper = self.__get_contract_wrapper(invoke_transaction.contract_address)
+            contract_wrapper = self.contracts.get_by_address(invoke_transaction.contract_address)
             adapted_result, execution_info = await contract_wrapper.call_or_invoke(
                 Choice.INVOKE,
                 entry_point_selector=invoke_transaction.entry_point_selector,
@@ -233,7 +223,7 @@ class StarknetWrapper:
 
     async def call(self, transaction: InvokeFunction):
         """Perform call according to specifications in `transaction`."""
-        contract_wrapper = self.__get_contract_wrapper(transaction.contract_address)
+        contract_wrapper = self.contracts.get_by_address(transaction.contract_address)
 
         adapted_result, _ = await contract_wrapper.call_or_invoke(
             Choice.CALL,
@@ -359,18 +349,6 @@ class StarknetWrapper:
             tx_wrapper.set_block_data(block_hash, block_number)
 
         self.transactions.store(tx_wrapper)
-
-    def get_code(self, contract_address: int) -> dict:
-        """Returns a `dict` with `abi` and `bytecode` of the contract at `contract_address`."""
-        if self.__is_contract_deployed(contract_address):
-            contract_wrapper = self.__get_contract_wrapper(contract_address)
-            return contract_wrapper.code
-        return self.origin.get_code(contract_address)
-
-    def get_full_contract(self, contract_address: int) -> dict:
-        """Returns a `dict` contract definition of the contract at `contract_address`."""
-        contract_wrapper = self.__get_contract_wrapper(contract_address)
-        return contract_wrapper.contract_definition
 
     async def get_storage_at(self, contract_address: int, key: int) -> str:
         """
