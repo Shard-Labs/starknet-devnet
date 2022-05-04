@@ -30,7 +30,7 @@ from .util import (
 from .contract_wrapper import ContractWrapper, call_internal_tx
 from .transaction_wrapper import TransactionWrapper, DeployTransactionWrapper, InvokeTransactionWrapper
 from .postman_wrapper import LocalPostmanWrapper
-from .constants import FAILURE_REASON_KEY
+from .transactions import DevnetTransactions
 
 enable_pickling()
 
@@ -45,11 +45,10 @@ class StarknetWrapper:
         self.origin: Origin = NullOrigin()
         """Origin chain that this devnet was forked from."""
 
+        self.transactions = DevnetTransactions(self.origin)
+
         self.__address2contract_wrapper: Dict[int, ContractWrapper] = {}
         """Maps contract address to contract wrapper."""
-
-        self.__transaction_wrappers: Dict[int, TransactionWrapper] = {}
-        """Maps transaction hash to transaction wrapper."""
 
         self.__hash2block: Dict[int, dict] = {}
         """Maps block hash to block."""
@@ -147,7 +146,7 @@ class StarknetWrapper:
         state = await self.__get_state()
         contract_definition = deploy_transaction.contract_definition
         if self.lite_mode_deploy_hash:
-            tx_hash = len(self.__transaction_wrappers)
+            tx_hash = self.transactions.get_count()
         else:
             tx_hash = deploy_transaction.calculate_hash(state.general_config)
 
@@ -246,69 +245,6 @@ class StarknetWrapper:
         )
 
         return { "result": adapted_result }
-
-    def get_transaction_status(self, transaction_hash: str):
-        """Returns the status of the transaction identified by `transaction_hash`."""
-
-        tx_hash_int = int(transaction_hash, 16)
-        if tx_hash_int in self.__transaction_wrappers:
-            transaction_wrapper = self.__transaction_wrappers[tx_hash_int]
-            transaction = transaction_wrapper.transaction
-
-            # the transaction status object only needs 1-3 elements from the transaction_wrapper object
-            ret = {
-                # "tx_status" always exists
-                "tx_status": transaction["status"]
-            }
-
-            # "block_hash" will only exist after transaction enters ACCEPTED_ON_L2
-            if "block_hash" in transaction:
-                ret["block_hash"] = transaction["block_hash"]
-
-            # "tx_failure_reason" will only exist if the transaction was rejected.
-            # the key in the transaction_wrapper object is "transaction_failure_reason"
-            # first it must be checked if the object contains an element with that key
-            if FAILURE_REASON_KEY in transaction:
-                ret["tx_failure_reason"] = transaction[FAILURE_REASON_KEY]
-
-            return ret
-
-        return self.origin.get_transaction_status(transaction_hash)
-
-    def get_transaction(self, transaction_hash: str):
-        """Returns the transaction identified by `transaction_hash`."""
-
-        tx_hash_int = int(transaction_hash,16)
-        if tx_hash_int in self.__transaction_wrappers:
-            return self.__transaction_wrappers[tx_hash_int].transaction
-
-        return self.origin.get_transaction(transaction_hash)
-
-    def get_transaction_receipt(self, transaction_hash: str):
-        """Returns the transaction receipt of the transaction identified by `transaction_hash`."""
-
-        tx_hash_int = int(transaction_hash, 16)
-        if tx_hash_int in self.__transaction_wrappers:
-            return self.__transaction_wrappers[tx_hash_int].receipt
-
-        return self.origin.get_transaction_receipt(transaction_hash)
-
-    def get_transaction_trace(self, transaction_hash:str):
-        """Returns the transaction trace of the tranasction indetified by `transaction_hash`"""
-
-        tx_hash_int = int(transaction_hash, 16)
-        if tx_hash_int in self.__transaction_wrappers:
-            status = self.__transaction_wrappers[tx_hash_int].transaction["status"]
-            transaction_wrapper = self.__transaction_wrappers[tx_hash_int]
-
-            if not hasattr(transaction_wrapper, "trace"):
-                raise StarknetDevnetException(
-                    f"Transaction corresponding to hash {tx_hash_int} has no trace; status: {status}."
-                )
-
-            return transaction_wrapper.trace
-
-        return self.origin.get_transaction_trace(transaction_hash)
 
     def get_number_of_blocks(self) -> int:
         """Returns the number of blocks stored so far."""
@@ -422,8 +358,7 @@ class StarknetWrapper:
             block_hash, block_number = await self.__generate_block(tx_wrapper)
             tx_wrapper.set_block_data(block_hash, block_number)
 
-        numeric_hash = int(tx_wrapper.transaction_hash, 16)
-        self.__transaction_wrappers[numeric_hash] = tx_wrapper
+        self.transactions.store(tx_wrapper)
 
     def get_code(self, contract_address: int) -> dict:
         """Returns a `dict` with `abi` and `bytecode` of the contract at `contract_address`."""
