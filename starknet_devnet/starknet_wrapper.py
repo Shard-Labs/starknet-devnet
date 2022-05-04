@@ -3,11 +3,9 @@ This module introduces `StarknetWrapper`, a wrapper class of
 starkware.starknet.testing.starknet.Starknet.
 """
 
-import json
 import time
 from copy import deepcopy
 from typing import Dict
-from web3 import Web3
 
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
@@ -22,11 +20,11 @@ from .origin import NullOrigin, Origin
 from .general_config import DEFAULT_GENERAL_CONFIG
 from .util import (
     Choice, StarknetDevnetException, TxStatus, DummyExecutionInfo,
-    fixed_length_hex, enable_pickling, generate_state_update
+    enable_pickling, generate_state_update
 )
 from .contract_wrapper import ContractWrapper, call_internal_tx
 from .transaction_wrapper import DeployTransactionWrapper, InvokeTransactionWrapper, TransactionWrapper
-from .postman_wrapper import LocalPostmanWrapper
+from .postman_wrapper import DevnetL1L2
 from .transactions import DevnetTransactions
 from .contracts import DevnetContracts
 from .blocks import DevnetBlocks
@@ -50,12 +48,9 @@ class StarknetWrapper:
 
         self.blocks = DevnetBlocks(self.origin)
 
+        self.l1l2 = DevnetL1L2()
+
         self.__starknet = None
-
-        self.__postman_wrapper = None
-
-        self.__l1_provider = None
-        """Saves the L1 URL being used for L1 <> L2 communication."""
 
         self.lite_mode_block_hash = False
 
@@ -75,7 +70,7 @@ class StarknetWrapper:
 
         return copied_state
 
-    async def get_starknet(self):
+    async def __get_starknet(self):
         """
         Returns the underlying Starknet instance, creating it first if necessary.
         """
@@ -89,7 +84,7 @@ class StarknetWrapper:
         Returns the StarknetState of the underlyling Starknet instance,
         creating the instance first if necessary.
         """
-        starknet = await self.get_starknet()
+        starknet = await self.__get_starknet()
         return starknet.state
 
     async def __update_state(self):
@@ -117,6 +112,31 @@ class StarknetWrapper:
         state = await self.__get_state()
         return state.state.shared_state.contract_states.root
 
+    async def __store_transaction(
+        self, tx_wrapper: TransactionWrapper, state_update: Dict, error_message: str=None
+    ) -> None:
+        """
+        Stores the provided data as a deploy transaction in `self.transactions`.
+        Generates a new block
+        """
+
+        if tx_wrapper.transaction["status"] == TxStatus.REJECTED:
+            assert error_message, "error_message must be present if tx rejected"
+            tx_wrapper.set_failure_reason(error_message)
+        else:
+            state = await self.__get_state()
+            state_root = await self.__get_state_root()
+
+            block_hash, block_number = await self.blocks.generate(
+                tx_wrapper,
+                state,
+                state_root,
+                state_update=state_update,
+            )
+            tx_wrapper.set_block_data(block_hash, block_number)
+
+        self.transactions.store(tx_wrapper)
+
     async def deploy(self, deploy_transaction: Deploy):
         """
         Deploys the contract specified with `transaction`.
@@ -137,7 +157,7 @@ class StarknetWrapper:
             contract_definition=deploy_transaction.contract_definition
         )
 
-        starknet = await self.get_starknet()
+        starknet = await self.__get_starknet()
 
         if not self.contracts.is_deployed(contract_address):
             try:
@@ -230,30 +250,6 @@ class StarknetWrapper:
 
         return { "result": adapted_result }
 
-    async def __store_transaction(self, tx_wrapper: TransactionWrapper, state_update: Dict, error_message: str=None
-    ):
-        """
-        Stores the provided data as a deploy transaction in `self.transactions`.
-        Generates a new block
-        """
-
-        if tx_wrapper.transaction["status"] == TxStatus.REJECTED:
-            assert error_message, "error_message must be present if tx rejected"
-            tx_wrapper.set_failure_reason(error_message)
-        else:
-            state = await self.__get_state()
-            state_root = await self.__get_state_root()
-
-            block_hash, block_number = await self.blocks.generate(
-                tx_wrapper,
-                state,
-                state_root,
-                state_update=state_update,
-            )
-            tx_wrapper.set_block_data(block_hash, block_number)
-
-        self.transactions.store(tx_wrapper)
-
     async def get_storage_at(self, contract_address: int, key: int) -> str:
         """
         Returns the storage identified by `key`
@@ -268,80 +264,15 @@ class StarknetWrapper:
         return self.origin.get_storage_at(contract_address, key)
 
     async def load_messaging_contract_in_l1(self, network_url: str, contract_address: str, network_id: str) -> dict:
-        """Creates a Postman Wrapper instance and loads an already deployed Messaging contract in the L1 network"""
-
-        # If no L1 network ID provided, will use a local testnet instance
-        if network_id is None or network_id == "local":
-            try:
-                starknet = await self.get_starknet()
-                starknet.state.l2_to_l1_messages_log.clear()
-                self.__postman_wrapper = LocalPostmanWrapper(network_url)
-                self.__postman_wrapper.load_mock_messaging_contract_in_l1(starknet,contract_address)
-            except Exception as error:
-                message = f"""Exception when trying to load the Starknet Messaging contract in a local testnet instance.
-Make sure you have a local testnet instance running at the provided network url, and that the Messaging Contract is deployed at the provided address
-Exception:
-{error}"""
-                raise StarknetDevnetException(message=message) from error
-        else:
-            message = "L1 interaction is only usable with a local running local testnet instance."
-            raise StarknetDevnetException(message=message)
-
-        self.__l1_provider = network_url
-        return {
-            "l1_provider": network_url,
-            "address": self.__postman_wrapper.mock_starknet_messaging_contract.address
-        }
+        """Loads the messaging contract at `contract_address`"""
+        starknet = await self.__get_starknet()
+        return self.l1l2.load_l1_messaging_contract(starknet, network_url, contract_address, network_id)
 
     async def postman_flush(self) -> dict:
         """Handles all pending L1 <> L2 messages and sends them to the other layer. """
 
         state = await self.__get_state()
-
-        if self.__postman_wrapper is None:
-            return {}
-
-        postman = self.__postman_wrapper.postman
-
-        l1_to_l2_messages = json.loads(Web3.toJSON(self.__postman_wrapper.l1_to_l2_message_filter.get_new_entries()))
-        l2_to_l1_messages = state.l2_to_l1_messages_log[postman.n_consumed_l2_to_l1_messages :]
-
-        await self.__postman_wrapper.flush()
-
-        return self.parse_l1_l2_messages(l1_to_l2_messages, l2_to_l1_messages)
-
-    def parse_l1_l2_messages(self, l1_raw_messages, l2_raw_messages) -> dict:
-        """Converts some of the values in the dictionaries from integer to hex and keys to snake_case."""
-
-        for message in l1_raw_messages:
-            message["args"]["selector"] = hex(message["args"]["selector"])
-            message["args"]["to_address"] = fixed_length_hex(message["args"].pop("toAddress")) # L2 addresses need the leading 0
-            message["args"]["from_address"] = message["args"].pop("fromAddress")
-            message["args"]["payload"] = [hex(val) for val in message["args"]["payload"]]
-
-            # change case to snake_case
-            message["transaction_hash"] = message.pop("transactionHash")
-            message["block_hash"] = message.pop("blockHash")
-            message["block_number"] = message.pop("blockNumber")
-            message["transaction_index"] = message.pop("transactionIndex")
-            message["log_index"] = message.pop("logIndex")
-
-        l2_messages = []
-        for message in l2_raw_messages:
-            new_message = {
-                "from_address": fixed_length_hex(message.from_address), # L2 addresses need the leading 0
-                "payload": [hex(val) for val in message.payload],
-                "to_address": hex(message.to_address)
-            }
-            l2_messages.append(new_message)
-
-        return {
-            "l1_provider": self.__l1_provider,
-            "consumed_messages": {
-                "from_l1": l1_raw_messages,
-                "from_l2": l2_messages
-            }
-        }
+        return await self.l1l2.flush(state)
 
     async def calculate_actual_fee(self, external_tx: InvokeFunction):
         """Calculates actual fee"""
