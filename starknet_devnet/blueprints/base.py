@@ -30,3 +30,19 @@ def dump():
 
     state.dumper.dump(dump_path)
     return Response(status=200)
+
+@base.route("/increase_time", methods=["POST"])
+def increase_time():
+    """Increases the block timestamp offset"""
+    # request_dict = request.json or {}
+    # time_ns = request_dict.get("time_ns") or 0
+    # state.block_info_manager.increase_time(time_ns)
+    return Response(status=200)
+
+@base.route("/set_time", methods=["POST"])
+def set_time():
+    """Sets the block timestamp offset"""
+    # request_dict = request.json or {}
+    # time_ns = request_dict.get("time_ns") or 0
+    # state.block_info_manager.set_time(time_ns)
+    return Response(status=200)
