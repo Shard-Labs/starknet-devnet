@@ -2,15 +2,13 @@
 Feeder gateway routes.
 """
 
-from flask import request, jsonify, abort, Blueprint
-from flask.wrappers import Response
+from flask import request, jsonify, Blueprint
 from marshmallow import ValidationError
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction
-from starkware.starkware_utils.error_handling import StarkException
 from werkzeug.datastructures import MultiDict
 
 from starknet_devnet.state import state
-from starknet_devnet.util import custom_int, StarknetDevnetException
+from starknet_devnet.util import StarknetDevnetException, custom_int
 from .shared import validate_transaction
 
 feeder_gateway = Blueprint("feeder_gateway", __name__, url_prefix="/feeder_gateway")
@@ -21,7 +19,7 @@ def validate_call(data: bytes):
     try:
         call_specifications = InvokeFunction.loads(data)
     except (TypeError, ValidationError) as err:
-        abort(Response(f"Invalid Starknet function call: {err}", 400))
+        raise StarknetDevnetException(message=f"Invalid Starknet function call: {err}", status_code=400) from err
 
     return call_specifications
 
@@ -33,7 +31,7 @@ def _check_block_hash(request_args: MultiDict):
 def _check_block_arguments(block_hash, block_number):
     if block_hash is not None and block_number is not None:
         message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
-        abort(Response(message, 500))
+        raise StarknetDevnetException(message=message, status_code=500)
 
 @feeder_gateway.route("/is_alive", methods=["GET"])
 def is_alive():
@@ -53,11 +51,7 @@ async def call_contract():
 
     call_specifications = validate_call(request.data)
 
-    try:
-        result_dict = await state.starknet_wrapper.call(call_specifications)
-    except StarkException as err:
-        # code 400 would make more sense, but alpha returns 500
-        abort(Response(err.message, 500))
+    result_dict = await state.starknet_wrapper.call(call_specifications)
 
     return jsonify(result_dict)
 
@@ -69,13 +63,10 @@ async def get_block():
 
     _check_block_arguments(block_hash, block_number)
 
-    try:
-        if block_hash is not None:
-            result_dict = state.starknet_wrapper.get_block_by_hash(block_hash)
-        else:
-            result_dict = state.starknet_wrapper.get_block_by_number(block_number)
-    except StarkException as err:
-        abort(Response(err.message, 500))
+    if block_hash is not None:
+        result_dict = state.starknet_wrapper.get_block_by_hash(block_hash)
+    else:
+        result_dict = state.starknet_wrapper.get_block_by_number(block_number)
 
     return jsonify(result_dict)
 
@@ -100,11 +91,8 @@ def get_full_contract():
 
     contract_address = request.args.get("contractAddress", type=custom_int)
 
-    try:
-        result_dict = state.starknet_wrapper.get_full_contract(contract_address)
-    except StarknetDevnetException as error:
-        # alpha throws 500 for unitialized contracts
-        abort(Response(error.message, 500))
+    result_dict = state.starknet_wrapper.get_full_contract(contract_address)
+
     return jsonify(result_dict)
 
 @feeder_gateway.route("/get_storage_at", methods=["GET"])
@@ -156,10 +144,7 @@ def get_transaction_trace():
 
     transaction_hash = request.args.get("transactionHash")
 
-    try:
-        transaction_trace = state.starknet_wrapper.get_transaction_trace(transaction_hash)
-    except StarkException as err:
-        abort(Response(err, 500))
+    transaction_trace = state.starknet_wrapper.get_transaction_trace(transaction_hash)
 
     return jsonify(transaction_trace)
 
@@ -173,10 +158,7 @@ def get_state_update():
     block_hash = request.args.get("blockHash")
     block_number = request.args.get("blockNumber", type=custom_int)
 
-    try:
-        state_update = state.starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
-    except StarkException as err:
-        abort(Response(err.message, 500))
+    state_update = state.starknet_wrapper.get_state_update(block_hash=block_hash, block_number=block_number)
 
     return jsonify(state_update)
 
@@ -184,10 +166,7 @@ def get_state_update():
 async def estimate_fee():
     """Returns the estimated fee for a transaction."""
     transaction = validate_transaction(request.data, InvokeFunction)
-    try:
-        actual_fee = await state.starknet_wrapper.calculate_actual_fee(transaction)
-    except StarkException as stark_exception:
-        abort(Response(stark_exception.message, 500))
+    actual_fee = await state.starknet_wrapper.calculate_actual_fee(transaction)
 
     return jsonify({
         "amount": actual_fee,

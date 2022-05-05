@@ -1,11 +1,11 @@
 """
 Gateway routes
 """
-from flask import Blueprint, abort, Response, request, jsonify
+from flask import Blueprint, request, jsonify
 from starkware.starknet.definitions.transaction_type import TransactionType
 from starkware.starkware_utils.error_handling import StarkErrorCode
 
-from starknet_devnet.util import DumpOn,fixed_length_hex
+from starknet_devnet.util import DumpOn, StarknetDevnetException,fixed_length_hex
 from starknet_devnet.state import state
 from .shared import validate_transaction
 
@@ -29,7 +29,7 @@ async def add_transaction():
     elif tx_type == TransactionType.INVOKE_FUNCTION.name:
         contract_address, transaction_hash, result_dict = await state.starknet_wrapper.invoke(transaction)
     else:
-        abort(Response(f"Invalid tx_type: {tx_type}.", 400))
+        raise StarknetDevnetException(message=f"Invalid tx_type: {tx_type}.", status_code=400)
 
     # after tx
     if state.dumper.dump_on == DumpOn.TRANSACTION:

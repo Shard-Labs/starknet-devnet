@@ -8,10 +8,12 @@ from dataclasses import dataclass
 from typing import List
 
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
+from starkware.starknet.business_logic.execution.objects import Event, L2ToL1MessageInfo
+from starkware.starknet.services.api.feeder_gateway.response_objects import FunctionInvocation
 from starkware.starknet.services.api.gateway.transaction import Deploy
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
 from starkware.starknet.definitions.transaction_type import TransactionType
-from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
+from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo, TransactionExecutionInfo
 
 from .util import TxStatus, fixed_length_hex
 from .constants import FAILURE_REASON_KEY
@@ -43,29 +45,33 @@ class InvokeTransactionDetails(TransactionDetails):
     entry_point_selector: str
     entry_point_type: str
 
-def get_events(execution_info: StarknetTransactionExecutionInfo):
-    """Extract events if any; stringify content."""
-    if not hasattr(execution_info, "raw_events"):
-        return []
-    events = []
-    for event in execution_info.raw_events:
-        events.append({
+def process_events(events: List[Event]):
+    """Extract events and hex the content."""
+
+    processed_events = []
+    for event in events:
+        processed_events.append({
             "from_address": hex(event.from_address),
             "data": [hex(d) for d in event.data],
             "keys": [hex(key) for key in event.keys]
         })
-    return events
+    return processed_events
 
 class TransactionWrapper(ABC):
     """Transaction Wrapper base class."""
 
+    # pylint: disable=too-many-arguments
     @abstractmethod
     def __init__(
-        self, status: TxStatus, execution_info: StarknetTransactionExecutionInfo, tx_details: TransactionDetails
+        self,
+        status: TxStatus,
+        function_invocation: FunctionInvocation,
+        tx_details: TransactionDetails,
+        events: List[Event],
+        l2_to_l1_messages: List[L2ToL1MessageInfo],
+        actual_fee: int,
     ):
         self.transaction_hash = tx_details.transaction_hash
-
-        events = get_events(execution_info)
 
         self.transaction = {
             "status": status.name,
@@ -74,9 +80,10 @@ class TransactionWrapper(ABC):
         }
 
         self.receipt = {
-            "execution_resources": execution_info.call_info.execution_resources,
-            "l2_to_l1_messages": execution_info.l2_to_l1_messages,
-            "events": events,
+            "actual_fee": hex(actual_fee),
+            "execution_resources": function_invocation.execution_resources,
+            "l2_to_l1_messages": l2_to_l1_messages,
+            "events": process_events(events),
             "status": status.name,
             "transaction_hash": tx_details.transaction_hash,
             "transaction_index": 0 # always the first (and only) tx in the block
@@ -84,7 +91,7 @@ class TransactionWrapper(ABC):
 
         if status is not TxStatus.REJECTED:
             self.trace = {
-                "function_invocation": execution_info.call_info.dump(),
+                "function_invocation": function_invocation.dump(),
                 "signature": tx_details.to_dict().get("signature", [])
             }
 
@@ -130,7 +137,7 @@ class DeployTransactionWrapper(TransactionWrapper):
     ):
         super().__init__(
             status,
-            execution_info,
+            execution_info.call_info,
             DeployTransactionDetails(
                 TransactionType.DEPLOY.name,
                 contract_address=fixed_length_hex(contract_address),
@@ -138,17 +145,23 @@ class DeployTransactionWrapper(TransactionWrapper):
                 constructor_calldata=[hex(arg) for arg in transaction.constructor_calldata],
                 contract_address_salt=hex(transaction.contract_address_salt),
                 class_hash=fixed_length_hex(int.from_bytes(contract_hash, "big"))
-            )
+            ),
+            events=execution_info.raw_events,
+            l2_to_l1_messages=execution_info.l2_to_l1_messages,
+            actual_fee=0
         )
 
 
 class InvokeTransactionWrapper(TransactionWrapper):
     """Wrapper of Invoke Transaction."""
 
-    def __init__(self, internal_tx: InternalInvokeFunction, status: TxStatus, execution_info: StarknetTransactionExecutionInfo):
+    def __init__(self, internal_tx: InternalInvokeFunction, status: TxStatus, execution_info: TransactionExecutionInfo):
+        call_info = execution_info.call_info
+        if status is not TxStatus.REJECTED:
+            call_info = FunctionInvocation.from_internal_version(call_info)
         super().__init__(
             status,
-            execution_info,
+            call_info,
             InvokeTransactionDetails(
                 TransactionType.INVOKE_FUNCTION.name,
                 contract_address=fixed_length_hex(internal_tx.contract_address),
@@ -157,5 +170,8 @@ class InvokeTransactionWrapper(TransactionWrapper):
                 entry_point_selector=fixed_length_hex(internal_tx.entry_point_selector),
                 entry_point_type=internal_tx.entry_point_type.name,
                 signature=[hex(sig_part) for sig_part in internal_tx.signature]
-            )
+            ),
+            events=execution_info.get_sorted_events(),
+            l2_to_l1_messages=execution_info.get_sorted_l2_to_l1_messages(),
+            actual_fee=execution_info.actual_fee
         )

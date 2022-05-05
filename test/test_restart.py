@@ -6,24 +6,12 @@ import pytest
 import requests
 
 from .settings import APP_URL, FEEDER_GATEWAY_URL
-from .util import run_devnet_in_background, deploy, assert_transaction_not_received, assert_tx_status, call, invoke
+from .util import devnet_in_background, deploy, assert_transaction_not_received, assert_tx_status, call, invoke
 from .shared import CONTRACT_PATH, ABI_PATH
-
-@pytest.fixture(autouse=True)
-def run_before_and_after_test():
-    """Run devnet before and kill it after the test run"""
-    # before test
-    devnet_proc = run_devnet_in_background()
-
-    yield
-
-    # after test
-    devnet_proc.kill()
 
 def restart():
     """Get restart response"""
-    print(f"{APP_URL}/restart")
-    return requests.get(f"{APP_URL}/restart")
+    return requests.post(f"{APP_URL}/restart")
 
 def get_state_update():
     """Get state update"""
@@ -36,6 +24,7 @@ def deploy_contract(salt=None):
     return deploy(CONTRACT_PATH, inputs=["0"], salt=salt)
 
 @pytest.mark.restart
+@devnet_in_background()
 def test_restart_on_initial_state():
     """Checks restart endpoint when there were no changes"""
     res = restart()
@@ -43,6 +32,7 @@ def test_restart_on_initial_state():
 
 
 @pytest.mark.restart
+@devnet_in_background()
 def test_transaction():
     """Checks that there is no deploy transaction after the restart"""
     deploy_info = deploy_contract()
@@ -54,6 +44,7 @@ def test_transaction():
     assert_transaction_not_received(tx_hash=tx_hash)
 
 @pytest.mark.restart
+@devnet_in_background()
 def test_contract():
     """Checks if contract storage is reset"""
     salt = "0x99"
@@ -74,6 +65,7 @@ def test_contract():
     assert balance == "0"
 
 @pytest.mark.restart
+@devnet_in_background()
 def test_state_update():
     """Checks if state update is reset"""
     deploy_contract()

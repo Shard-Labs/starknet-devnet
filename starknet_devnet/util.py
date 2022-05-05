@@ -157,8 +157,9 @@ class StarknetDevnetException(StarkException):
     Exception raised across the project.
     Indicates the raised issue is devnet-related.
     """
-    def __init__(self, code=500, message=None):
+    def __init__(self, status_code=500, code=None, message=None):
         super().__init__(code=code, message=message)
+        self.status_code = status_code
 
 @dataclass
 class DummyCallInfo:
@@ -170,10 +171,20 @@ class DummyCallInfo:
 class DummyExecutionInfo:
     """Used temporarily until contracts received from starknet.deploy include their own execution_info."""
     def __init__(self):
+        self.actual_fee = 0
         self.call_info = DummyCallInfo()
         self.retdata = []
         self.internal_calls = []
         self.l2_to_l1_messages = []
+        self.raw_events = []
+
+    def get_sorted_events(self):
+        """Return empty list"""
+        return self.raw_events
+
+    def get_sorted_l2_to_l1_messages(self):
+        """Return empty list"""
+        return self.l2_to_l1_messages
 
 def enable_pickling():
     """

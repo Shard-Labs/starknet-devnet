@@ -19,6 +19,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Check devnet versions
+          command: ./scripts/check_versions.sh
+      - run:
           name: Install development tools
           command: ./scripts/install_dev_tools.sh
       - run:
@@ -31,7 +34,10 @@ jobs:
           name: Run pytest tests
           parallel: true
           command: |
-            TESTFILES=$(circleci tests glob test/test*.py | circleci tests split --split-by=timings)
+            TESTFILES=$(
+                circleci tests glob test/test*.py |
+                circleci tests split --split-by=timings --timings-type=classname
+            )
             mkdir -p test-results
             poetry run pytest -s --junitxml=test-results/junit.xml -vv $TESTFILES
       - store_test_results:
@@ -51,7 +57,23 @@ jobs:
       - checkout
       - setup_remote_docker:
           version: 20.10.7
-      - run: ./scripts/image_build_and_push.sh
+      - run:
+          name: Build and push image
+          command: ./scripts/image_build_and_push.sh
+          environment:
+            REMOTE: true
+
+  image_build_and_push_arm:
+    machine:
+      image: ubuntu-2004:202111-02
+    resource_class: arm.medium
+    steps:
+      - checkout
+      - run:
+          name: Build and push image
+          command: ./scripts/image_build_and_push.sh
+          environment:
+            TAG_SUFFIX: -arm
 
 workflows:
   version: 2
@@ -61,4 +83,6 @@ workflows:
       - package_build_and_publish:
           <<: *on_master_after_test
       - image_build_and_push:
+          <<: *on_master_after_test
+      - image_build_and_push_arm:
           <<: *on_master_after_test

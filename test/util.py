@@ -7,6 +7,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 
 from starkware.starknet.services.api.contract_definition import ContractDefinition
@@ -30,6 +31,32 @@ def run_devnet_in_background(*args, sleep_seconds=5):
     time.sleep(sleep_seconds)
     atexit.register(proc.kill)
     return proc
+
+def devnet_in_background(*devnet_args, **devnet_kwargs):
+    """
+    Decorator that runs devnet in background and later kills it.
+    Prints devnet output in case of AssertionError.
+    """
+    def wrapper(func):
+        def inner_wrapper(*args, **kwargs):
+            proc = run_devnet_in_background(*devnet_args, **devnet_kwargs)
+            try:
+                func(*args, **kwargs)
+            except AssertionError as error:
+                proc.kill()
+                stdout, stderr = proc.communicate()
+
+                print("Devnet stdout:", file=sys.stderr)
+                print(stdout.decode("utf-8"), file=sys.stderr)
+
+                print("Devnet stderr:", file=sys.stderr)
+                print(stderr.decode("utf-8"), file=sys.stderr)
+
+                raise error
+            finally:
+                proc.kill()
+        return inner_wrapper
+    return wrapper
 
 def assert_equal(actual, expected, explanation=None):
     """Assert that the two values are equal. Optionally provide explanation."""
@@ -276,14 +303,13 @@ def assert_block_hash(latest_block_number, expected_block_hash):
     assert_equal(block["block_hash"], expected_block_hash)
     assert_equal(block["status"], "ACCEPTED_ON_L2")
 
-def assert_salty_deploy(contract_path, inputs, salt, expected_address, expected_tx_hash):
-    """Run twice deployment with salt. Expect the same output."""
-    for i in range(2):
-        print(f"Running deployment {i + 1})")
-        deploy_info = deploy(contract_path, inputs, salt=salt)
-        assert_tx_status(deploy_info["tx_hash"], "ACCEPTED_ON_L2")
-        assert_equal(deploy_info["address"], expected_address)
-        assert_equal(deploy_info["tx_hash"], expected_tx_hash)
+def assert_salty_deploy(contract_path, inputs, salt, expected_status, expected_address, expected_tx_hash):
+    """Deploy with salt and assert."""
+
+    deploy_info = deploy(contract_path, inputs, salt=salt)
+    assert_tx_status(deploy_info["tx_hash"], expected_status)
+    assert_equal(deploy_info["address"], expected_address)
+    assert_equal(deploy_info["tx_hash"], expected_tx_hash)
 
 def assert_failing_deploy(contract_path):
     """Run deployment for a contract that's expected to be rejected."""

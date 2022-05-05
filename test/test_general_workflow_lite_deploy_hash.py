@@ -5,7 +5,7 @@ The general workflow testing script, run with the lite deploy hash calculation m
 import pytest
 
 from .util import (
-    run_devnet_in_background,
+    devnet_in_background,
     assert_equal,
     assert_tx_status,
     call, deploy, invoke
@@ -18,18 +18,8 @@ from .shared import (
 
 BALANCE_KEY = "916907772491729262376534102982219947830828984996257231353398618781993312401"
 
-@pytest.fixture(autouse=True)
-def run_before_and_after_test():
-    """Run devnet before and kill it after the test run"""
-    # before test
-    devnet_proc = run_devnet_in_background("--lite-mode-deploy-hash")
-
-    yield
-
-    # after test
-    devnet_proc.kill()
-
 @pytest.mark.general_workflow
+@devnet_in_background("--lite-mode-deploy-hash")
 def test_general_workflow_lite():
     """Test devnet with CLI"""
     deploy_info = deploy(CONTRACT_PATH, ["0"])

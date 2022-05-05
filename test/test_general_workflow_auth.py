@@ -4,7 +4,7 @@ Tests how signed interaction with a Starknet contract.
 import pytest
 
 from .util import (
-    run_devnet_in_background,
+    devnet_in_background,
     assert_block, assert_equal, assert_receipt,
     assert_storage, assert_transaction, assert_tx_status,
     call, deploy, invoke
@@ -25,18 +25,8 @@ SIGNATURE = [
 ]
 BALANCE_KEY = "142452623821144136554572927896792266630776240502820879601186867231282346767"
 
-@pytest.fixture(autouse=True)
-def run_before_and_after_test():
-    """Run devnet before and kill it after the test run"""
-    # before test
-    devnet_proc = run_devnet_in_background()
-
-    yield
-
-    # after test
-    devnet_proc.kill()
-
 @pytest.mark.general_workflow
+@devnet_in_background()
 def test_general_workflow_auth():
     """Test CLI auth in devnet"""
 

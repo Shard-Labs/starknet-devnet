@@ -15,6 +15,8 @@ Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 - [L1-L2 Postman Communication](#postman-integration)
 - [Block Explorer](#block-explorer)
 - [Lite Mode](#lite-mode)
+- [Restart](#restart)
+- [Contract debugging](#contract-debugging)
 - [Development](#development)
 
 ## Install
@@ -43,7 +45,7 @@ brew install gmp
 
 - Devnet should not be used as a replacement for Alpha testnet. After testing on Devnet, be sure to test on testnet (alpha-goerli)!
 - Specifying a block by its hash/number is not supported. All interaction is done with the latest block.
-- Read more in [interaction](#interaction-api).
+- Read more in [interaction](#interaction).
 
 ## Run
 
@@ -67,9 +69,23 @@ optional arguments:
   --dump-on DUMP_ON     Specify when to dump; can dump on: exit, transaction
 ```
 
+You can run `starknet-devnet` in a separate shell, or you can run it in background with `starknet-devnet &`. 
+Check that it's alive by running the following (address and port my vary if you specified a different one with `--host` or `--port`):
+
+```
+curl http://localhost:5000/is_alive
+```
+
 ### Run with Docker
 
-Devnet is available as a Docker container ([shardlabs/starknet-devnet](https://hub.docker.com/repository/docker/shardlabs/starknet-devnet)):
+Devnet is available as a Docker image ([shardlabs/starknet-devnet](https://hub.docker.com/repository/docker/shardlabs/starknet-devnet)):
+
+#### Versions and Tags
+
+Image tags correspond to Devnet versions as on PyPI and GitHub, with the `latest` tag used for the latest image. These images are built for linux/amd64. To use the arm64 versions, since `0.1.23` you can append `-arm` to the tag. E.g.:
+
+- `shardlabs/starknet-devnet:0.1.23` - image for the amd64 architecture
+- `shardlabs/starknet-devnet:0.1.23-arm` - image for the arm64 architecture
 
 ```text
 docker pull shardlabs/starknet-devnet
@@ -221,6 +237,24 @@ To improve Devnet performance, consider passing these CLI flags on Devnet startu
 - `--lite-mode` enables all of the optimizations described below (same as using all of the following flags);
 - `--lite-mode-deploy-hash` disables the calculation of the transaction hash for deploy transactions. It will instead be a simple sequence of numbers;
 - `--lite-mode-block-hash` disables the calculation of the block hash. It will instead be a simple sequence of numbers;
+
+## Restart
+
+Devnet can be restarted by making a `POST /restart` request. All of the deployed contracts, blocks and storage updates will be restarted to the empty state.
+
+## Contract debugging
+
+If your contract is using `print` in cairo hints (it was compiled with the `--disable-hint-validation` flag), Devnet will output those lines together with its regular server output. To filter out just your debugging print lines, redirect stderr to /dev/null when starting Devnet:
+
+```
+starknet-devnet 2> /dev/null
+```
+
+To enable printing with a dockerized version of Devnet set `PYTHONUNBUFFERED=1`:
+
+```
+docker run -p 127.0.0.1:5000:5000 -e PYTHONUNBUFFERED=1 shardlabs/starknet-devnet
+```
 
 ## Development
 

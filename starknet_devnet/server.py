@@ -9,6 +9,7 @@ import dill as pickle
 from flask import Flask
 from flask_cors import CORS
 
+from starkware.starkware_utils.error_handling import StarkException
 from .blueprints.base import base
 from .blueprints.gateway import gateway
 from .blueprints.feeder_gateway import feeder_gateway
@@ -59,6 +60,11 @@ def main():
         if args.dump_on == DumpOn.EXIT:
             state.dumper.dump()
             sys.exit(0)
+
+@app.errorhandler(StarkException)
+def handle(error: StarkException):
+    """Handles the error and responds in JSON. """
+    return {"message": error.message, "status_code": error.status_code}, error.status_code
 
 if __name__ == "__main__":
     main()

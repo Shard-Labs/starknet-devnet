@@ -7,20 +7,9 @@ import requests
 
 from starkware.starknet.core.os.contract_hash import compute_contract_hash
 
-from .util import deploy, invoke, load_contract_definition, run_devnet_in_background, get_block
+from .util import deploy, invoke, load_contract_definition, devnet_in_background, get_block
 from .settings import FEEDER_GATEWAY_URL
 from .shared import CONTRACT_PATH, ABI_PATH, BALANCE_KEY
-
-@pytest.fixture(autouse=True)
-def run_before_and_after_test():
-    """Run devnet before and kill it after the test run"""
-    # before test
-    devnet_proc = run_devnet_in_background()
-
-    yield
-
-    # after test
-    devnet_proc.kill()
 
 def get_state_update_response(block_hash=None, block_number=None):
     """Get state update response"""
@@ -57,6 +46,7 @@ def get_contract_hash():
     return compute_contract_hash(contract_definition)
 
 @pytest.mark.state_update
+@devnet_in_background()
 def test_initial_state_update():
     """Test initial state update"""
     state_update = get_state_update()
@@ -64,6 +54,7 @@ def test_initial_state_update():
     assert state_update is None
 
 @pytest.mark.state_update
+@devnet_in_background()
 def test_deployed_contracts():
     """Test deployed contracts in the state update"""
     contract_address = deploy_empty_contract()
@@ -79,6 +70,7 @@ def test_deployed_contracts():
     assert int(deployed_contract_hash, 16) == get_contract_hash()
 
 @pytest.mark.state_update
+@devnet_in_background()
 def test_storage_diff():
     """Test storage diffs in the state update"""
     contract_address = deploy_empty_contract()
@@ -97,6 +89,7 @@ def test_storage_diff():
     assert contract_storage_diffs[0]["key"] == hex(int(BALANCE_KEY))
 
 @pytest.mark.state_update
+@devnet_in_background()
 def test_block_hash():
     """Test block hash in the state update"""
     deploy_empty_contract()
@@ -117,6 +110,7 @@ def test_block_hash():
     assert previous_state_update == initial_state_update
 
 @pytest.mark.state_update
+@devnet_in_background()
 def test_wrong_block_hash():
     """Test wrong block hash in the state update"""
     state_update_response = get_state_update_response(block_hash="WRONG_HASH")
@@ -124,6 +118,7 @@ def test_wrong_block_hash():
     assert state_update_response.status_code == 500
 
 @pytest.mark.state_update
+@devnet_in_background()
 def test_block_number():
     """Test block hash in the state update"""
     deploy_empty_contract()
@@ -140,6 +135,7 @@ def test_block_number():
     assert second_block_state_update == new_state_update
 
 @pytest.mark.state_update
+@devnet_in_background()
 def test_wrong_block_number():
     """Test wrong block hash in the state update"""
     state_update_response = get_state_update_response(block_number=42)
@@ -147,6 +143,7 @@ def test_wrong_block_number():
     assert state_update_response.status_code == 500
 
 @pytest.mark.state_update
+@devnet_in_background()
 def test_roots():
     """Test new root and old root in the state update"""
     deploy_empty_contract()

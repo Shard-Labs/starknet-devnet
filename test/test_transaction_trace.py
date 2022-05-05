@@ -5,20 +5,9 @@ Test get_transaction endpoint
 import pytest
 import requests
 
-from .util import deploy, invoke, load_json_from_path, run_devnet_in_background
+from .util import deploy, invoke, load_json_from_path, devnet_in_background
 from .settings import FEEDER_GATEWAY_URL
 from .shared import ABI_PATH, CONTRACT_PATH, SIGNATURE, NONEXISTENT_TX_HASH
-
-@pytest.fixture(autouse=True)
-def run_before_and_after_test():
-    """Run devnet before and kill it after the test run"""
-    # before test
-    devnet_proc = run_devnet_in_background()
-
-    yield
-
-    # after test
-    devnet_proc.kill()
 
 def get_transaction_trace_response(tx_hash=None):
     """Get transaction trace response"""
@@ -46,6 +35,7 @@ def assert_function_invocation(function_invocation, expected_path):
     assert function_invocation == expected_function_invocation
 
 @pytest.mark.transaction_trace
+@devnet_in_background()
 def test_deploy_transaction_trace():
     """Test deploy transaction trace"""
     tx_hash = deploy_empty_contract()["tx_hash"]
@@ -61,6 +51,7 @@ def test_deploy_transaction_trace():
     )
 
 @pytest.mark.transaction_trace
+@devnet_in_background()
 def test_invoke_transaction_hash():
     """Test invoke transaction trace"""
     contract_address = deploy_empty_contract()["address"]
@@ -78,6 +69,7 @@ def test_invoke_transaction_hash():
 
 
 @pytest.mark.transaction_trace
+@devnet_in_background()
 def test_invoke_transaction_hash_with_signature():
     """Test invoke transaction trace with signature"""
     contract_address = deploy_empty_contract()["address"]
@@ -97,6 +89,7 @@ def test_invoke_transaction_hash_with_signature():
     )
 
 @pytest.mark.transaction_trace
+@devnet_in_background()
 def test_nonexistent_transaction_hash():
     """Test if it throws 500 for nonexistent transaction trace"""
     res = get_transaction_trace_response(NONEXISTENT_TX_HASH)

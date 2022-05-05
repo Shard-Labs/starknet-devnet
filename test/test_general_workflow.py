@@ -9,7 +9,7 @@ from .util import (
     assert_negative_block_input,
     assert_transaction_not_received,
     assert_transaction_receipt_not_received,
-    run_devnet_in_background,
+    devnet_in_background,
     assert_block, assert_contract_code, assert_equal, assert_failing_deploy, assert_receipt, assert_salty_deploy,
     assert_storage, assert_transaction, assert_tx_status, assert_events,
     call, deploy, invoke
@@ -27,23 +27,11 @@ from .shared import (
     NONEXISTENT_TX_HASH
 )
 
-@pytest.fixture(autouse=True)
-def run_before_and_after_test():
-    """Run devnet before and kill it after the test run"""
-    # before test
-    devnet_proc = run_devnet_in_background()
-
-    yield
-
-    # after test
-    devnet_proc.kill()
-
 @pytest.mark.general_workflow
+@devnet_in_background()
 def test_general_workflow():
     """Test devnet with CLI"""
     deploy_info = deploy(CONTRACT_PATH, ["0"])
-
-    print("Deployment:", deploy_info)
 
     assert_tx_status(deploy_info["tx_hash"], "ACCEPTED_ON_L2")
     assert_transaction(deploy_info["tx_hash"], "ACCEPTED_ON_L2")
@@ -98,6 +86,16 @@ def test_general_workflow():
         contract_path=EVENTS_CONTRACT_PATH,
         salt="0x99",
         inputs=None,
+        expected_status="ACCEPTED_ON_L2",
+        expected_address=EXPECTED_SALTY_DEPLOY_ADDRESS,
+        expected_tx_hash=EXPECTED_SALTY_DEPLOY_HASH
+    )
+
+    assert_salty_deploy(
+        contract_path=EVENTS_CONTRACT_PATH,
+        salt="0x99",
+        inputs=None,
+        expected_status="REJECTED",
         expected_address=EXPECTED_SALTY_DEPLOY_ADDRESS,
         expected_tx_hash=EXPECTED_SALTY_DEPLOY_HASH
     )
