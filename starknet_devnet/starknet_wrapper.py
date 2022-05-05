@@ -176,6 +176,8 @@ class StarknetWrapper:
                 error_message = err.message
                 status = TxStatus.REJECTED
                 execution_info = DummyExecutionInfo()
+                state_update = None
+
 
             tx_wrapper = DeployTransactionWrapper(
                 transaction=deploy_transaction,
@@ -224,6 +226,7 @@ class StarknetWrapper:
             status = TxStatus.REJECTED
             execution_info = DummyExecutionInfo()
             adapted_result = []
+            state_update = None
 
         tx_wrapper = InvokeTransactionWrapper(invoke_transaction, status, execution_info)
 
