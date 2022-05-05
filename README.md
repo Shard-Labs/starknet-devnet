@@ -73,7 +73,7 @@ You can run `starknet-devnet` in a separate shell, or you can run it in backgrou
 Check that it's alive by running the following (address and port my vary if you specified a different one with `--host` or `--port`):
 
 ```
-curl http://localhost:5000/is_alive
+curl http://127.0.0.1:5050/is_alive
 ```
 
 ### Run with Docker
@@ -140,7 +140,7 @@ Postman is a Starknet utility that allows testing L1 <> L2 interactions. To util
 - Load a `StarknetMockMessaging` contract. The `address` parameter is optional; if provided, the `StarknetMockMessaging` contract will be fetched from that address, otherwise a new one will be deployed:
 
   - `POST /postman/load_l1_messaging_contract`
-  - body: `{ "networkUrl": "http://localhost:5005", "address": "0x83D76591560d9CD02CE16c060c92118d19F996b3" }`
+  - body: `{ "networkUrl": "http://localhost:8545", "address": "0x83D76591560d9CD02CE16c060c92118d19F996b3" }`
   - `networkUrl` - the URL of the L1 network you've run locally or that already exists; possibilities include, and are not limited to:
     - [Goerli testnet](https://goerli.net/)
     - [Ganache node](https://www.npmjs.com/package/ganache)
@@ -253,7 +253,7 @@ starknet-devnet 2> /dev/null
 To enable printing with a dockerized version of Devnet set `PYTHONUNBUFFERED=1`:
 
 ```
-docker run -p 127.0.0.1:5000:5000 -e PYTHONUNBUFFERED=1 shardlabs/starknet-devnet
+docker run -p 127.0.0.1:5050:5050 -e PYTHONUNBUFFERED=1 shardlabs/starknet-devnet
 ```
 
 ## Development
