@@ -52,6 +52,8 @@ class StarknetWrapper:
 
         self.__starknet = None
 
+        self.__current_carried_state = None
+
         self.lite_mode_block_hash = False
 
         self.lite_mode_deploy_hash = False
@@ -62,13 +64,9 @@ class StarknetWrapper:
         with open(path, "rb") as file:
             return pickle.load(file)
 
-    async def __get_state_copy(self) -> CarriedState:
-        state = await self.__get_state()
-
-        copied_state = deepcopy(state.state)
-        copied_state.shared_state = state.state.shared_state
-
-        return copied_state
+    async def __preserve_current_state(self, state: CarriedState):
+        self.__current_carried_state = deepcopy(state)
+        self.__current_carried_state.shared_state = state.shared_state
 
     async def __get_starknet(self):
         """
@@ -76,6 +74,7 @@ class StarknetWrapper:
         """
         if not self.__starknet:
             self.__starknet = await Starknet.empty(general_config=DEFAULT_GENERAL_CONFIG)
+            await self.__preserve_current_state(self.__starknet.state.state)
 
         return self.__starknet
 
@@ -89,7 +88,7 @@ class StarknetWrapper:
 
     async def __update_state(self):
         if not self.lite_mode_block_hash:
-            previous_state = await self.__get_state_copy()
+            previous_state = self.__current_carried_state
             assert previous_state is not None
             current_carried_state = (await self.__get_state()).state
 
@@ -105,6 +104,7 @@ class StarknetWrapper:
                 current_carried_state=current_carried_state
             )
             self.__starknet.state.state.shared_state = updated_shared_state
+            await self.__preserve_current_state(self.__starknet.state.state)
 
             return generate_state_update(previous_state, current_carried_state)
 

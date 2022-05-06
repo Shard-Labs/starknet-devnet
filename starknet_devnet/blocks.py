@@ -135,7 +135,7 @@ class DevnetBlocks():
         self.__hash2num[block_hash] = block_number
 
         if state_update is not None:
-            state_update["block_hash"] = block_hash_hexed
+            state_update["block_hash"] = hex(block_hash)
 
         self.__state_updates[block_number] = state_update
 
