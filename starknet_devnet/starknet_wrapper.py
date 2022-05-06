@@ -34,6 +34,7 @@ enable_pickling()
 
 @dataclasses.dataclass
 class DevnetConfig:
+    """Configuration for the devnet."""
     lite_mode_block_hash: bool = False
     lite_mode_deploy_hash: bool = False
 
