@@ -29,6 +29,7 @@ from .postman_wrapper import DevnetL1L2
 from .transactions import DevnetTransactions
 from .contracts import DevnetContracts
 from .blocks import DevnetBlocks
+from .block_info_generator import BlockInfoGenerator
 
 enable_pickling()
 
@@ -62,6 +63,8 @@ class StarknetWrapper:
         self.__current_carried_state = None
 
         self.config = config
+
+        self.block_info_generator = BlockInfoGenerator()
 
     @staticmethod
     def load(path: str) -> "StarknetWrapper":
@@ -97,10 +100,8 @@ class StarknetWrapper:
             assert previous_state is not None
             current_carried_state = (await self.__get_state()).state
 
-            current_carried_state.block_info = BlockInfo(
-                block_number=current_carried_state.block_info.block_number,
-                gas_price=current_carried_state.block_info.gas_price,
-                block_timestamp=int(time.time()),
+            current_carried_state.block_info = self.block_info_generator.next_block(
+                block_info=current_carried_state.block_info
             )
 
             updated_shared_state = await current_carried_state.shared_state.apply_state_updates(
@@ -304,3 +305,11 @@ class StarknetWrapper:
         )
 
         return actual_fee
+
+    def increase_block_time(self, time_ns: int):
+        """Increases the block time by `time_ns`."""
+        self.block_info_generator.increase_time(time_ns)
+
+    def set_block_time(self, time_ns: int):
+        """Sets the block time to `time`."""
+        self.block_info_generator.set_next_block_time(time_ns)

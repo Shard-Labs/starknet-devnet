@@ -1,7 +1,7 @@
 """
 Base routes
 """
-from flask import Blueprint, Response, request
+from flask import Blueprint, Response, request, jsonify
 
 from starknet_devnet.state import state
 from starknet_devnet.util import StarknetDevnetException
@@ -31,18 +31,36 @@ def dump():
     state.dumper.dump(dump_path)
     return Response(status=200)
 
+def validate_time_value(time_ns: int):
+    """Validates the time_ns value"""
+    if time_ns < 0:
+        raise StarknetDevnetException(message="Time value must be greater than 0.", status_code=400)
+
+    if time_ns is None:
+        raise StarknetDevnetException(message="Time value must be provided.", status_code=400)
+
+    if not isinstance(time_ns, int):
+        raise StarknetDevnetException(message="Time value must be an integer.", status_code=400)
+
 @base.route("/increase_time", methods=["POST"])
 def increase_time():
     """Increases the block timestamp offset"""
-    # request_dict = request.json or {}
-    # time_ns = request_dict.get("time_ns") or 0
-    # state.block_info_manager.increase_time(time_ns)
-    return Response(status=200)
+    request_dict = request.json or {}
+    time_ns = request_dict.get("time_ns")
+    validate_time_value(time_ns)
+
+    state.starknet_wrapper.increase_block_time(time_ns)
+
+    return jsonify({"ts_increased_by": time_ns})
 
 @base.route("/set_time", methods=["POST"])
 def set_time():
     """Sets the block timestamp offset"""
-    # request_dict = request.json or {}
-    # time_ns = request_dict.get("time_ns") or 0
-    # state.block_info_manager.set_time(time_ns)
-    return Response(status=200)
+    request_dict = request.json or {}
+    time_ns = request_dict.get("time_ns")
+    validate_time_value(time_ns)
+
+    state.starknet_wrapper.set_block_time(time_ns=time_ns)
+
+    return jsonify({"next_block_timestamp": time_ns})
+
