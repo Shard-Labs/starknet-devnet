@@ -13,7 +13,7 @@ class State():
         self.starknet_wrapper = StarknetWrapper(config=DevnetConfig())
         self.dumper = Dumper(self.starknet_wrapper)
 
-    def set_starknet_wrapper(self, starknet_wrapper: StarknetWrapper):
+    def __set_starknet_wrapper(self, starknet_wrapper: StarknetWrapper):
         """Sets starknet wrapper and creates new instance of dumper"""
         self.starknet_wrapper = starknet_wrapper
         self.dumper = Dumper(starknet_wrapper)
@@ -21,10 +21,10 @@ class State():
     def reset(self, config: DevnetConfig = None):
         """Reset the starknet wrapper and dumper instances"""
         previous_config = self.starknet_wrapper.config
-        self.set_starknet_wrapper(StarknetWrapper(config=config or previous_config))
+        self.__set_starknet_wrapper(StarknetWrapper(config=config or previous_config))
 
     def load(self, load_path: str):
         """Loads starknet wrapper from path"""
-        self.set_starknet_wrapper(StarknetWrapper.load(load_path))
+        self.__set_starknet_wrapper(StarknetWrapper.load(load_path))
 
 state = State()

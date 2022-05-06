@@ -142,6 +142,13 @@ class StarknetWrapper:
 
         self.transactions.store(tx_wrapper)
 
+    def set_config(self, config: DevnetConfig):
+        """
+        Sets the configuration of the devnet.
+        """
+        self.config = config
+        self.blocks.lite = config.lite_mode_block_hash
+
     async def deploy(self, deploy_transaction: Deploy):
         """
         Deploys the contract specified with `transaction`.

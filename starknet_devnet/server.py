@@ -52,7 +52,7 @@ def main():
             lite_mode_deploy_hash=args.lite_mode_deploy_hash
         )
 
-    state.set_starknet_wrapper(StarknetWrapper(config=config))
+    state.starknet_wrapper.set_config(config)
     state.dumper.dump_path = args.dump_path
     state.dumper.dump_on = args.dump_on
 
