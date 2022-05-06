@@ -53,7 +53,5 @@ class DevnetContracts:
         """
         Get the contract wrapper by address.
         """
-        if not self.is_deployed(address):
-            return self.origin.get_full_contract(address)
-
-        return self.__intstances[address].contract_definition
+        contract = self.get_by_address(address)
+        return contract.contract_definition
