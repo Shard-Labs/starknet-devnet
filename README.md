@@ -17,6 +17,7 @@ Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 - [Lite Mode](#lite-mode)
 - [Restart](#restart)
 - [Contract debugging](#contract-debugging)
+- [Devnet speed-up troubleshooting](#devnet-speed-up-troubleshooting)
 - [Development](#development)
 
 ## Install
@@ -69,7 +70,7 @@ optional arguments:
   --dump-on DUMP_ON     Specify when to dump; can dump on: exit, transaction
 ```
 
-You can run `starknet-devnet` in a separate shell, or you can run it in background with `starknet-devnet &`. 
+You can run `starknet-devnet` in a separate shell, or you can run it in background with `starknet-devnet &`.
 Check that it's alive by running the following (address and port my vary if you specified a different one with `--host` or `--port`):
 
 ```
@@ -80,16 +81,16 @@ curl http://127.0.0.1:5050/is_alive
 
 Devnet is available as a Docker image ([shardlabs/starknet-devnet](https://hub.docker.com/repository/docker/shardlabs/starknet-devnet)):
 
+```text
+docker pull shardlabs/starknet-devnet:<TAG>
+```
+
 #### Versions and Tags
 
 Image tags correspond to Devnet versions as on PyPI and GitHub, with the `latest` tag used for the latest image. These images are built for linux/amd64. To use the arm64 versions, since `0.1.23` you can append `-arm` to the tag. E.g.:
 
 - `shardlabs/starknet-devnet:0.1.23` - image for the amd64 architecture
 - `shardlabs/starknet-devnet:0.1.23-arm` - image for the arm64 architecture
-
-```text
-docker pull shardlabs/starknet-devnet
-```
 
 The server inside the container listens to the port 5050, which you need to publish to a desired `<PORT>` on your host machine:
 
@@ -232,15 +233,17 @@ A local block explorer (Voyager), as noted [here](https://voyager.online/local-v
 
 ## Lite mode
 
-To improve Devnet performance, consider passing these CLI flags on Devnet startup:
+To improve Devnet performance, instead of calculating the actual hash of deployment transactions and blocks, sequential numbering can be used (0x0, 0x1, 0x2, ...).
 
-- `--lite-mode` enables all of the optimizations described below (same as using all of the following flags);
-- `--lite-mode-deploy-hash` disables the calculation of the transaction hash for deploy transactions. It will instead be a simple sequence of numbers;
-- `--lite-mode-block-hash` disables the calculation of the block hash. It will instead be a simple sequence of numbers;
+Consider passing these CLI flags on Devnet startup:
+
+- `--lite-mode` enables all of the optimizations described below (same as using all of the flags below)
+- `--lite-mode-deploy-hash` disables the calculation of transaction hash for deploy transactions
+- `--lite-mode-block-hash` disables the calculation of block hash
 
 ## Restart
 
-Devnet can be restarted by making a `POST /restart` request. All of the deployed contracts, blocks and storage updates will be restarted to the empty state.
+Devnet can be restarted by making a `POST /restart` request. All of the deployed contracts, blocks and storage updates will be restarted to the empty state. If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin#restart), run `await starknet.devnet.restart()`.
 
 ## Contract debugging
 
@@ -255,6 +258,20 @@ To enable printing with a dockerized version of Devnet set `PYTHONUNBUFFERED=1`:
 ```
 docker run -p 127.0.0.1:5050:5050 -e PYTHONUNBUFFERED=1 shardlabs/starknet-devnet
 ```
+
+## Devnet speed-up troubleshooting
+
+If you are not satisfied with your Devnet performance, consider the following:
+
+- Make sure you are using the latest version of Devnet because new improvements are added regularly.
+- Try using [lite-mode](#lite-mode).
+- Using an [installed Devnet](#install) should be faster than [running it with Docker](#run-with-docker).
+- If you are [running Devnet with Docker](#run-with-docker) on an ARM machine (e.g. M1), make sure you are using [the appropriate image tag](#versions-and-tags)
+- If Devnet has been running for some time, try restarting it (either by killing it or by using the [restart functionality](#restart)).
+- Keep in mind that:
+  - The first transaction is always a bit slower due to lazy loading.
+  - Tools you use for testing (e.g. [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin)) add their own overhead.
+  - Bigger contracts are more time consuming.
 
 ## Development
 
