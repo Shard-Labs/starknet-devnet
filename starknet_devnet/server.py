@@ -16,7 +16,7 @@ from .blueprints.feeder_gateway import feeder_gateway
 from .blueprints.postman import postman
 from .util import DumpOn, parse_args
 from .state import state
-from .starknet_wrapper import StarknetWrapper, DevnetConfig
+from .starknet_wrapper import DevnetConfig
 
 app = Flask(__name__)
 CORS(app)
