@@ -63,4 +63,3 @@ def set_time():
     state.starknet_wrapper.set_block_time(time_ns=time_ns)
 
     return jsonify({"next_block_timestamp": time_ns})
-

@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from .shared import ARTIFACTS_PATH
-from .util import devnet_in_background, deploy, call, get_block, get_block
+from .util import devnet_in_background, deploy, call, get_block
 from .settings import APP_URL
 
 TS_CONTRACT_PATH = f"{ARTIFACTS_PATH}/timestamp.cairo/timestamp.json"
