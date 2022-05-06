@@ -4,6 +4,7 @@ starkware.starknet.testing.starknet.Starknet.
 """
 
 import time
+import dataclasses
 from copy import deepcopy
 from typing import Dict
 
@@ -31,6 +32,11 @@ from .blocks import DevnetBlocks
 
 enable_pickling()
 
+@dataclasses.dataclass
+class DevnetConfig:
+    lite_mode_block_hash: bool = False
+    lite_mode_deploy_hash: bool = False
+
 #pylint: disable=too-many-instance-attributes
 class StarknetWrapper:
     """
@@ -38,7 +44,7 @@ class StarknetWrapper:
     contract states, transactions, blocks, storages.
     """
 
-    def __init__(self):
+    def __init__(self, config: DevnetConfig):
         self.origin: Origin = NullOrigin()
         """Origin chain that this devnet was forked from."""
 
@@ -46,7 +52,7 @@ class StarknetWrapper:
 
         self.contracts = DevnetContracts(self.origin)
 
-        self.blocks = DevnetBlocks(self.origin)
+        self.blocks = DevnetBlocks(self.origin, lite=config.lite_mode_block_hash)
 
         self.l1l2 = DevnetL1L2()
 
@@ -54,9 +60,7 @@ class StarknetWrapper:
 
         self.__current_carried_state = None
 
-        self.lite_mode_block_hash = False
-
-        self.lite_mode_deploy_hash = False
+        self.config = config
 
     @staticmethod
     def load(path: str) -> "StarknetWrapper":
@@ -87,7 +91,7 @@ class StarknetWrapper:
         return starknet.state
 
     async def __update_state(self):
-        if not self.lite_mode_block_hash:
+        if not self.config.lite_mode_block_hash:
             previous_state = self.__current_carried_state
             assert previous_state is not None
             current_carried_state = (await self.__get_state()).state
@@ -145,7 +149,7 @@ class StarknetWrapper:
 
         state = await self.__get_state()
         contract_definition = deploy_transaction.contract_definition
-        if self.lite_mode_deploy_hash:
+        if self.config.lite_mode_deploy_hash:
             tx_hash = self.transactions.get_count()
         else:
             tx_hash = deploy_transaction.calculate_hash(state.general_config)
