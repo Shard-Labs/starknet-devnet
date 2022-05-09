@@ -25,4 +25,4 @@ RUN pip3 install --no-cache /wheels/*
 
 RUN rm -rf /wheels
 
-ENTRYPOINT [ "starknet-devnet", "--host", "0.0.0.0", "--port", "5000" ]
+ENTRYPOINT [ "starknet-devnet", "--host", "0.0.0.0", "--port", "5050" ]

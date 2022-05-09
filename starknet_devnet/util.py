@@ -13,6 +13,9 @@ from starkware.starknet.business_logic.state.state import CarriedState
 
 from . import __version__
 
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 5050
+
 class TxStatus(Enum):
     """
     According to: https://www.cairo-lang.org/docs/hello_starknet/intro.html#interact-with-the-contract
@@ -83,9 +86,6 @@ def parse_dump_on(option: str):
     if option in DUMP_ON_OPTIONS:
         return DumpOn[option.upper()]
     sys.exit(f"Error: Invalid --dump-on option: {option}. Valid options: {DUMP_ON_OPTIONS_STRINGIFIED}")
-
-DEFAULT_HOST = "localhost"
-DEFAULT_PORT = 5000
 
 class NonNegativeAction(argparse.Action):
     """

@@ -162,49 +162,47 @@ class StarknetWrapper:
         else:
             tx_hash = deploy_transaction.calculate_hash(state.general_config)
 
-        contract_address = calculate_contract_address(
-            caller_address=0,
-            constructor_calldata=deploy_transaction.constructor_calldata,
-            salt=deploy_transaction.contract_address_salt,
-            contract_definition=deploy_transaction.contract_definition
-        )
-
         starknet = await self.__get_starknet()
 
-        if not self.contracts.is_deployed(contract_address):
-            try:
-                contract = await starknet.deploy(
-                    contract_def=contract_definition,
-                    constructor_calldata=deploy_transaction.constructor_calldata,
-                    contract_address_salt=deploy_transaction.contract_address_salt
-                )
-                execution_info = contract.deploy_execution_info
-                error_message = None
-                status = TxStatus.ACCEPTED_ON_L2
+        try:
+            contract = await starknet.deploy(
+                contract_def=contract_definition,
+                constructor_calldata=deploy_transaction.constructor_calldata,
+                contract_address_salt=deploy_transaction.contract_address_salt
+            )
+            execution_info = contract.deploy_execution_info
+            error_message = None
+            status = TxStatus.ACCEPTED_ON_L2
 
-                self.contracts.store(contract.contract_address, ContractWrapper(contract, contract_definition))
-                state_update = await self.__update_state()
-            except StarkException as err:
-                error_message = err.message
-                status = TxStatus.REJECTED
-                execution_info = DummyExecutionInfo()
-                state_update = None
+            self.contracts.store(contract.contract_address, ContractWrapper(contract, contract_definition))
+            state_update = await self.__update_state()
+        except StarkException as err:
+            error_message = err.message
+            status = TxStatus.REJECTED
+            execution_info = DummyExecutionInfo()
+            state_update = None
 
-
-            tx_wrapper = DeployTransactionWrapper(
-                transaction=deploy_transaction,
-                contract_address=contract_address,
-                tx_hash=tx_hash,
-                status=status,
-                execution_info=execution_info,
-                contract_hash=state.state.contract_states[contract_address].state.contract_hash,
+            contract_address = calculate_contract_address(
+                caller_address=0,
+                constructor_calldata=deploy_transaction.constructor_calldata,
+                salt=deploy_transaction.contract_address_salt,
+                contract_definition=deploy_transaction.contract_definition
             )
 
-            await self.__store_transaction(
-                tx_wrapper=tx_wrapper,
-                state_update=state_update,
-                error_message=error_message,
-            )
+        tx_wrapper = DeployTransactionWrapper(
+            transaction=deploy_transaction,
+            contract_address=contract_address,
+            tx_hash=tx_hash,
+            status=status,
+            execution_info=execution_info,
+            contract_hash=state.state.contract_states[contract_address].state.contract_hash,
+        )
+
+        await self.__store_transaction(
+            tx_wrapper=tx_wrapper,
+            state_update=state_update,
+            error_message=error_message,
+        )
 
         return contract_address, tx_hash
 
