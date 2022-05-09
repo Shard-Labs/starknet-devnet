@@ -86,6 +86,19 @@ def parse_dump_on(option: str):
 
 DEFAULT_HOST = "localhost"
 DEFAULT_PORT = 5000
+
+class NonNegativeAction(argparse.Action):
+    """
+    Action for parsing the non negative int argument.
+    """
+    def __call__(self, parser, namespace, values, option_string=None):
+        value = int(values)
+
+        if value < 0:
+            parser.error(f"{option_string} must be a positive integer.")
+
+        setattr(namespace, self.dest, value)
+
 def parse_args():
     """
     Parses CLI arguments.
@@ -136,6 +149,11 @@ def parse_args():
         "--lite-mode-deploy-hash",
         action='store_true',
         help="Disables deploy tx hash calculation"
+    )
+    parser.add_argument(
+        "--start-time",
+        action=NonNegativeAction,
+        help="Specify the start time of the genesis block in nanoseconds"
     )
     # Uncomment this once fork support is added
     # parser.add_argument(

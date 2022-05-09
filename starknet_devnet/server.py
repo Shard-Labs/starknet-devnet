@@ -56,6 +56,9 @@ def main():
     state.dumper.dump_path = args.dump_path
     state.dumper.dump_on = args.dump_on
 
+    if hasattr(args, 'start_time'):
+        state.starknet_wrapper.set_block_time(args.start_time)
+
     try:
         meinheld.listen((args.host, args.port))
         print(f" * Listening on http://{args.host}:{args.port}/ (Press CTRL+C to quit)")
