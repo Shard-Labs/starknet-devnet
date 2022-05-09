@@ -170,6 +170,7 @@ class StarknetWrapper:
                 constructor_calldata=deploy_transaction.constructor_calldata,
                 contract_address_salt=deploy_transaction.contract_address_salt
             )
+            contract_address = contract.contract_address
             execution_info = contract.deploy_execution_info
             error_message = None
             status = TxStatus.ACCEPTED_ON_L2
