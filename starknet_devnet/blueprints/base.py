@@ -33,14 +33,15 @@ def dump():
 
 def validate_time_value(time_ns: int):
     """Validates the time_ns value"""
-    if time_ns < 0:
-        raise StarknetDevnetException(message="Time value must be greater than 0.", status_code=400)
-
     if time_ns is None:
         raise StarknetDevnetException(message="Time value must be provided.", status_code=400)
 
     if not isinstance(time_ns, int):
         raise StarknetDevnetException(message="Time value must be an integer.", status_code=400)
+
+    if time_ns < 0:
+        raise StarknetDevnetException(message="Time value must be greater than 0.", status_code=400)
+
 
 @base.route("/increase_time", methods=["POST"])
 def increase_time():

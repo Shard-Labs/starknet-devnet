@@ -12,6 +12,7 @@ from .settings import APP_URL
 TS_CONTRACT_PATH = f"{ARTIFACTS_PATH}/timestamp.cairo/timestamp.json"
 TS_ABI_PATH = f"{ARTIFACTS_PATH}/timestamp.cairo/timestamp_abi.json"
 
+SET_TIME_ARGUMENT = 1_000_000_000_000
 
 def deploy_ts_contract():
     """Deploys the timestamp contract"""
@@ -31,11 +32,11 @@ def get_ts_from_last_block():
 
 def increase_time(time_ns):
     """Increases the block timestamp offset"""
-    requests.post(f"{APP_URL}/increase_time", json={"time_ns": time_ns})
+    return requests.post(f"{APP_URL}/increase_time", json={"time_ns": time_ns})
 
 def set_time(time_ns):
     """Sets the block timestamp offset"""
-    requests.post(f"{APP_URL}/set_time", json={"time_ns": time_ns})
+    return requests.post(f"{APP_URL}/set_time", json={"time_ns": time_ns})
 
 @pytest.mark.timestamps
 @devnet_in_background()
@@ -111,3 +112,60 @@ def test_timestamps_set_time():
 
     # check if offset is still the same
     assert third_block_ts - first_block_ts >= 86400000000000
+
+@pytest.mark.timestamps
+@devnet_in_background("--start-time", str(SET_TIME_ARGUMENT))
+def test_timestamps_set_time_argument():
+    """Test timestamp set time argument"""
+    deploy_ts_contract()
+    first_block_ts = get_ts_from_last_block()
+
+    assert first_block_ts == SET_TIME_ARGUMENT
+
+@pytest.mark.timestamps
+@devnet_in_background()
+def test_timestamps_set_time_errors():
+    """Test timestamp set time negative"""
+    deploy_ts_contract()
+
+    response = set_time(-1)
+    message = response.json()["message"]
+
+    assert response.status_code == 400
+    assert message == "Time value must be greater than 0."
+
+    response = set_time(None)
+    message = response.json()["message"]
+
+    assert response.status_code == 400
+    assert message == "Time value must be provided."
+
+    response = set_time("not an int")
+    message = response.json()["message"]
+
+    assert response.status_code == 400
+    assert message == "Time value must be an integer."
+
+@pytest.mark.timestamps
+@devnet_in_background()
+def test_timestamps_increase_time_errors():
+    """Test timestamp increase time negative"""
+    deploy_ts_contract()
+
+    response = increase_time(-1)
+    message = response.json()["message"]
+
+    assert response.status_code == 400
+    assert message == "Time value must be greater than 0."
+
+    response = increase_time(None)
+    message = response.json()["message"]
+
+    assert response.status_code == 400
+    assert message == "Time value must be provided."
+
+    response = increase_time("not an int")
+    message = response.json()["message"]
+
+    assert response.status_code == 400
+    assert message == "Time value must be an integer."
