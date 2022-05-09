@@ -16,6 +16,7 @@ Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 - [Block Explorer](#block-explorer)
 - [Lite Mode](#lite-mode)
 - [Restart](#restart)
+- [Advancing time](#advancing-time)
 - [Contract debugging](#contract-debugging)
 - [Devnet speed-up troubleshooting](#devnet-speed-up-troubleshooting)
 - [Development](#development)
@@ -244,6 +245,42 @@ Consider passing these CLI flags on Devnet startup:
 ## Restart
 
 Devnet can be restarted by making a `POST /restart` request. All of the deployed contracts, blocks and storage updates will be restarted to the empty state. If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin#restart), run `await starknet.devnet.restart()`.
+
+## Advancing time
+
+Block timestamp can be manipulated by seting the exact time or seting the time offset. Timestamps methods won't mint a new block, but they will modify the time of following blocks. All values should be set in [Unix time](https://en.wikipedia.org/wiki/Unix_time).
+
+### Set time
+
+Sets the exact time of the next minted block. All minted blocks afterwards will keep a set offset.
+
+```
+POST /set_time
+{
+    "time_ns": TIME_IN_NS
+}
+```
+
+Warning: block time can be set in the past and lead to unexpected behaviours!
+
+### Increase time
+
+Increases the time offset for each minted block.
+
+```
+POST /increase_time
+{
+    "time_ns": TIME_IN_NS
+}
+```
+
+### Start time arg
+
+Devnet can be started with the `--start-time` argument.
+
+```
+starknet-devnet --start-time START_TIME_IN_NS
+```
 
 ## Contract debugging
 
