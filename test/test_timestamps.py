@@ -12,7 +12,7 @@ from .settings import APP_URL
 TS_CONTRACT_PATH = f"{ARTIFACTS_PATH}/timestamp.cairo/timestamp.json"
 TS_ABI_PATH = f"{ARTIFACTS_PATH}/timestamp.cairo/timestamp_abi.json"
 
-SET_TIME_ARGUMENT = 1_000_000_000_000
+SET_TIME_ARGUMENT = 1514764800
 
 def deploy_ts_contract():
     """Deploys the timestamp contract"""
@@ -24,19 +24,19 @@ def get_ts_from_contract(address):
         function="get_timestamp",
         address=address,
         abi_path=TS_ABI_PATH,
-    ), 16)
+    ))
 
 def get_ts_from_last_block():
     """Returns the timestamp of the last block"""
     return get_block(parse=True)["timestamp"]
 
-def increase_time(time_ns):
+def increase_time(time):
     """Increases the block timestamp offset"""
-    return requests.post(f"{APP_URL}/increase_time", json={"time_ns": time_ns})
+    return requests.post(f"{APP_URL}/increase_time", json={"time": time})
 
-def set_time(time_ns):
+def set_time(time):
     """Sets the block timestamp offset"""
-    return requests.post(f"{APP_URL}/set_time", json={"time_ns": time_ns})
+    return requests.post(f"{APP_URL}/set_time", json={"time": time})
 
 @pytest.mark.timestamps
 @devnet_in_background()
@@ -71,14 +71,14 @@ def test_timestamps_increase_time():
     assert ts_after_deploy == first_block_ts
 
     # increase time by 1 day
-    increase_time(86400000000000)
+    increase_time(86400)
 
     # deploy another contract contract to generate a new block
     deploy_ts_contract()
 
     second_block_ts = get_ts_from_last_block()
 
-    assert second_block_ts - first_block_ts >= 86400000000000
+    assert second_block_ts - first_block_ts >= 86400
 
 @pytest.mark.timestamps
 @devnet_in_background()
@@ -92,7 +92,7 @@ def test_timestamps_set_time():
     assert first_block_ts == ts_from_first_call
 
     # set time to 1 day after the deploy
-    set_time(first_block_ts + 86400000000000)
+    set_time(first_block_ts + 86400)
 
     ts_after_set = get_ts_from_last_block()
 
@@ -103,7 +103,7 @@ def test_timestamps_set_time():
 
     second_block_ts = get_ts_from_last_block()
 
-    assert second_block_ts == first_block_ts + 86400000000000
+    assert second_block_ts == first_block_ts + 86400
 
     # generate a new block by deploying a new contract
     deploy_ts_contract()
@@ -111,7 +111,7 @@ def test_timestamps_set_time():
     third_block_ts = get_ts_from_last_block()
 
     # check if offset is still the same
-    assert third_block_ts - first_block_ts >= 86400000000000
+    assert third_block_ts - first_block_ts >= 86400
 
 @pytest.mark.timestamps
 @devnet_in_background("--start-time", str(SET_TIME_ARGUMENT))

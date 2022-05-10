@@ -248,7 +248,7 @@ Devnet can be restarted by making a `POST /restart` request. All of the deployed
 
 ## Advancing time
 
-Block timestamp can be manipulated by seting the exact time or seting the time offset. Timestamps methods won't mint a new block, but they will modify the time of following blocks. All values should be set in [Unix time](https://en.wikipedia.org/wiki/Unix_time).
+Block timestamp can be manipulated by seting the exact time or seting the time offset. Timestamps methods won't generate a new block, but they will modify the time of the following blocks. All values should be set in [Unix time](https://en.wikipedia.org/wiki/Unix_time) and seconds.
 
 ### Set time
 
@@ -257,7 +257,7 @@ Sets the exact time of the next minted block. All minted blocks afterwards will 
 ```
 POST /set_time
 {
-    "time_ns": TIME_IN_NS
+    "time": TIME_IN_SECONDS
 }
 ```
 
@@ -270,7 +270,7 @@ Increases the time offset for each minted block.
 ```
 POST /increase_time
 {
-    "time_ns": TIME_IN_NS
+    "time": TIME_IN_SECONDS
 }
 ```
 
@@ -279,7 +279,7 @@ POST /increase_time
 Devnet can be started with the `--start-time` argument.
 
 ```
-starknet-devnet --start-time START_TIME_IN_NS
+starknet-devnet --start-time START_TIME_IN_SECONDS
 ```
 
 ## Contract debugging

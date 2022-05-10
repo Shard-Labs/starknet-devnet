@@ -31,15 +31,15 @@ def dump():
     state.dumper.dump(dump_path)
     return Response(status=200)
 
-def validate_time_value(time_ns: int):
-    """Validates the time_ns value"""
-    if time_ns is None:
+def validate_time_value(time: int):
+    """Validates the time value"""
+    if time is None:
         raise StarknetDevnetException(message="Time value must be provided.", status_code=400)
 
-    if not isinstance(time_ns, int):
+    if not isinstance(time, int):
         raise StarknetDevnetException(message="Time value must be an integer.", status_code=400)
 
-    if time_ns < 0:
+    if time < 0:
         raise StarknetDevnetException(message="Time value must be greater than 0.", status_code=400)
 
 
@@ -47,20 +47,20 @@ def validate_time_value(time_ns: int):
 def increase_time():
     """Increases the block timestamp offset"""
     request_dict = request.json or {}
-    time_ns = request_dict.get("time_ns")
-    validate_time_value(time_ns)
+    time = request_dict.get("time")
+    validate_time_value(time)
 
-    state.starknet_wrapper.increase_block_time(time_ns)
+    state.starknet_wrapper.increase_block_time(time)
 
-    return jsonify({"ts_increased_by": time_ns})
+    return jsonify({"ts_increased_by": time})
 
 @base.route("/set_time", methods=["POST"])
 def set_time():
     """Sets the block timestamp offset"""
     request_dict = request.json or {}
-    time_ns = request_dict.get("time_ns")
-    validate_time_value(time_ns)
+    time = request_dict.get("time")
+    validate_time_value(time)
 
-    state.starknet_wrapper.set_block_time(time_ns=time_ns)
+    state.starknet_wrapper.set_block_time(time=time)
 
-    return jsonify({"next_block_timestamp": time_ns})
+    return jsonify({"next_block_timestamp": time})

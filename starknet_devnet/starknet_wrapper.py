@@ -304,10 +304,10 @@ class StarknetWrapper:
 
         return actual_fee
 
-    def increase_block_time(self, time_ns: int):
-        """Increases the block time by `time_ns`."""
-        self.block_info_generator.increase_time(time_ns)
+    def increase_block_time(self, time: int):
+        """Increases the block time by `time`."""
+        self.block_info_generator.increase_time(time)
 
-    def set_block_time(self, time_ns: int):
+    def set_block_time(self, time: int):
         """Sets the block time to `time`."""
-        self.block_info_generator.set_next_block_time(time_ns)
+        self.block_info_generator.set_next_block_time(time)
