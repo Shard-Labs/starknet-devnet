@@ -34,14 +34,14 @@ class BlockInfoGenerator():
             block_timestamp=block_timestamp
         )
 
-    def increase_time(self, time: int):
+    def increase_time(self, time_s: int):
         """
         Increases block timestamp offeset
         """
-        self.block_timestamp_offset += time
+        self.block_timestamp_offset += time_s
 
-    def set_next_block_time(self, time: int):
+    def set_next_block_time(self, time_s: int):
         """
         Sets the timestamp of next block
         """
-        self.next_block_start_time = time
+        self.next_block_start_time = time_s

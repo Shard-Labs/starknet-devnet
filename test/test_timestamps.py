@@ -30,13 +30,13 @@ def get_ts_from_last_block():
     """Returns the timestamp of the last block"""
     return get_block(parse=True)["timestamp"]
 
-def increase_time(time):
+def increase_time(time_s):
     """Increases the block timestamp offset"""
-    return requests.post(f"{APP_URL}/increase_time", json={"time": time})
+    return requests.post(f"{APP_URL}/increase_time", json={"time": time_s})
 
-def set_time(time):
+def set_time(time_s):
     """Sets the block timestamp offset"""
-    return requests.post(f"{APP_URL}/set_time", json={"time": time})
+    return requests.post(f"{APP_URL}/set_time", json={"time": time_s})
 
 @pytest.mark.timestamps
 @devnet_in_background()

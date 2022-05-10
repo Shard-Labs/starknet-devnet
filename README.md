@@ -252,7 +252,7 @@ Block timestamp can be manipulated by seting the exact time or seting the time o
 
 ### Set time
 
-Sets the exact time of the next minted block. All minted blocks afterwards will keep a set offset.
+Sets the exact time of the next generated block. All blocks afterwards will keep a set offset.
 
 ```
 POST /set_time
@@ -265,7 +265,7 @@ Warning: block time can be set in the past and lead to unexpected behaviours!
 
 ### Increase time
 
-Increases the time offset for each minted block.
+Increases the time offset for each generated block.
 
 ```
 POST /increase_time
