@@ -12,8 +12,8 @@ import time
 
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 
-from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
+from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT
 
 class ReturnCodeAssertionError(AssertionError):
     """Error to be raised when the return code of an executed process is not as expected."""
