@@ -112,6 +112,7 @@ class StarknetWrapper:
                 block_number=current_carried_state.block_info.block_number,
                 gas_price=current_carried_state.block_info.gas_price,
                 block_timestamp=int(time.time()),
+                sequencer_address=0
             )
 
             updated_shared_state = await current_carried_state.shared_state.apply_state_updates(
@@ -342,7 +343,8 @@ class StarknetWrapper:
                 block_timestamp=timestamp,
                 tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
                 tx_signatures=[signature],
-                event_hashes=[]
+                event_hashes=[],
+                sequencer_address=0
             )
             self.__last_state_update["block_hash"] = hex(block_hash)
             self.__hash2state_update[block_hash] = self.__last_state_update
