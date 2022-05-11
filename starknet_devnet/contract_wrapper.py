@@ -63,6 +63,7 @@ class ContractWrapper:
             "bytecode": self.contract_definition["program"]["data"]
         }
 
+    # pylint: disable=too-many-arguments
     async def call(
         self,
         entry_point_selector: int,
