@@ -331,6 +331,7 @@ class StarknetWrapper:
         if "signature" in tx_wrapper.transaction["transaction"]:
             signature = [int(sig_part, 16) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
         sequencer_address = state.general_config.sequencer_address
+        gas_price = state.general_config.min_gas_price
 
         parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
 
@@ -353,9 +354,9 @@ class StarknetWrapper:
 
         block_hash_hexed = fixed_length_hex(block_hash)
         block = {
-            "actual_fee": tx_wrapper.get_receipt_block_variant()["actual_fee"],
             "block_hash": block_hash_hexed,
             "block_number": block_number,
+            "gas_price": hex(gas_price),
             "parent_block_hash": parent_block_hash,
             "sequencer_address": hex(sequencer_address),
             "state_root": state_root.hex(),
