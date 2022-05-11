@@ -330,6 +330,7 @@ class StarknetWrapper:
         signature = []
         if "signature" in tx_wrapper.transaction["transaction"]:
             signature = [int(sig_part, 16) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
+        sequencer_address = state.general_config.sequencer_address
 
         parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
 
@@ -345,16 +346,18 @@ class StarknetWrapper:
                 tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
                 tx_signatures=[signature],
                 event_hashes=[],
-                sequencer_address=state.general_config.sequencer_address
+                sequencer_address=sequencer_address
             )
             self.__last_state_update["block_hash"] = hex(block_hash)
             self.__hash2state_update[block_hash] = self.__last_state_update
 
         block_hash_hexed = fixed_length_hex(block_hash)
         block = {
+            "actual_fee": tx_wrapper.get_receipt_block_variant()["actual_fee"],
             "block_hash": block_hash_hexed,
             "block_number": block_number,
             "parent_block_hash": parent_block_hash,
+            "sequencer_address": hex(sequencer_address),
             "state_root": state_root.hex(),
             "status": TxStatus.ACCEPTED_ON_L2.name,
             "timestamp": timestamp,
