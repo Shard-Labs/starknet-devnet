@@ -37,12 +37,6 @@ class TxStatus(Enum):
     """The transaction was accepted on-chain."""
 
 
-class Choice(Enum):
-    """Enumerates ways of interacting with a Starknet function."""
-    CALL = "call"
-    INVOKE = "invoke"
-
-
 def custom_int(arg: str) -> str:
     """
     Converts the argument to an integer.
