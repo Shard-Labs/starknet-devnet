@@ -271,7 +271,7 @@ POST /set_time
 }
 ```
 
-Warning: block time can be set in the past and lead to unexpected behaviours!
+Warning: block time can be set in the past and lead to unexpected behaviour!
 
 ### Increase time
 
