@@ -153,7 +153,7 @@ def parse_args():
     parser.add_argument(
         "--start-time",
         action=NonNegativeAction,
-        help="Specify the start time of the genesis block in nanoseconds"
+        help="Specify the start time of the genesis block in Unix time"
     )
     # Uncomment this once fork support is added
     # parser.add_argument(

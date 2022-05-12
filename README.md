@@ -69,6 +69,16 @@ optional arguments:
   --dump-path DUMP_PATH
                         Specify the path to dump to
   --dump-on DUMP_ON     Specify when to dump; can dump on: exit, transaction
+  --lite-mode           Applies all optimizations by disabling some
+                        features. These can be applied individually
+                        by using other flags instead of this one.
+  --lite-mode-block-hash
+                        Disables block hash calculation
+  --lite-mode-deploy-hash
+                        Disables deploy tx hash calculation
+  --start-time START_TIME
+                        Specify the start time of the genesis block
+                        in Unix time
 ```
 
 You can run `starknet-devnet` in a separate shell, or you can run it in background with `starknet-devnet &`.
