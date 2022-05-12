@@ -36,7 +36,7 @@ class BlockInfoGenerator():
 
     def increase_time(self, time_s: int):
         """
-        Increases block timestamp offeset
+        Increases block timestamp offset
         """
         self.block_timestamp_offset += time_s
 
