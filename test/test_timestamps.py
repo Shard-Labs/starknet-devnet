@@ -4,6 +4,8 @@ Test block timestamps
 
 import pytest
 import requests
+import time
+import math
 
 from .shared import ARTIFACTS_PATH
 from .util import devnet_in_background, deploy, call, get_block
@@ -35,7 +37,7 @@ def increase_time(time_s):
     return requests.post(f"{APP_URL}/increase_time", json={"time": time_s})
 
 def set_time(time_s):
-    """Sets the block timestamp offset"""
+    """Sets the block timestamp and offset"""
     return requests.post(f"{APP_URL}/set_time", json={"time": time_s})
 
 @pytest.mark.timestamps
@@ -49,7 +51,7 @@ def test_timestamps():
 
     assert ts_after_deploy == ts_from_first_call
 
-    # deploy another contract contract to generate a new block
+    # deploy another contract to generate a new block
     deploy_ts_contract()
     ts_after_second_deploy = get_ts_from_last_block()
 
@@ -60,9 +62,11 @@ def test_timestamps():
     assert ts_after_second_deploy == ts_from_second_call
     assert ts_from_second_call > ts_from_first_call
 
+@pytest.mark.timestamps
 @devnet_in_background()
-def test_timestamps_increase_time():
+def test_increase_time():
     """Test timestamp increase time"""
+    start = time.time()
     deploy_info = deploy_ts_contract()
     ts_after_deploy = get_ts_from_last_block()
 
@@ -73,16 +77,19 @@ def test_timestamps_increase_time():
     # increase time by 1 day
     increase_time(86400)
 
-    # deploy another contract contract to generate a new block
+    # deploy another contract to generate a new block
     deploy_ts_contract()
 
     second_block_ts = get_ts_from_last_block()
 
     assert second_block_ts - first_block_ts >= 86400
+    elapsed_time = math.ceil(time.time() - start)
+    assert second_block_ts < first_block_ts + 86400 + elapsed_time
+
 
 @pytest.mark.timestamps
 @devnet_in_background()
-def test_timestamps_set_time():
+def test_set_time():
     """Test timestamp set time"""
     deploy_info = deploy_ts_contract()
     first_block_ts = get_ts_from_last_block()
@@ -115,7 +122,7 @@ def test_timestamps_set_time():
 
 @pytest.mark.timestamps
 @devnet_in_background("--start-time", str(SET_TIME_ARGUMENT))
-def test_timestamps_set_time_argument():
+def test_set_time_argument():
     """Test timestamp set time argument"""
     deploy_ts_contract()
     first_block_ts = get_ts_from_last_block()
@@ -124,7 +131,7 @@ def test_timestamps_set_time_argument():
 
 @pytest.mark.timestamps
 @devnet_in_background()
-def test_timestamps_set_time_errors():
+def test_set_time_errors():
     """Test timestamp set time negative"""
     deploy_ts_contract()
 
@@ -148,7 +155,7 @@ def test_timestamps_set_time_errors():
 
 @pytest.mark.timestamps
 @devnet_in_background()
-def test_timestamps_increase_time_errors():
+def test_increase_time_errors():
     """Test timestamp increase time negative"""
     deploy_ts_contract()
 
