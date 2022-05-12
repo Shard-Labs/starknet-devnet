@@ -69,10 +69,11 @@ class DevnetL1L2:
                 self.__postman_wrapper = LocalPostmanWrapper(network_url)
                 self.__postman_wrapper.load_mock_messaging_contract_in_l1(starknet,contract_address)
             except Exception as error:
-                message = f"""Exception when trying to load the Starknet Messaging contract in a local testnet instance.
-    Make sure you have a local testnet instance running at the provided network url, and that the Messaging Contract is deployed at the provided address
-    Exception:
-    {error}"""
+                message = f"""
+                    Unable to load the Starknet Messaging contract in a local testnet instance.
+                    Make sure you have a local testnet instance running at the provided network url, and that the Messaging Contract
+                    is deployed at the provided address.    
+                """
                 raise StarknetDevnetException(message=message) from error
         else:
             message = "L1 interaction is only usable with a local running local testnet instance."
