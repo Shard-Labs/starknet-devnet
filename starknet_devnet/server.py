@@ -56,7 +56,7 @@ def main():
     state.dumper.dump_path = args.dump_path
     state.dumper.dump_on = args.dump_on
 
-    if hasattr(args, 'start_time'):
+    if args.start_time is not None:
         state.starknet_wrapper.set_block_time(args.start_time)
 
     try:
