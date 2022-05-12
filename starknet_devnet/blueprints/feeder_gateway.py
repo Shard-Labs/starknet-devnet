@@ -113,8 +113,8 @@ def get_transaction_status():
     """
 
     transaction_hash = request.args.get("transactionHash")
-    ret = state.starknet_wrapper.transactions.get_transaction_status(transaction_hash)
-    return jsonify(ret)
+    transaction_status = state.starknet_wrapper.transactions.get_transaction_status(transaction_hash)
+    return jsonify(transaction_status)
 
 @feeder_gateway.route("/get_transaction", methods=["GET"])
 def get_transaction():
