@@ -2,10 +2,10 @@
 Test block timestamps
 """
 
+import math
+import time
 import pytest
 import requests
-import time
-import math
 
 from .shared import ARTIFACTS_PATH
 from .util import devnet_in_background, deploy, call, get_block
