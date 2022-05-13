@@ -82,7 +82,7 @@ class ContractWrapper:
             contract_address=self.contract.contract_address,
             max_fee=max_fee,
             selector=entry_point_selector,
-            signature=signature,
+            signature=signature and cast_to_felts(values=signature)
         )
 
         result = list(map(hex, call_info.retdata))
