@@ -12,6 +12,7 @@ import time
 
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 
+from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
 from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT
 
 class ReturnCodeAssertionError(AssertionError):
@@ -295,6 +296,9 @@ def assert_block(latest_block_number, latest_tx_hash):
     assert_equal(len(latest_block_transactions), 1)
     latest_transaction = latest_block_transactions[0]
     assert_equal(latest_transaction["transaction_hash"], latest_tx_hash)
+
+    assert_equal(latest_block["sequencer_address"], hex(DEFAULT_GENERAL_CONFIG.sequencer_address))
+    assert_equal(latest_block["gas_price"], hex(DEFAULT_GENERAL_CONFIG.min_gas_price))
 
 def assert_block_hash(latest_block_number, expected_block_hash):
     """Asserts the content of the block with block_number."""

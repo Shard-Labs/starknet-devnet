@@ -5,6 +5,7 @@ Block info generator for the Starknet Devnet.
 import time
 
 from starkware.starknet.business_logic.state.state import BlockInfo
+from starkware.starknet.definitions.general_config import StarknetGeneralConfig
 
 def now() -> int:
     """Get the current time in seconds."""
@@ -17,7 +18,7 @@ class BlockInfoGenerator():
         self.block_timestamp_offset = 0
         self.next_block_start_time = start_time
 
-    def next_block(self, block_info: BlockInfo):
+    def next_block(self, block_info: BlockInfo, general_config: StarknetGeneralConfig):
         """
         Returns the next block info with the correct timestamp
         """
@@ -31,7 +32,8 @@ class BlockInfoGenerator():
         return BlockInfo(
             gas_price=block_info.gas_price,
             block_number=block_info.block_number,
-            block_timestamp=block_timestamp
+            block_timestamp=block_timestamp,
+            sequencer_address=general_config.sequencer_address
         )
 
     def increase_time(self, time_s: int):

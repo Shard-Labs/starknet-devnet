@@ -5,20 +5,16 @@ Contains code for wrapping StarknetContract instances.
 from dataclasses import dataclass
 from typing import List
 
-from starkware.starknet.services.api.contract_definition import ContractDefinition, EntryPointType
+from starkware.starknet.services.api.contract_definition import ContractDefinition
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.utils.api_utils import cast_to_felts
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction
-from starkware.starknet.definitions import constants
-from starkware.starknet.public.abi import get_selector_from_name
 from starkware.starknet.business_logic.execution.execute_entry_point import ExecuteEntryPoint
 from starkware.starknet.business_logic.execution.objects import (
     TransactionExecutionContext,
     TransactionExecutionInfo,
 )
 from starkware.starknet.testing.state import StarknetState
-
-from starknet_devnet.util import Choice
 
 async def call_internal_tx(starknet_state: StarknetState, internal_tx: InternalInvokeFunction):
     """
@@ -67,29 +63,7 @@ class ContractWrapper:
             "bytecode": self.contract_definition["program"]["data"]
         }
 
-
     # pylint: disable=too-many-arguments
-    async def call_or_invoke(
-        self,
-        choice: Choice,
-        entry_point_selector: int,
-        calldata: List[int],
-        signature: List[int],
-        caller_address: int,
-        max_fee: int
-    ):
-        """
-        Depending on `choice`, performs the call or invoke of the function
-        identified with `entry_point_selector`, potentially passing in `calldata` and `signature`.
-        """
-        if choice == Choice.CALL:
-            execution_info = await self.call(entry_point_selector, calldata, signature, caller_address, max_fee)
-        else:
-            execution_info = await self.invoke(entry_point_selector, calldata, signature, caller_address, max_fee)
-
-        result = list(map(hex, execution_info.call_info.retdata))
-        return result, execution_info
-
     async def call(
         self,
         entry_point_selector: int,
@@ -101,36 +75,19 @@ class ContractWrapper:
         """
         Calls the function identified with `entry_point_selector`, potentially passing in `calldata` and `signature`.
         """
-        starknet_state = self.contract.state.copy()
-        contract_address = self.contract.contract_address
-        selector = entry_point_selector
 
-        if isinstance(contract_address, str):
-            contract_address = int(contract_address, 16)
-        assert isinstance(contract_address, int)
-
-        if isinstance(selector, str):
-            selector = get_selector_from_name(selector)
-        assert isinstance(selector, int)
-
-        if signature is None:
-            signature = []
-
-        internal_tx = InternalInvokeFunction.create(
-            contract_address=contract_address,
-            entry_point_selector=selector,
-            entry_point_type=EntryPointType.EXTERNAL,
+        call_info = await self.contract.state.call_raw(
             calldata=calldata,
-            max_fee=max_fee,
-            signature=signature,
             caller_address=caller_address,
-            nonce=None,
-            chain_id=starknet_state.general_config.chain_id.value,
-            version=constants.QUERY_VERSION,
-            only_query=True,
+            contract_address=self.contract.contract_address,
+            max_fee=max_fee,
+            selector=entry_point_selector,
+            signature=signature and cast_to_felts(values=signature)
         )
 
-        return await call_internal_tx(starknet_state, internal_tx)
+        result = list(map(hex, call_info.retdata))
+
+        return result
 
     async def invoke(
         self,
@@ -144,7 +101,7 @@ class ContractWrapper:
         Invokes the function identified with `entry_point_selector`, potentially passing in `calldata` and `signature`.
         """
 
-        return await self.contract.state.invoke_raw(
+        execution_info = await self.contract.state.invoke_raw(
             contract_address=self.contract.contract_address,
             selector=entry_point_selector,
             calldata=calldata,
@@ -152,3 +109,6 @@ class ContractWrapper:
             max_fee=max_fee,
             signature=signature and cast_to_felts(values=signature),
         )
+
+        result = list(map(hex, execution_info.call_info.retdata))
+        return result, execution_info

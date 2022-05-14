@@ -19,7 +19,7 @@ from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee_b
 from .origin import NullOrigin, Origin
 from .general_config import DEFAULT_GENERAL_CONFIG
 from .util import (
-    Choice, StarknetDevnetException, TxStatus, DummyExecutionInfo,
+    StarknetDevnetException, TxStatus, DummyExecutionInfo,
     enable_pickling, generate_state_update
 )
 from .contract_wrapper import ContractWrapper, call_internal_tx
@@ -98,9 +98,11 @@ class StarknetWrapper:
             previous_state = self.__current_carried_state
             assert previous_state is not None
             current_carried_state = (await self.__get_state()).state
+            state = await self.__get_state()
 
             current_carried_state.block_info = self.block_info_generator.next_block(
-                block_info=current_carried_state.block_info
+                block_info=current_carried_state.block_info,
+                general_config=state.general_config
             )
 
             updated_shared_state = await current_carried_state.shared_state.apply_state_updates(
@@ -221,8 +223,7 @@ class StarknetWrapper:
                     raise StarknetDevnetException(message=message)
 
             contract_wrapper = self.contracts.get_by_address(invoke_transaction.contract_address)
-            adapted_result, execution_info = await contract_wrapper.call_or_invoke(
-                Choice.INVOKE,
+            adapted_result, execution_info = await contract_wrapper.invoke(
                 entry_point_selector=invoke_transaction.entry_point_selector,
                 calldata=invoke_transaction.calldata,
                 signature=invoke_transaction.signature,
@@ -253,8 +254,7 @@ class StarknetWrapper:
         """Perform call according to specifications in `transaction`."""
         contract_wrapper = self.contracts.get_by_address(transaction.contract_address)
 
-        adapted_result, _ = await contract_wrapper.call_or_invoke(
-            Choice.CALL,
+        adapted_result = await contract_wrapper.call(
             entry_point_selector=transaction.entry_point_selector,
             calldata=transaction.calldata,
             signature=transaction.signature,

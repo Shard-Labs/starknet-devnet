@@ -104,6 +104,8 @@ class DevnetBlocks():
             signature = [int(sig_part, 16) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
 
         parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
+        sequencer_address = state.general_config.sequencer_address
+        gas_price = state.general_config.min_gas_price
 
         if self.lite:
             block_hash = block_number
@@ -116,14 +118,17 @@ class DevnetBlocks():
                 block_timestamp=timestamp,
                 tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
                 tx_signatures=[signature],
-                event_hashes=[]
+                event_hashes=[],
+                sequencer_address=state.general_config.sequencer_address
             )
 
         block_hash_hexed = fixed_length_hex(block_hash)
         block = {
             "block_hash": block_hash_hexed,
             "block_number": block_number,
+            "gas_price": hex(gas_price),
             "parent_block_hash": parent_block_hash,
+            "sequencer_address": hex(sequencer_address),
             "state_root": state_root.hex(),
             "status": TxStatus.ACCEPTED_ON_L2.name,
             "timestamp": timestamp,
