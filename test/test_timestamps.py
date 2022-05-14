@@ -7,6 +7,9 @@ import time
 import pytest
 import requests
 
+from starknet_devnet.block_info_generator import BlockInfoGenerator, BlockInfo
+from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
+
 from .shared import ARTIFACTS_PATH
 from .util import devnet_in_background, deploy, call, get_block
 from .settings import APP_URL
@@ -34,11 +37,21 @@ def get_ts_from_last_block():
 
 def increase_time(time_s):
     """Increases the block timestamp offset"""
-    return requests.post(f"{APP_URL}/increase_time", json={"time": time_s})
+    increase_time_response = requests.post(f"{APP_URL}/increase_time", json={"time": time_s})
+
+    if increase_time_response.status_code == 200:
+        assert increase_time_response.json().get("timestamp_increased_by") == time_s
+
+    return increase_time_response
 
 def set_time(time_s):
     """Sets the block timestamp and offset"""
-    return requests.post(f"{APP_URL}/set_time", json={"time": time_s})
+    set_time_response = requests.post(f"{APP_URL}/set_time", json={"time": time_s})
+
+    if set_time_response == 200:
+        assert set_time_response.json().get("next_block_timestamp") == time_s
+
+    return set_time_response
 
 @pytest.mark.timestamps
 @devnet_in_background()
@@ -176,3 +189,41 @@ def test_increase_time_errors():
 
     assert response.status_code == 400
     assert message == "Time value must be an integer."
+
+
+@pytest.mark.timestamps
+def test_block_info_generator():
+    """Test block info generator"""
+    start = int(time.time())
+    block_info = BlockInfo.create_for_testing(block_number=0, block_timestamp=start)
+
+
+    # Test if start time is set by the constructor
+    generator = BlockInfoGenerator(start_time=10)
+
+    block_with_start_time = generator.next_block(block_info=block_info, general_config=DEFAULT_GENERAL_CONFIG)
+
+    assert block_with_start_time.block_timestamp == 10
+
+    # Check if set time can be incrased
+
+    generator.increase_time(22)
+
+    block_after_increase = generator.next_block(block_info=block_info, general_config=DEFAULT_GENERAL_CONFIG)
+
+    assert block_after_increase.block_timestamp == 32
+
+    # Test if start time can be set after increase
+
+    generator = BlockInfoGenerator()
+    generator.increase_time(1_000_000_000)
+
+    block_with_increase_time = generator.next_block(block_info=block_info, general_config=DEFAULT_GENERAL_CONFIG)
+
+    assert block_with_increase_time.block_timestamp == 1_000_000_000 + int(time.time())
+
+
+    generator.set_next_block_time(222)
+    block_after_set_time = generator.next_block(block_info=block_info, general_config=DEFAULT_GENERAL_CONFIG)
+
+    assert block_after_set_time.block_timestamp == 222

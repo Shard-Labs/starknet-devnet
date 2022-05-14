@@ -52,7 +52,7 @@ def increase_time():
 
     state.starknet_wrapper.increase_block_time(time_s)
 
-    return jsonify({"ts_increased_by": time_s})
+    return jsonify({"timestamp_increased_by": time_s})
 
 @base.route("/set_time", methods=["POST"])
 def set_time():
