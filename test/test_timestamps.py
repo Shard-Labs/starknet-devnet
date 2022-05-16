@@ -220,7 +220,7 @@ def test_block_info_generator():
 
     block_with_increase_time = generator.next_block(block_info=block_info, general_config=DEFAULT_GENERAL_CONFIG)
 
-    assert block_with_increase_time.block_timestamp == 1_000_000_000 + int(time.time())
+    assert block_with_increase_time.block_timestamp >= 1_000_000_000 + int(time.time())
 
 
     generator.set_next_block_time(222)
