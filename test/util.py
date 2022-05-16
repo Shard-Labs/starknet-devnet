@@ -133,7 +133,7 @@ def assert_transaction(tx_hash, expected_status, expected_signature=None):
             "max_fee", "signature", "transaction_hash", "type"
         ]
         assert_keys(transaction["transaction"], invoke_transaction_keys)
-    
+
     if tx_type == "DEPLOY":
         deploy_transaction_keys = [
             "class_hash", "constructor_calldata", "contract_address",
@@ -141,12 +141,12 @@ def assert_transaction(tx_hash, expected_status, expected_signature=None):
         ]
         assert_keys(transaction["transaction"], deploy_transaction_keys)
 
-def assert_keys(dict, keys):
+def assert_keys(dictionary, keys):
     """Asserts that the dict has the correct keys"""
-    assert len(dict.keys()) == len(keys)
-    
+    assert len(dictionary.keys()) == len(keys)
+
     for key in keys:
-        assert key in dict, f"Missing key {key}"
+        assert key in dictionary, f"Missing key {key}"
 
 def assert_transaction_not_received(tx_hash):
     """Assert correct tx response when there is no tx with `tx_hash`."""
