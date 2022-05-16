@@ -121,6 +121,33 @@ def assert_transaction(tx_hash, expected_status, expected_signature=None):
     if expected_signature:
         assert_equal(transaction["transaction"]["signature"], expected_signature)
 
+    keys = ["block_hash", "block_number", "status", "transaction", "transaction_index"]
+
+    assert_keys(transaction, keys)
+
+    tx_type = transaction["transaction"]["type"]
+
+    if tx_type == "INVOKE_FUNCTION":
+        invoke_transaction_keys = [
+            "calldata", "contract_address", "entry_point_selector", "entry_point_type",
+            "max_fee", "signature", "transaction_hash", "type"
+        ]
+        assert_keys(transaction["transaction"], invoke_transaction_keys)
+    
+    if tx_type == "DEPLOY":
+        deploy_transaction_keys = [
+            "class_hash", "constructor_calldata", "contract_address",
+            "contract_address_salt", "transaction_hash", "type"
+        ]
+        assert_keys(transaction["transaction"], deploy_transaction_keys)
+
+def assert_keys(dict, keys):
+    """Asserts that the dict has the correct keys"""
+    assert len(dict.keys()) == len(keys)
+    
+    for key in keys:
+        assert key in dict, f"Missing key {key}"
+
 def assert_transaction_not_received(tx_hash):
     """Assert correct tx response when there is no tx with `tx_hash`."""
     output = run_starknet(["get_transaction", "--hash", tx_hash])
