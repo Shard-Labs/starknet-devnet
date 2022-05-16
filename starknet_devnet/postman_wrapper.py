@@ -71,7 +71,7 @@ class DevnetL1L2:
             except Exception as error:
                 message = """Unable to load the Starknet Messaging contract in a local testnet instance.
 Make sure you have a local testnet instance running at the provided network url ({network_url}),
-and that the Messaging Contract is deployed at the provided address."""
+and that the Messaging Contract is deployed at the provided address ({contract_address})."""
                 raise StarknetDevnetException(message=message) from error
         else:
             message = "L1 interaction is only usable with a local running local testnet instance."
