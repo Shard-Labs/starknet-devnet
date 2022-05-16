@@ -44,6 +44,7 @@ class InvokeTransactionDetails(TransactionDetails):
     signature: List[str]
     entry_point_selector: str
     entry_point_type: str
+    max_fee: str
 
 def process_events(events: List[Event]):
     """Extract events and hex the content."""
@@ -169,7 +170,8 @@ class InvokeTransactionWrapper(TransactionWrapper):
                 calldata=[hex(arg) for arg in internal_tx.calldata],
                 entry_point_selector=fixed_length_hex(internal_tx.entry_point_selector),
                 entry_point_type=internal_tx.entry_point_type.name,
-                signature=[hex(sig_part) for sig_part in internal_tx.signature]
+                signature=[hex(sig_part) for sig_part in internal_tx.signature],
+                max_fee=hex(internal_tx.max_fee)
             ),
             events=execution_info.get_sorted_events(),
             l2_to_l1_messages=execution_info.get_sorted_l2_to_l1_messages(),
