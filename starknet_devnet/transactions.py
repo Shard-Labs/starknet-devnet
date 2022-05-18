@@ -87,7 +87,6 @@ class DevnetTransaction:
 
     def set_failure_reason(self, error_message: str):
         """Sets the failure reason of the transaction"""
-        # set tx_id?
         self.transaction_failure_reason = TransactionFailureReason(
             code=StarknetErrorCode.TRANSACTION_FAILED.name,
             error_message=error_message

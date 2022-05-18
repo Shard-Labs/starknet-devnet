@@ -101,7 +101,7 @@ class DevnetBlocks():
         if block_number == 0:
             parent_block_hash = 0
         else:
-            last_block: StarknetBlock = self.__get_last_block()
+            last_block = self.__get_last_block()
             parent_block_hash = last_block.block_hash
 
         if self.lite:
