@@ -121,6 +121,35 @@ def assert_transaction(tx_hash, expected_status, expected_signature=None):
     if expected_signature:
         assert_equal(transaction["transaction"]["signature"], expected_signature)
 
+    expected_keys = ["status", "transaction", "transaction_index"]
+    if expected_status == "REJECTED":
+        expected_keys.append("transaction_failure_reason")
+    else:
+        expected_keys.extend(["block_hash", "block_number"])
+
+    assert_keys(transaction, expected_keys)
+
+    tx_type = transaction["transaction"]["type"]
+
+    if tx_type == "INVOKE_FUNCTION":
+        invoke_transaction_keys = [
+            "calldata", "contract_address", "entry_point_selector", "entry_point_type",
+            "max_fee", "signature", "transaction_hash", "type"
+        ]
+        assert_keys(transaction["transaction"], invoke_transaction_keys)
+
+    if tx_type == "DEPLOY":
+        deploy_transaction_keys = [
+            "class_hash", "constructor_calldata", "contract_address",
+            "contract_address_salt", "transaction_hash", "type"
+        ]
+        assert_keys(transaction["transaction"], deploy_transaction_keys)
+
+def assert_keys(dictionary, keys):
+    """Asserts that the dict has the correct keys"""
+    expected_set = set(keys)
+    assert dictionary.keys() == expected_set, f"{dictionary.keys()} != {expected_set}"
+
 def assert_transaction_not_received(tx_hash):
     """Assert correct tx response when there is no tx with `tx_hash`."""
     output = run_starknet(["get_transaction", "--hash", tx_hash])
@@ -204,8 +233,12 @@ def load_contract_definition(contract_path: str):
 def assert_tx_status(tx_hash, expected_tx_status):
     """Asserts the tx_status of the tx with tx_hash."""
     output = run_starknet(["tx_status", "--hash", tx_hash])
-    tx_status = json.loads(output.stdout)["tx_status"]
+    response = json.loads(output.stdout)
+    tx_status = response["tx_status"]
     assert_equal(tx_status, expected_tx_status)
+
+    if tx_status == "REJECTED":
+        assert "tx_failure_reason" in response, f"Key not found in {response}"
 
 def assert_contract_code(address):
     """Asserts the content of the code of a contract at address."""
@@ -319,6 +352,7 @@ def assert_failing_deploy(contract_path):
     """Run deployment for a contract that's expected to be rejected."""
     deploy_info = deploy(contract_path)
     assert_tx_status(deploy_info["tx_hash"], "REJECTED")
+    assert_transaction(deploy_info["tx_hash"], "REJECTED")
 
 def load_file_content(file_name: str):
     """Load content of file located in the same directory as this test file."""
