@@ -29,14 +29,13 @@ class DevnetTransaction:
         status: TransactionStatus,
         execution_info: TransactionExecutionInfo or StarknetTransactionExecutionInfo,
         transaction_hash: int = None,
-        transaction_index:int = 0
     ):
         self.block = None
         self.execution_info = execution_info
         self.internal_tx = internal_tx
         self.status = status
         self.transaction_failure_reason = None
-        self.transaction_index = transaction_index
+        self.transaction_index = 0
 
         if transaction_hash is None:
             self.transaction_hash = internal_tx.hash_value
