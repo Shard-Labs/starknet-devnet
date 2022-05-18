@@ -93,6 +93,10 @@ class DevnetTransaction:
             error_message=error_message
         )
 
+    def get_signature(self) -> List[int]:
+        """Returns the signature"""
+        return self.internal_tx.signature if hasattr(self.internal_tx, "signature") else []
+
     def get_tx_info(self) -> TransactionInfo:
         """Returns the transaction info"""
         return TransactionInfo.create(
@@ -127,7 +131,7 @@ class DevnetTransaction:
                 if isinstance(call_info, FunctionInvocation)
                 else FunctionInvocation.from_internal_version(self.execution_info.call_info)
             ),
-            signature=self.internal_tx.signature if hasattr(self.internal_tx, "signature") else [],
+            signature=self.get_signature(),
         )
 
     def get_execution(self) -> TransactionExecution:

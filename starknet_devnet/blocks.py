@@ -96,7 +96,7 @@ class DevnetBlocks():
         """
         block_number = self.get_number_of_blocks()
         timestamp = state.state.block_info.block_timestamp
-        signature = transaction.get_trace().signature or []
+        signature = transaction.get_signature()
 
         if block_number == 0:
             parent_block_hash = 0
@@ -119,7 +119,7 @@ class DevnetBlocks():
                 sequencer_address=state.general_config.sequencer_address
             )
 
-        transaction_receipts = (transaction.get_execution(), )
+        transaction_receipts = (transaction.get_execution(),)
 
         block = StarknetBlock.create(
             block_hash=block_hash,
