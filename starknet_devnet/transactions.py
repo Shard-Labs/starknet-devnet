@@ -36,6 +36,7 @@ class DevnetTransaction:
         self.status = status
         self.transaction_failure_reason = None
         self.transaction_index = 0
+        self.transaction_hash = transaction_hash
 
         if transaction_hash is None:
             self.transaction_hash = internal_tx.hash_value
@@ -52,6 +53,14 @@ class DevnetTransaction:
     def __get_l2_to_l1_messages(self) -> list:
         """Returns the l2 to l1 messages"""
         return self.execution_info.call_info.l2_to_l1_messages if hasattr(self.execution_info.call_info, "l2_to_l1_messages") else []
+
+    def __get_block_hash(self) -> int:
+        """Returns the block hash"""
+        return self.block.block_hash if self.block else None
+
+    def __get_block_number(self) -> int:
+        """Returns the block number"""
+        return self.block.block_number if self.block else None
 
     def set_block(self, block: StarknetBlock):
         """Sets the block hash and number of the transaction"""
@@ -71,8 +80,8 @@ class DevnetTransaction:
             status=self.status,
             transaction=self.internal_tx,
             transaction_index=self.transaction_index,
-            block_hash=self.block.block_hash,
-            block_number=self.block.block_number,
+            block_hash=self.__get_block_hash(),
+            block_number=self.__get_block_number(),
             transaction_failure_reason=self.transaction_failure_reason
         )
 
