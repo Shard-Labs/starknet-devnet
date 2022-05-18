@@ -127,7 +127,7 @@ class StarknetWrapper:
         Generates a new block
         """
 
-        if tx_wrapper.transaction["status"] == TxStatus.REJECTED:
+        if tx_wrapper.transaction["status"] == TxStatus.REJECTED.name:
             assert error_message, "error_message must be present if tx rejected"
             tx_wrapper.set_failure_reason(error_message)
         else:
