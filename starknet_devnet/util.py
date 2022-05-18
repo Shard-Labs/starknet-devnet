@@ -16,30 +16,6 @@ from . import __version__
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5050
 
-class TxStatus(Enum):
-    """
-    According to: https://www.cairo-lang.org/docs/hello_starknet/intro.html#interact-with-the-contract
-    """
-
-    NOT_RECEIVED = auto()
-    """The transaction has not been received yet (i.e. not written to storage)."""
-
-    RECEIVED = auto()
-    """The transaction was received by the operator."""
-
-    PENDING = auto()
-    """The transaction passed the validation and entered the pending block."""
-
-    REJECTED = auto()
-    """The transaction failed validation and thus was skipped."""
-
-    ACCEPTED_ON_L2 = auto()
-    """The transaction passed the validation and entered an actual created block."""
-
-    ACCEPTED_ON_L1 = auto()
-    """The transaction was accepted on-chain."""
-
-
 def custom_int(arg: str) -> str:
     """
     Converts the argument to an integer.
