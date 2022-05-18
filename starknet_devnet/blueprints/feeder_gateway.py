@@ -2,7 +2,7 @@
 Feeder gateway routes.
 """
 
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, Response
 from marshmallow import ValidationError
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction
 from werkzeug.datastructures import MultiDict
@@ -64,11 +64,11 @@ async def get_block():
     _check_block_arguments(block_hash, block_number)
 
     if block_hash is not None:
-        result_dict = state.starknet_wrapper.blocks.get_by_hash(block_hash)
+        block = state.starknet_wrapper.blocks.get_by_hash(block_hash)
     else:
-        result_dict = state.starknet_wrapper.blocks.get_by_number(block_number)
+        block = state.starknet_wrapper.blocks.get_by_number(block_number)
 
-    return jsonify(result_dict)
+    return Response(block.dumps(), status=200, mimetype="application/json")
 
 @feeder_gateway.route("/get_code", methods=["GET"])
 def get_code():
@@ -123,8 +123,8 @@ def get_transaction():
     """
 
     transaction_hash = request.args.get("transactionHash")
-    transaction = state.starknet_wrapper.transactions.get_transaction(transaction_hash)
-    return jsonify(transaction)
+    transaction_info = state.starknet_wrapper.transactions.get_transaction(transaction_hash)
+    return Response(response=transaction_info.dumps(), status=200, mimetype="application/json")
 
 @feeder_gateway.route("/get_transaction_receipt", methods=["GET"])
 def get_transaction_receipt():
@@ -134,7 +134,7 @@ def get_transaction_receipt():
 
     transaction_hash = request.args.get("transactionHash")
     transaction_receipt = state.starknet_wrapper.transactions.get_transaction_receipt(transaction_hash)
-    return jsonify(transaction_receipt)
+    return Response(response=transaction_receipt.dumps(), status=200, mimetype="application/json")
 
 @feeder_gateway.route("/get_transaction_trace", methods=["GET"])
 def get_transaction_trace():
@@ -145,7 +145,7 @@ def get_transaction_trace():
     transaction_hash = request.args.get("transactionHash")
     transaction_trace = state.starknet_wrapper.transactions.get_transaction_trace(transaction_hash)
 
-    return jsonify(transaction_trace)
+    return Response(response=transaction_trace.dumps(), status=200, mimetype="application/json")
 
 @feeder_gateway.route("/get_state_update", methods=["GET"])
 def get_state_update():

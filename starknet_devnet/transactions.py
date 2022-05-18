@@ -1,11 +1,117 @@
 """
-Class for storing and handling transactions.
+Classes for storing and handling transactions.
 """
 
-from .origin import Origin
-from .transaction_wrapper import TransactionWrapper
-from .constants import FAILURE_REASON_KEY
+from starkware.starknet.services.api.feeder_gateway.response_objects import (
+    TransactionReceipt,
+    TransactionTrace,
+    TransactionInfo,
+    TransactionStatus,
+    TransactionExecution,
+    StarknetBlock,
+    FunctionInvocation,
+    Event
+)
+from starkware.starknet.business_logic.internal_transaction import InternalTransaction
+from starkware.starknet.testing.objects import TransactionExecutionInfo
+from starkware.starknet.definitions.error_codes import StarknetErrorCode
+from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
+from services.everest.business_logic.transaction_execution_objects import TransactionFailureReason
 
+from .origin import Origin
+
+class DevnetTransaction:
+    """Represents the devnet transaction"""
+
+    def __init__(
+        self,
+        internal_tx: InternalTransaction,
+        status: TransactionStatus,
+        execution_info: TransactionExecutionInfo or StarknetTransactionExecutionInfo,
+        transaction_index:int = 0
+    ):
+        self.block_hash = None
+        self.block_number = None
+        self.execution_info = execution_info
+        self.internal_tx = internal_tx
+        self.status = status
+        self.transaction_failure_reason = None
+        self.transaction_index = transaction_index
+
+    def __get_actual_fee(self) -> int:
+        """Returns the actual fee"""
+        return self.execution_info.actual_fee if hasattr(self.execution_info, "actual_fee") else 0
+
+    def __get_events(self) -> list:
+        """Returns the events"""
+        contract_address = self.execution_info.call_info.contract_address
+        return [Event.create(event_content=e, emitting_contract_address=contract_address) for e in self.execution_info.call_info.events]
+
+    def __get_l2_to_l1_messages(self) -> list:
+        """Returns the l2 to l1 messages"""
+        return self.execution_info.call_info.l2_to_l1_messages if hasattr(self.execution_info.call_info, "l2_to_l1_messages") else []
+
+    def set_block(self, block: StarknetBlock):
+        """Sets the block hash and number of the transaction"""
+        self.block_hash = block.block_hash
+        self.block_number = block.block_number
+
+    def set_failure_reason(self, error_message: str):
+        """Sets the failure reason of the transaction"""
+        # set tx_id?
+        self.transaction_failure_reason = TransactionFailureReason(
+            code=StarknetErrorCode.TRANSACTION_FAILED.name,
+            error_message=error_message
+        )
+
+    def get_tx_info(self) -> TransactionInfo:
+        """Returns the transaction info"""
+        return TransactionInfo.create(
+            status=self.status,
+            transaction=self.internal_tx,
+            transaction_index=self.transaction_index,
+            block_hash=self.block_hash,
+            block_number=self.block_number,
+            transaction_failure_reason=self.transaction_failure_reason
+        )
+
+    def get_receipt(self) -> TransactionReceipt:
+        """Returns the transaction receipt"""
+        tx_info = self.get_tx_info()
+
+        return TransactionReceipt.from_tx_info(
+            transaction_hash=self.internal_tx.hash_value,
+            tx_info=tx_info,
+            actual_fee=self.__get_actual_fee(),
+            events=self.__get_events(),
+            execution_resources=self.execution_info.call_info.execution_resources,
+            l2_to_l1_messages=self.__get_l2_to_l1_messages()
+        )
+
+    def get_trace(self) -> TransactionTrace:
+        """Returns the transaction trace"""
+        call_info = self.execution_info.call_info
+
+        return TransactionTrace(
+            function_invocation=(
+                call_info
+                if isinstance(call_info, FunctionInvocation)
+                else FunctionInvocation.from_internal_version(self.execution_info.call_info)
+            ),
+            signature=self.internal_tx.signature if hasattr(self.internal_tx, "signature") else [],
+        )
+
+    def get_execution(self) -> TransactionExecution:
+        """Returns the transaction execution"""
+        return TransactionExecution(
+            transaction_hash=self.internal_tx.hash_value,
+            transaction_index=self.transaction_index,
+            actual_fee=self.__get_actual_fee(),
+            events=self.__get_events(),
+            execution_resources=self.execution_info.call_info.execution_resources,
+            l2_to_l1_messages=self.__get_l2_to_l1_messages(),
+            l1_to_l2_consumed_message=None
+        )
 
 class DevnetTransactions:
     """
@@ -16,7 +122,7 @@ class DevnetTransactions:
         self.origin = origin
         self.__instances = {}
 
-    def __get_transaction_by_hash(self, tx_hash: str) -> TransactionWrapper or None:
+    def __get_transaction_by_hash(self, tx_hash: str) -> DevnetTransaction or None:
         """
         Get a transaction by hash.
         """
@@ -29,23 +135,24 @@ class DevnetTransactions:
         """
         return len(self.__instances)
 
-    def store(self, transaction: TransactionWrapper):
+    def store(self, transaction: DevnetTransaction):
         """
         Store a transaction.
         """
-        numeric_hash = int(transaction.transaction_hash, 16)
+        numeric_hash = transaction.internal_tx.hash_value
         self.__instances[numeric_hash] = transaction
 
     def get_transaction(self, tx_hash: str):
         """
-        Get a transaction.
+        Get a transaction info.
         """
         transaction = self.__get_transaction_by_hash(tx_hash)
 
         if transaction is None:
             return self.origin.get_transaction(tx_hash)
 
-        return transaction.transaction
+        return transaction.get_tx_info()
+
 
     def get_transaction_trace(self, tx_hash: str):
         """
@@ -56,7 +163,7 @@ class DevnetTransactions:
         if transaction is None:
             return self.origin.get_transaction_trace(tx_hash)
 
-        return transaction.trace
+        return transaction.get_trace()
 
     def get_transaction_receipt(self, tx_hash: str):
         """
@@ -67,33 +174,29 @@ class DevnetTransactions:
         if transaction is None:
             return self.origin.get_transaction_receipt(tx_hash)
 
-        return transaction.receipt
+        return transaction.get_receipt()
 
     def get_transaction_status(self, tx_hash: str):
         """
         Get a transaction status.
         """
-        transaction_wrapper = self.__get_transaction_by_hash(tx_hash)
+        transaction = self.__get_transaction_by_hash(tx_hash)
 
-        if transaction_wrapper is None:
+        if transaction is None:
             return self.origin.get_transaction_status(tx_hash)
 
-        transaction = transaction_wrapper.transaction
+        tx_info = transaction.get_tx_info()
 
-        # the transaction status object only needs 1-3 elements from the transaction_wrapper object
         status_response = {
-            # "tx_status" always exists
-            "tx_status": transaction["status"]
+            "tx_status": tx_info.status.name,
         }
 
         # "block_hash" will only exist after transaction enters ACCEPTED_ON_L2
-        if "block_hash" in transaction:
-            status_response["block_hash"] = transaction["block_hash"]
+        if transaction.status == TransactionStatus.ACCEPTED_ON_L2:
+            status_response["block_hash"] = transaction.block_hash
 
         # "tx_failure_reason" will only exist if the transaction was rejected.
-        # the key in the transaction_wrapper object is "transaction_failure_reason"
-        # first it must be checked if the object contains an element with that key
-        if FAILURE_REASON_KEY in transaction:
-            status_response["tx_failure_reason"] = transaction[FAILURE_REASON_KEY]
+        if transaction.status == TransactionStatus.REJECTED:
+            status_response["tx_failure_reason"] = tx_info.transaction_failure_reason
 
         return status_response

@@ -2,7 +2,15 @@
 Contains classes that provide the abstraction of L2 blockchain.
 """
 
-from starknet_devnet.util import StarknetDevnetException, TxStatus
+from starkware.starknet.services.api.feeder_gateway.response_objects import (
+    TransactionStatus,
+    TransactionInfo,
+    TransactionReceipt,
+    TransactionTrace,
+    StarknetBlock,
+)
+
+from starknet_devnet.util import StarknetDevnetException
 
 class Origin:
     """
@@ -13,23 +21,23 @@ class Origin:
         """Returns the status of the transaction."""
         raise NotImplementedError
 
-    def get_transaction(self, transaction_hash: str):
+    def get_transaction(self, transaction_hash: str) -> TransactionInfo:
         """Returns the transaction object."""
         raise NotImplementedError
 
-    def get_transaction_receipt(self, transaction_hash: str):
+    def get_transaction_receipt(self, transaction_hash: str) -> TransactionReceipt:
         """Returns the transaction receipt object."""
         raise NotImplementedError
 
-    def get_transaction_trace(self, transaction_hash: str):
+    def get_transaction_trace(self, transaction_hash: str) -> TransactionTrace:
         """Returns the transaction trace object."""
         raise NotImplementedError
 
-    def get_block_by_hash(self, block_hash: str):
+    def get_block_by_hash(self, block_hash: str) -> StarknetBlock:
         """Returns the block identified with either its hash."""
         raise NotImplementedError
 
-    def get_block_by_number(self, block_number: int):
+    def get_block_by_number(self, block_number: int) -> StarknetBlock:
         """Returns the block identified with either its number or the latest block if no number provided."""
         raise NotImplementedError
 
@@ -63,21 +71,28 @@ class NullOrigin(Origin):
 
     def get_transaction_status(self, transaction_hash: str):
         return {
-            "tx_status": TxStatus.NOT_RECEIVED.name
+            "tx_status": TransactionStatus.NOT_RECEIVED.name
         }
 
-    def get_transaction(self, transaction_hash: str):
-        return {
-            "status": TxStatus.NOT_RECEIVED.name
-        }
+    def get_transaction(self, transaction_hash: str) -> TransactionInfo:
+        return TransactionInfo.create(
+            status=TransactionStatus.NOT_RECEIVED,
+        )
 
-    def get_transaction_receipt(self, transaction_hash: str):
-        return {
-            "l2_to_l1_messages": [],
-            "status": TxStatus.NOT_RECEIVED.name,
-            "transaction_hash": transaction_hash,
-            "events": []
-        }
+    def get_transaction_receipt(self, transaction_hash: str) -> TransactionReceipt:
+        return TransactionReceipt(
+            status=TransactionStatus.NOT_RECEIVED,
+            transaction_hash=int(transaction_hash, 16),
+            events=[],
+            l2_to_l1_messages=[],
+            block_hash=None,
+            block_number=None,
+            transaction_index=None,
+            execution_resources=None,
+            actual_fee=None,
+            transaction_failure_reason=None,
+            l1_to_l2_consumed_message=None
+        )
 
     def get_transaction_trace(self, transaction_hash: str):
         tx_hash_int = int(transaction_hash, 16)

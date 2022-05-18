@@ -6,24 +6,21 @@ from typing import Dict, Tuple
 
 from starkware.starknet.testing.state import StarknetState
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
+from starkware.starknet.services.api.feeder_gateway.response_objects import StarknetBlock, BlockStatus, TransactionExecution
 
 from .origin import Origin
-from .util import (
-    StarknetDevnetException,
-    TxStatus,
-    fixed_length_hex
-)
-from .transaction_wrapper import TransactionWrapper
+from .util import StarknetDevnetException
+from .transactions import DevnetTransaction
 
 class DevnetBlocks():
     """This class is used to store the generated blocks of the devnet."""
 
     def __init__(self, origin: Origin, lite = False) -> None:
         self.origin = origin
-        self.__num2block = {}
-        self.__state_updates = {}
-        self.__hash2num = {}
         self.lite = lite
+        self.__num2block: Dict[int, StarknetBlock] = {}
+        self.__state_updates = {}
+        self.__hash2num: Dict[str, int] = {}
 
     def __get_last_block(self):
         """Returns the last block stored so far."""
@@ -34,7 +31,7 @@ class DevnetBlocks():
         """Returns the number of blocks stored so far."""
         return len(self.__num2block) + self.origin.get_number_of_blocks()
 
-    def get_by_number(self, block_number: int) -> Dict:
+    def get_by_number(self, block_number: int) -> StarknetBlock:
         """Returns the block whose block_number is provided"""
         if block_number is None:
             if self.__num2block:
@@ -54,7 +51,7 @@ class DevnetBlocks():
 
         return self.origin.get_block_by_number(block_number)
 
-    def get_by_hash(self, block_hash: str) -> Dict:
+    def get_by_hash(self, block_hash: str) -> StarknetBlock:
         """
         Returns the block with the given block hash.
         """
@@ -89,9 +86,9 @@ class DevnetBlocks():
         return self.__state_updates.get(self.get_number_of_blocks() - 1) or self.origin.get_state_update()
 
     async def generate(
-        self, tx_wrapper: TransactionWrapper, state: StarknetState,
+        self, transaction: DevnetTransaction, state: StarknetState,
         state_root: bytes, state_update = None
-    ) -> Tuple[str, int]:
+    ) -> StarknetBlock:
         """
         Generates a block and stores it to blocks and hash2block. The block contains just the passed transaction.
         The `tx_wrapper.transaction` dict should contain a key `transaction`.
@@ -99,42 +96,43 @@ class DevnetBlocks():
         """
         block_number = self.get_number_of_blocks()
         timestamp = state.state.block_info.block_timestamp
-        signature = []
-        if "signature" in tx_wrapper.transaction["transaction"]:
-            signature = [int(sig_part, 16) for sig_part in tx_wrapper.transaction["transaction"]["signature"]]
+        signature = transaction.get_trace().signature or []
 
-        parent_block_hash = self.__get_last_block()["block_hash"] if block_number else fixed_length_hex(0)
-        sequencer_address = state.general_config.sequencer_address
-        gas_price = state.general_config.min_gas_price
+        if block_number == 0:
+            parent_block_hash = 0
+        else:
+            last_block: StarknetBlock = self.__get_last_block()
+            parent_block_hash = last_block.block_hash
 
         if self.lite:
             block_hash = block_number
         else:
             block_hash = await calculate_block_hash(
                 general_config=state.general_config,
-                parent_hash=int(parent_block_hash, 16),
+                parent_hash=parent_block_hash,
                 block_number=block_number,
                 global_state_root=state_root,
                 block_timestamp=timestamp,
-                tx_hashes=[int(tx_wrapper.transaction_hash, 16)],
+                tx_hashes=[transaction.internal_tx.hash_value],
                 tx_signatures=[signature],
                 event_hashes=[],
                 sequencer_address=state.general_config.sequencer_address
             )
 
-        block_hash_hexed = fixed_length_hex(block_hash)
-        block = {
-            "block_hash": block_hash_hexed,
-            "block_number": block_number,
-            "gas_price": hex(gas_price),
-            "parent_block_hash": parent_block_hash,
-            "sequencer_address": hex(sequencer_address),
-            "state_root": state_root.hex(),
-            "status": TxStatus.ACCEPTED_ON_L2.name,
-            "timestamp": timestamp,
-            "transaction_receipts": [tx_wrapper.get_receipt_block_variant()],
-            "transactions": [tx_wrapper.transaction["transaction"]],
-        }
+        transaction_receipts = (transaction.get_execution(), )
+
+        block = StarknetBlock.create(
+            block_hash=block_hash,
+            block_number=block_number,
+            state_root=state_root,
+            transactions=[transaction.internal_tx],
+            timestamp=timestamp,
+            transaction_receipts=transaction_receipts,
+            status=BlockStatus.ACCEPTED_ON_L2,
+            gas_price=state.general_config.min_gas_price,
+            sequencer_address=state.general_config.sequencer_address,
+            parent_block_hash=parent_block_hash
+        )
 
         self.__num2block[block_number] = block
         self.__hash2num[block_hash] = block_number
@@ -144,4 +142,4 @@ class DevnetBlocks():
 
         self.__state_updates[block_number] = state_update
 
-        return block_hash_hexed, block_number
+        return block
