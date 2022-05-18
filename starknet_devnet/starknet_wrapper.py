@@ -113,7 +113,8 @@ class StarknetWrapper:
         return state.state.shared_state.contract_states.root
 
     async def __store_transaction(
-        self, transaction: DevnetTransaction, state_update: Dict, error_message: str=None
+        self, transaction: DevnetTransaction, tx_hash: int,
+        state_update: Dict, error_message: str=None
     ) -> None:
         """
         Stores the provided data as a deploy transaction in `self.transactions`.
@@ -135,7 +136,7 @@ class StarknetWrapper:
             )
             transaction.set_block(block=block)
 
-        self.transactions.store(transaction)
+        self.transactions.store(tx_hash, transaction)
 
     def set_config(self, config: DevnetConfig):
         """
@@ -152,10 +153,6 @@ class StarknetWrapper:
 
         state = await self.get_state()
         contract_definition = deploy_transaction.contract_definition
-        if self.config.lite_mode_deploy_hash:
-            tx_hash = self.transactions.get_count()
-        else:
-            tx_hash = deploy_transaction.calculate_hash(state.general_config)
 
         starknet = await self.__get_starknet()
 
@@ -185,16 +182,25 @@ class StarknetWrapper:
                 contract_definition=deploy_transaction.contract_definition
             )
 
+        internal_tx = InternalDeploy.from_external(deploy_transaction, state.general_config)
+
+        if self.config.lite_mode_deploy_hash:
+            tx_hash = self.transactions.get_count()
+        else:
+            tx_hash = internal_tx.hash_value
+
         transaction = DevnetTransaction(
-            internal_tx=InternalDeploy.from_external(deploy_transaction, state.general_config),
+            internal_tx=internal_tx,
             status=status,
             execution_info=execution_info,
+            transaction_hash=tx_hash,
         )
 
         await self.__store_transaction(
             transaction=transaction,
             state_update=state_update,
             error_message=error_message,
+            tx_hash=tx_hash
         )
 
         return contract_address, tx_hash
@@ -235,7 +241,8 @@ class StarknetWrapper:
         await self.__store_transaction(
             transaction=transaction,
             state_update=state_update,
-            error_message=error_message
+            error_message=error_message,
+            tx_hash=transaction.transaction_hash
         )
 
         return invoke_function.contract_address, invoke_transaction.hash_value, { "result": adapted_result }

@@ -28,15 +28,18 @@ class DevnetTransaction:
         internal_tx: InternalTransaction,
         status: TransactionStatus,
         execution_info: TransactionExecutionInfo or StarknetTransactionExecutionInfo,
+        transaction_hash: int = None,
         transaction_index:int = 0
     ):
-        self.block_hash = None
-        self.block_number = None
+        self.block = None
         self.execution_info = execution_info
         self.internal_tx = internal_tx
         self.status = status
         self.transaction_failure_reason = None
         self.transaction_index = transaction_index
+
+        if transaction_hash is None:
+            self.transaction_hash = internal_tx.hash_value
 
     def __get_actual_fee(self) -> int:
         """Returns the actual fee"""
@@ -53,8 +56,7 @@ class DevnetTransaction:
 
     def set_block(self, block: StarknetBlock):
         """Sets the block hash and number of the transaction"""
-        self.block_hash = block.block_hash
-        self.block_number = block.block_number
+        self.block = block
 
     def set_failure_reason(self, error_message: str):
         """Sets the failure reason of the transaction"""
@@ -70,8 +72,8 @@ class DevnetTransaction:
             status=self.status,
             transaction=self.internal_tx,
             transaction_index=self.transaction_index,
-            block_hash=self.block_hash,
-            block_number=self.block_number,
+            block_hash=self.block.block_hash,
+            block_number=self.block.block_number,
             transaction_failure_reason=self.transaction_failure_reason
         )
 
@@ -80,7 +82,7 @@ class DevnetTransaction:
         tx_info = self.get_tx_info()
 
         return TransactionReceipt.from_tx_info(
-            transaction_hash=self.internal_tx.hash_value,
+            transaction_hash=self.transaction_hash,
             tx_info=tx_info,
             actual_fee=self.__get_actual_fee(),
             events=self.__get_events(),
@@ -135,12 +137,11 @@ class DevnetTransactions:
         """
         return len(self.__instances)
 
-    def store(self, transaction: DevnetTransaction):
+    def store(self, tx_hash: int, transaction: DevnetTransaction):
         """
         Store a transaction.
         """
-        numeric_hash = transaction.internal_tx.hash_value
-        self.__instances[numeric_hash] = transaction
+        self.__instances[tx_hash] = transaction
 
     def get_transaction(self, tx_hash: str):
         """
@@ -192,8 +193,8 @@ class DevnetTransactions:
         }
 
         # "block_hash" will only exist after transaction enters ACCEPTED_ON_L2
-        if transaction.status == TransactionStatus.ACCEPTED_ON_L2:
-            status_response["block_hash"] = transaction.block_hash
+        if transaction.status == TransactionStatus.ACCEPTED_ON_L2 and transaction.block is not None:
+            status_response["block_hash"] = transaction.block.block_hash
 
         # "tx_failure_reason" will only exist if the transaction was rejected.
         if transaction.status == TransactionStatus.REJECTED:

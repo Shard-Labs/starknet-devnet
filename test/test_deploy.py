@@ -7,6 +7,7 @@ from starkware.starknet.services.api.contract_definition import ContractDefiniti
 from starkware.starknet.services.api.gateway.transaction import Deploy
 from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address
 from starkware.starknet.business_logic.internal_transaction import InternalDeploy
+from starkware.starknet.services.api.feeder_gateway.response_objects import TransactionStatus
 
 from starknet_devnet.starknet_wrapper import StarknetWrapper, DevnetConfig
 from .shared import CONTRACT_PATH
@@ -53,4 +54,27 @@ async def test_deploy():
     )
 
     assert tx_hash == internal_tx.hash_value
-    
+
+@pytest.mark.asyncio
+async def test_deploy_lite():
+    """
+    Test the deployment of a contract with lite mode.
+    """
+    devnet = StarknetWrapper(config=DevnetConfig(lite_mode_block_hash=True, lite_mode_deploy_hash=True))
+    deploy_transaction = get_deploy_transaction(inputs=[0])
+
+    contract_address, tx_hash = await devnet.deploy(deploy_transaction=deploy_transaction)
+    expected_contract_address = calculate_contract_address(
+        caller_address=0,
+        constructor_calldata=deploy_transaction.constructor_calldata,
+        salt=deploy_transaction.contract_address_salt,
+        contract_definition=deploy_transaction.contract_definition
+    )
+
+    assert contract_address == expected_contract_address
+    assert tx_hash == 0
+
+    tx_status = devnet.transactions.get_transaction_status(hex(tx_hash))
+
+    assert tx_status["tx_status"] == TransactionStatus.ACCEPTED_ON_L2.name
+    assert tx_status["block_hash"] == 0
