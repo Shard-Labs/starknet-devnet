@@ -2,6 +2,10 @@
 Classes for storing and handling transactions.
 """
 
+from typing import List
+
+from web3 import Web3
+
 from starkware.starknet.services.api.feeder_gateway.response_objects import (
     TransactionReceipt,
     TransactionTrace,
@@ -10,7 +14,8 @@ from starkware.starknet.services.api.feeder_gateway.response_objects import (
     TransactionExecution,
     StarknetBlock,
     FunctionInvocation,
-    Event
+    Event,
+    L2ToL1Message
 )
 from starkware.starknet.business_logic.internal_transaction import InternalTransaction
 from starkware.starknet.testing.objects import TransactionExecutionInfo
@@ -45,14 +50,28 @@ class DevnetTransaction:
         """Returns the actual fee"""
         return self.execution_info.actual_fee if hasattr(self.execution_info, "actual_fee") else 0
 
-    def __get_events(self) -> list:
+    def __get_events(self) -> List[Event]:
         """Returns the events"""
         contract_address = self.execution_info.call_info.contract_address
         return [Event.create(event_content=e, emitting_contract_address=contract_address) for e in self.execution_info.call_info.events]
 
-    def __get_l2_to_l1_messages(self) -> list:
+    def __get_l2_to_l1_messages(self) -> List[L2ToL1Message]:
         """Returns the l2 to l1 messages"""
-        return self.execution_info.call_info.l2_to_l1_messages if hasattr(self.execution_info.call_info, "l2_to_l1_messages") else []
+        l2_to_l1_messages = []
+
+        if not hasattr(self.execution_info.call_info, "l2_to_l1_messages"):
+            return l2_to_l1_messages
+
+        contract_address = self.execution_info.call_info.contract_address
+
+        for l2_to_l1_message in self.execution_info.call_info.l2_to_l1_messages:
+            l2_to_l1_messages.append(L2ToL1Message(
+                from_address=contract_address,
+                to_address=Web3.toChecksumAddress(hex(l2_to_l1_message.to_address)),
+                payload=l2_to_l1_message.payload,
+            ))
+
+        return l2_to_l1_messages
 
     def __get_block_hash(self) -> int:
         """Returns the block hash"""
