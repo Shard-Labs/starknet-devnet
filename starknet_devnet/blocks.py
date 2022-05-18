@@ -2,11 +2,11 @@
 Class for generating and handling blocks
 """
 
-from typing import Dict, Tuple
+from typing import Dict
 
 from starkware.starknet.testing.state import StarknetState
 from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
-from starkware.starknet.services.api.feeder_gateway.response_objects import StarknetBlock, BlockStatus, TransactionExecution
+from starkware.starknet.services.api.feeder_gateway.response_objects import StarknetBlock, BlockStatus
 
 from .origin import Origin
 from .util import StarknetDevnetException
