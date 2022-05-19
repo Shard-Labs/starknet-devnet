@@ -251,9 +251,9 @@ Consider passing these CLI flags on Devnet startup:
 - `--lite-mode` enables all of the optimizations described below (same as using all of the flags below)
 - `--lite-mode-deploy-hash`
   - disables the calculation of transaction hash for deploy transactions
-  - disables get_state_update functionality
 - `--lite-mode-block-hash`
   - disables the calculation of block hash
+  - disables get_state_update functionality
 
 ## Restart
 
