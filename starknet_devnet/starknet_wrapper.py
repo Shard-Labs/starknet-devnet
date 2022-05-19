@@ -104,6 +104,9 @@ class StarknetWrapper:
         )
 
         if not self.config.lite_mode_block_hash:
+            # This is the most time-intensive part of the function.
+            # With only skipping it in lite-mode, we still get the time benefit.
+            # In regular mode it's needed for state update calculation and block state_root calculation.
             state.state.shared_state = updated_shared_state
             await self.__preserve_current_state(state.state)
 
