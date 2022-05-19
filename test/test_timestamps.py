@@ -227,3 +227,18 @@ def test_block_info_generator():
     block_after_set_time = generator.next_block(block_info=block_info, general_config=DEFAULT_GENERAL_CONFIG)
 
     assert block_after_set_time.block_timestamp == 222
+
+@pytest.mark.timestamps
+@devnet_in_background("--lite-mode")
+def test_lite_mode_compatibility():
+    """Tests compatibility with lite mode"""
+
+    deploy_info = deploy_ts_contract()
+
+    set_time(100)
+
+    # deploy another contract to generate a new block
+    deploy_ts_contract()
+
+    time_from_contract = get_ts_from_contract(address=deploy_info["address"])
+    assert time_from_contract == 100
