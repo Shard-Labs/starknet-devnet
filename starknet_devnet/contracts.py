@@ -2,6 +2,7 @@
 Class for storing and handling contracts
 """
 
+from typing import Dict
 from .origin import Origin
 from .util import (
     StarknetDevnetException,
@@ -16,21 +17,21 @@ class DevnetContracts:
 
     def __init__(self, origin: Origin):
         self.origin = origin
-        self.__intstances = {}
+        self.__instances: Dict[int, ContractWrapper] = {}
 
-    def store(self, address: str, contract: ContractWrapper) -> None:
+    def store(self, address: int, contract: ContractWrapper) -> None:
         """
         Store the contract wrapper.
         """
-        self.__intstances[address] = contract
+        self.__instances[address] = contract
 
-    def is_deployed(self, address: str) -> bool:
+    def is_deployed(self, address: int) -> bool:
         """
         Check if the contract is deployed.
         """
-        return address in self.__intstances
+        return address in self.__instances
 
-    def get_by_address(self, address: str) -> ContractWrapper:
+    def get_by_address(self, address: int) -> ContractWrapper:
         """
         Get the contract wrapper by address.
         """
@@ -38,18 +39,18 @@ class DevnetContracts:
             message = f"No contract at the provided address ({fixed_length_hex(address)})."
             raise StarknetDevnetException(message=message)
 
-        return self.__intstances[address]
+        return self.__instances[address]
 
-    def get_code(self, address: str) -> str:
+    def get_code(self, address: int) -> str:
         """
         Get the contract code by address.
         """
         if not self.is_deployed(address):
             return self.origin.get_code(address)
 
-        return self.__intstances[address].code
+        return self.__instances[address].code
 
-    def get_full_contract(self, address: str) -> ContractWrapper:
+    def get_full_contract(self, address: int) -> ContractWrapper:
         """
         Get the contract wrapper by address.
         """

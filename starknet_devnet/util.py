@@ -16,7 +16,7 @@ from . import __version__
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5050
 
-def custom_int(arg: str) -> str:
+def custom_int(arg: str) -> int:
     """
     Converts the argument to an integer.
     Conversion base is 16 if `arg` starts with `0x`, otherwise `10`.
