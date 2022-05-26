@@ -8,10 +8,11 @@ aliases:
         only:
           - master
     requires:
-      - test
+      - test-py-min
+      - test-py-max
 
 jobs:
-  test:
+  test-py-min: &test-template
     docker:
       - image: cimg/python:3.7.12-node
     resource_class: medium
@@ -42,6 +43,12 @@ jobs:
             poetry run pytest -s --junitxml=test-results/junit.xml -vv $TESTFILES
       - store_test_results:
           path: test-results
+
+  test-py-max:
+    <<: *test-template
+    docker:
+      - image: cimg/python:3.9-node
+
   package_build_and_publish:
     docker:
       - image: cimg/python:3.7.12
@@ -49,6 +56,7 @@ jobs:
     steps:
       - checkout
       - run: ./scripts/package_build_and_publish.sh
+
   image_build_and_push:
     docker:
       - image: cimg/base:2021.04
@@ -79,7 +87,8 @@ workflows:
   version: 2
   test_and_publish:
     jobs:
-      - test
+      - test-py-min
+      - test-py-max
       - package_build_and_publish:
           <<: *on_master_after_test
       - image_build_and_push:
