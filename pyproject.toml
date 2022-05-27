@@ -23,6 +23,7 @@ crypto-cpp-py = "^1.0.3"
 [tool.poetry.dev-dependencies]
 pylint = "~2.12.2"
 web3 = "~5.28.0"
+psutil = "~5.9.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -2,7 +2,6 @@
 File containing functions that wrap Starknet CLI commands.
 """
 
-import atexit
 import json
 import os
 import re
@@ -30,7 +29,6 @@ def run_devnet_in_background(*args, sleep_seconds=5):
     proc = subprocess.Popen(command, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     time.sleep(sleep_seconds)
-    atexit.register(proc.kill)
     return proc
 
 def devnet_in_background(*devnet_args, **devnet_kwargs):

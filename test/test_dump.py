@@ -7,6 +7,7 @@ import signal
 import time
 import requests
 
+import psutil
 import pytest
 
 from .util import call, deploy, devnet_in_background, invoke, run_devnet_in_background
@@ -25,8 +26,12 @@ def run_before_and_after_test():
     yield
 
     # after test
-    if os.path.isfile(DUMP_PATH):
-        os.remove(DUMP_PATH)
+    for path in os.listdir():
+        if path.endswith(".pkl"):
+            os.remove(path)
+
+    for child in psutil.Process().children(recursive=True):
+        child.kill()
 
 def send_dump_request(dump_path: str=None):
     """Send HTTP request to trigger dumping."""
