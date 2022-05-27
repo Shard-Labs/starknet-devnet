@@ -59,6 +59,7 @@ class StarknetWrapper:
         self.transactions = DevnetTransactions(self.origin)
         self.__starknet = None
         self.__current_carried_state = None
+        self.__initialized = False
 
         self.accounts: List[Account] = []
         """List of predefined accounts"""
@@ -71,12 +72,14 @@ class StarknetWrapper:
 
     async def initialize(self):
         """Initialize the underlying starknet instance, fee_token and accounts."""
-        starknet = await self.__get_starknet()
+        if not self.__initialized:
+            starknet = await self.__get_starknet()
 
-        await FeeToken.deploy(starknet)
-        await self.__deploy_accounts()
+            await FeeToken.deploy(starknet)
+            await self.__deploy_accounts()
 
-        await self.__preserve_current_state(starknet.state.state)
+            await self.__preserve_current_state(starknet.state.state)
+            self.__initialized = True
 
     async def __preserve_current_state(self, state: CarriedState):
         self.__current_carried_state = deepcopy(state)
