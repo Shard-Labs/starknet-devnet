@@ -15,9 +15,9 @@ def is_alive():
     return "Alive!!!"
 
 @base.route("/restart", methods=["POST"])
-def restart():
+async def restart():
     """Restart the starknet_wrapper"""
-    state.reset()
+    await state.reset()
     return Response(status=200)
 
 @base.route("/dump", methods=["POST"])
