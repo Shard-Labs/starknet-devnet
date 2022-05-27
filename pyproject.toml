@@ -18,6 +18,7 @@ cairo-lang = "0.8.2.1"
 dill = "~0.3.4"
 meinheld = "~1.0.2"
 Werkzeug = "~2.0.3"
+crypto-cpp-py = "^1.0.3"
 
 [tool.poetry.dev-dependencies]
 pylint = "~2.12.2"
