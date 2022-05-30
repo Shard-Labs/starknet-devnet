@@ -190,13 +190,10 @@ def generate_storage_diff(previous_storage_updates, storage_updates):
     """
     Returns storage diff between previous and current storage updates
     """
-    if not previous_storage_updates:
-        return []
-
     storage_diff = []
 
     for storage_key, leaf in storage_updates.items():
-        previous_leaf = previous_storage_updates.get(storage_key)
+        previous_leaf = previous_storage_updates.get(storage_key) if previous_storage_updates else None
 
         if previous_leaf is None or previous_leaf.value != leaf.value:
             storage_diff.append({
