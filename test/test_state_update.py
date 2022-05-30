@@ -6,10 +6,13 @@ import pytest
 import requests
 
 from starkware.starknet.core.os.contract_hash import compute_contract_hash
+from starkware.starknet.public.abi import get_selector_from_name
 
 from .util import deploy, invoke, load_contract_definition, devnet_in_background, get_block
 from .settings import FEEDER_GATEWAY_URL
-from .shared import CONTRACT_PATH, ABI_PATH, BALANCE_KEY
+from .shared import STORAGE_CONTRACT_PATH, STORAGE_ABI_PATH
+
+STORAGE_KEY = hex(get_selector_from_name("storage"))
 
 def get_state_update_response(block_hash=None, block_number=None):
     """Get state update response"""
@@ -31,17 +34,17 @@ def get_state_update(block_hash=None, block_number=None):
 
 def deploy_empty_contract():
     """
-    Deploy sample contract with balance = 0.
+    Deploy storage contract
     Returns contract address.
     """
-    deploy_dict = deploy(CONTRACT_PATH, inputs=["0"])
+    deploy_dict = deploy(STORAGE_CONTRACT_PATH)
     contract_address = deploy_dict["address"]
 
     return contract_address
 
 def get_contract_hash():
     """Get contract hash of the sample contract"""
-    contract_definition = load_contract_definition(CONTRACT_PATH)
+    contract_definition = load_contract_definition(STORAGE_CONTRACT_PATH)
 
     return compute_contract_hash(contract_definition)
 
@@ -74,19 +77,27 @@ def test_deployed_contracts():
 def test_storage_diff():
     """Test storage diffs in the state update"""
     contract_address = deploy_empty_contract()
-    invoke("increase_balance", ["10", "20"], contract_address, ABI_PATH)
+    invoke("store_value", ["30"], contract_address, STORAGE_ABI_PATH)
 
     state_update = get_state_update()
-
     storage_diffs = state_update["state_diff"]["storage_diffs"]
-
     assert len(storage_diffs) == 1
 
     contract_storage_diffs = storage_diffs[contract_address]
 
     assert len(contract_storage_diffs) == 1
     assert contract_storage_diffs[0]["value"] == hex(30)
-    assert contract_storage_diffs[0]["key"] == hex(int(BALANCE_KEY))
+    assert contract_storage_diffs[0]["key"] == STORAGE_KEY
+
+    invoke("store_value", ["0"], contract_address, STORAGE_ABI_PATH)
+
+    state_update = get_state_update()
+    storage_diffs = state_update["state_diff"]["storage_diffs"]
+    contract_storage_diffs = storage_diffs[contract_address]
+
+    assert len(contract_storage_diffs) == 1
+    assert contract_storage_diffs[0]["value"] == hex(0)
+    assert contract_storage_diffs[0]["key"] == STORAGE_KEY
 
 @pytest.mark.state_update
 @devnet_in_background()
