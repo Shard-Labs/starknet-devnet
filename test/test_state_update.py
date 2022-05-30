@@ -66,7 +66,7 @@ def test_deployed_contracts():
     deployed_contracts = state_update["state_diff"]["deployed_contracts"]
 
     assert len(deployed_contracts) == 1
-    assert deployed_contracts[0]["address"] == contract_address
+    assert int(deployed_contracts[0]["address"], 16) == int(contract_address, 16)
 
     deployed_contract_hash =  deployed_contracts[0]["contract_hash"]
 
@@ -77,13 +77,14 @@ def test_deployed_contracts():
 def test_storage_diff():
     """Test storage diffs in the state update"""
     contract_address = deploy_empty_contract()
+    address = hex(int(contract_address, 16))
     invoke("store_value", ["30"], contract_address, STORAGE_ABI_PATH)
 
     state_update = get_state_update()
     storage_diffs = state_update["state_diff"]["storage_diffs"]
     assert len(storage_diffs) == 1
 
-    contract_storage_diffs = storage_diffs[contract_address]
+    contract_storage_diffs = storage_diffs[address]
 
     assert len(contract_storage_diffs) == 1
     assert contract_storage_diffs[0]["value"] == hex(30)
@@ -93,7 +94,7 @@ def test_storage_diff():
 
     state_update = get_state_update()
     storage_diffs = state_update["state_diff"]["storage_diffs"]
-    contract_storage_diffs = storage_diffs[contract_address]
+    contract_storage_diffs = storage_diffs[address]
 
     assert len(contract_storage_diffs) == 1
     assert contract_storage_diffs[0]["value"] == hex(0)

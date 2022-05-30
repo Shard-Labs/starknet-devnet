@@ -159,6 +159,9 @@ def get_state_update():
 
     state_update = state.starknet_wrapper.blocks.get_state_update(block_hash=block_hash, block_number=block_number)
 
+    if state_update is not None:
+        return Response(response=state_update.dumps(), status=200, mimetype="application/json")
+
     return jsonify(state_update)
 
 @feeder_gateway.route("/estimate_fee", methods=["POST"])
