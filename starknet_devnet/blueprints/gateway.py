@@ -9,7 +9,7 @@ from starknet_devnet.util import DumpOn, StarknetDevnetException,fixed_length_he
 from starknet_devnet.state import state
 from .shared import validate_transaction
 
-gateway = Blueprint("gateay", __name__, url_prefix="/gateway")
+gateway = Blueprint("gateway", __name__, url_prefix="/gateway")
 
 @gateway.route("/is_alive", methods=["GET"])
 def is_alive():

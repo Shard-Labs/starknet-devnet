@@ -325,11 +325,10 @@ If you are not satisfied with your Devnet performance, consider the following:
 
 ## Development
 
-If you're a developer willing to contribute, be sure to have installed [Poetry](https://pypi.org/project/poetry/) and all the dependency packages.
+If you're a developer willing to contribute, be sure to have installed [Poetry](https://pypi.org/project/poetry/) and all the dependency packages by running the following script. You are expected to have npm.
 
 ```text
-pip install poetry
-poetry install
+./scripts/install_dev_tools.sh
 ```
 
 ### Development - Run
@@ -338,18 +337,30 @@ poetry install
 poetry run starknet-devnet
 ```
 
-### Development - Test
-
-When running tests locally, do it from the project root:
+### Development - Lint
 
 ```text
-poetry run pytest test/
+poetry run pylint starknet_devnet test
 ```
 
-or for a single file
+### Development - Test
 
-```text
-poetry run pytest test/<TEST_FILE>
+When running tests locally, do it from the project root. First, generate the artifacts:
+
+```bash
+./scripts/compile_contracts.sh
+
+poetry run pytest test/
+
+poetry run pytest test/<TEST_FILE> # for a single file
+
+poetry run pytest test/<TEST_FILE>::<TEST_CASE> # for a single test case
+```
+
+### Development - Check Versioning consistency
+
+```
+./scripts/check_versions.sh
 ```
 
 ### Development - Build

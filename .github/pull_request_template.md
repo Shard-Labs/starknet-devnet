@@ -12,3 +12,4 @@
 - [ ] Rebased to the base branch
 - [ ] Documented the changes
 - [ ] Updated the tests
+- [ ] All tests are passing
