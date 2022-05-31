@@ -9,7 +9,7 @@ from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 from starkware.python.utils import to_bytes
 
-from starknet_devnet.util import Uint256, fixed_length_hex
+from starknet_devnet.util import Uint256
 
 class FeeToken:
     """Wrapper of token for charging fees."""
@@ -25,7 +25,6 @@ class FeeToken:
     #     caller_address=0
     # )
     ADDRESS = 3010087218464233437042494926438213308193618470717965319183989869245145381251
-    print(f"Using fee token contract at {fixed_length_hex(ADDRESS)}")
 
     contract: StarknetContract = None
 
