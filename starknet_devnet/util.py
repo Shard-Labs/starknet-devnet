@@ -6,11 +6,15 @@ from dataclasses import dataclass
 from enum import Enum, auto
 import argparse
 import sys
+from typing import List, Dict
 import warnings
 
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.business_logic.state.state import CarriedState
+from starkware.starknet.services.api.feeder_gateway.response_objects import (
+    BlockStateUpdate, StateDiff, StorageEntry, DeployedContract
+)
 
 from . import __version__
 
@@ -250,57 +254,58 @@ def enable_pickling():
     StarknetContract.__getstate__ = contract_getstate
     StarknetContract.__setstate__ = contract_setstate
 
-def generate_storage_diff(previous_storage_updates, storage_updates):
+def generate_storage_diff(previous_storage_updates, storage_updates) -> List[StorageEntry]:
     """
     Returns storage diff between previous and current storage updates
     """
-    if not previous_storage_updates:
-        return []
-
     storage_diff = []
 
     for storage_key, leaf in storage_updates.items():
-        previous_leaf = previous_storage_updates.get(storage_key)
+        previous_leaf = previous_storage_updates.get(storage_key) if previous_storage_updates else None
 
         if previous_leaf is None or previous_leaf.value != leaf.value:
-            storage_diff.append({
-                "key": hex(storage_key),
-                "value": hex(leaf.value)
-            })
+            storage_diff.append(StorageEntry(
+                key=storage_key,
+                value=leaf.value
+                )
+            )
 
     return storage_diff
 
 
-def generate_state_update(previous_state: CarriedState, current_state: CarriedState):
+def generate_state_update(previous_state: CarriedState, current_state: CarriedState) -> BlockStateUpdate:
     """
     Returns roots, deployed contracts and storage diffs between 2 states
     """
-    deployed_contracts = []
-    storage_diffs = {}
+    deployed_contracts: List[DeployedContract] = []
+    storage_diffs: Dict[int, List[StorageEntry]] = {}
 
     for contract_address in current_state.contract_states.keys():
         if contract_address not in previous_state.contract_states:
-            deployed_contracts.append({
-                "address": fixed_length_hex(contract_address),
-                "contract_hash": current_state.contract_states[contract_address].state.contract_hash.hex()
-            })
+            deployed_contracts.append(
+                DeployedContract(
+                    address=contract_address,
+                    contract_hash=current_state.contract_states[contract_address].state.contract_hash
+                )
+            )
         else:
             previous_storage_updates = previous_state.contract_states[contract_address].storage_updates
             storage_updates = current_state.contract_states[contract_address].storage_updates
             storage_diff = generate_storage_diff(previous_storage_updates, storage_updates)
 
             if len(storage_diff) > 0:
-                contract_address_hexed = fixed_length_hex(contract_address)
-                storage_diffs[contract_address_hexed] = storage_diff
+                storage_diffs[contract_address] = storage_diff
 
-    new_root = current_state.shared_state.contract_states.root.hex()
-    old_root = previous_state.shared_state.contract_states.root.hex()
+    new_root = current_state.shared_state.contract_states.root
+    old_root = previous_state.shared_state.contract_states.root
+    state_diff = StateDiff(
+        deployed_contracts=deployed_contracts,
+        storage_diffs=storage_diffs,
+    )
 
-    return {
-        "new_root": new_root,
-        "old_root": old_root,
-        "state_diff": {
-            "deployed_contracts": deployed_contracts,
-            "storage_diffs": storage_diffs
-        }
-    }
+    return BlockStateUpdate(
+        block_hash=None,
+        new_root=new_root,
+        old_root=old_root,
+        state_diff=state_diff
+    )

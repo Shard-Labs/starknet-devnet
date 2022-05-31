@@ -3,6 +3,8 @@
 ARTIFACTS_PATH = "test/artifacts/contracts/cairo"
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract.json"
 ABI_PATH = f"{ARTIFACTS_PATH}/contract.cairo/contract_abi.json"
+STORAGE_CONTRACT_PATH = f"{ARTIFACTS_PATH}/storage.cairo/storage.json"
+STORAGE_ABI_PATH = f"{ARTIFACTS_PATH}/storage.cairo/storage_abi.json"
 EVENTS_CONTRACT_PATH = f"{ARTIFACTS_PATH}/events.cairo/events.json"
 EVENTS_ABI_PATH = f"{ARTIFACTS_PATH}/events.cairo/events_abi.json"
 FAILING_CONTRACT_PATH = f"{ARTIFACTS_PATH}/always_fail.cairo/always_fail.json"
