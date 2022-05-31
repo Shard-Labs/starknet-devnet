@@ -2,6 +2,7 @@
 Test server state serialization (dumping/loading).
 """
 
+from asyncio import subprocess
 import os
 import signal
 import time
@@ -83,7 +84,7 @@ def deploy_empty_contract():
 def test_load_if_no_file():
     """Test loading if dump file not present."""
     assert_no_dump_present(DUMP_PATH)
-    devnet_proc = run_devnet_in_background("--load-path", DUMP_PATH)
+    devnet_proc = run_devnet_in_background("--load-path", DUMP_PATH, stderr=subprocess.PIPE)
     devnet_proc.wait()
 
     assert devnet_proc.returncode != 0
@@ -149,7 +150,11 @@ def test_dumping_on_exit():
 
 def test_invalid_dump_on_option():
     """Test behavior when invalid dump-on is provided."""
-    devnet_proc = run_devnet_in_background("--dump-on", "obviously-invalid", "--dump-path", DUMP_PATH)
+    devnet_proc = run_devnet_in_background(
+        "--dump-on", "obviously-invalid",
+        "--dump-path", DUMP_PATH,
+        stderr=subprocess.PIPE
+    )
     devnet_proc.wait()
 
     assert devnet_proc.returncode != 0
@@ -158,7 +163,7 @@ def test_invalid_dump_on_option():
 
 def test_dump_path_not_present_with_dump_on_present():
     """Test behavior when dump-path is not present and dump-on is."""
-    devnet_proc = run_devnet_in_background("--dump-on", "exit")
+    devnet_proc = run_devnet_in_background("--dump-on", "exit", stderr=subprocess.PIPE)
     devnet_proc.wait()
 
     assert devnet_proc.returncode != 0

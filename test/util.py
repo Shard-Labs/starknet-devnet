@@ -16,7 +16,7 @@ from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT
 class ReturnCodeAssertionError(AssertionError):
     """Error to be raised when the return code of an executed process is not as expected."""
 
-def run_devnet_in_background(*args, sleep_seconds=5):
+def run_devnet_in_background(*args, sleep_seconds=5, stderr=None, stdout=None):
     """
     Runs starknet-devnet in background.
     By default sleeps 5 second after spawning devnet.
@@ -25,7 +25,7 @@ def run_devnet_in_background(*args, sleep_seconds=5):
     """
     command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT, *args]
     # pylint: disable=consider-using-with
-    proc = subprocess.Popen(command, close_fds=True)
+    proc = subprocess.Popen(command, close_fds=True, stderr=stderr, stdout=stdout)
 
     time.sleep(sleep_seconds)
     return proc
@@ -40,9 +40,6 @@ def devnet_in_background(*devnet_args, **devnet_kwargs):
             proc = run_devnet_in_background(*devnet_args, **devnet_kwargs)
             try:
                 func(*args, **kwargs)
-            except AssertionError as error:
-                proc.kill()
-                raise error
             finally:
                 proc.kill()
         return inner_wrapper
