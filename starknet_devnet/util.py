@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 import argparse
 import sys
+import warnings
 
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.testing.contract import StarknetContract
@@ -83,7 +84,11 @@ def int_or_float(value: str):
         pass
 
     try:
-        return int(float(value))
+        float_value = float(value)
+        int_value = int(float_value)
+        if float_value != int_value:
+            warnings.warn(f"Warning: {value} had to be rounded!")
+        return int_value
     except ValueError:
         pass
 
