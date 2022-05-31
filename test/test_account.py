@@ -27,8 +27,6 @@ from .account import (
     get_estimated_fee
 )
 
-# pylint: disable=fixme
-FEE_FACTOR = 1000 # TODO Temporarily used until fee estimation is fixed
 INVOKE_CONTENT = load_file_content("invoke.json")
 DEPLOY_CONTENT = load_file_content("deploy.json")
 ACCOUNT_ADDRESS = "0x066a91d591d5ba09d37f21fd526242c1ddc6dc6b0ce72b2482a4c6c033114e3a"
@@ -119,10 +117,9 @@ def test_low_max_fee():
     # get estimated fee for increase_balance call
     calls = [(to_address, "increase_balance", [10, 20])]
     estimated_fee = get_estimated_fee(calls, ACCOUNT_ADDRESS, PRIVATE_KEY)
-    assert estimated_fee > 0
-    max_fee = max(estimated_fee // FEE_FACTOR, 1)
+    assert estimated_fee > 1
 
-    tx_hash = execute(calls, ACCOUNT_ADDRESS, PRIVATE_KEY, max_fee=max_fee)
+    tx_hash = execute(calls, ACCOUNT_ADDRESS, PRIVATE_KEY, max_fee=estimated_fee - 1)
 
     assert_tx_status(tx_hash, "REJECTED")
 
@@ -132,7 +129,7 @@ def test_low_max_fee():
 
 @pytest.mark.account
 @devnet_in_background("--accounts", "1", "--seed", "42", "--gas-price", "1e11", "--initial-balance", "1e24")
-def test_with_sufficient_max_fee():
+def test_sufficient_max_fee():
     """Test invoking with a sufficient max fee."""
     deploy_info = deploy_empty_contract()
     account_address = "0x981c460a0b96bf4439df5a320aa12d4177400190638693988a92cd2df896ed"
@@ -150,9 +147,8 @@ def test_with_sufficient_max_fee():
     execute(calls, account_address, private_key, query=True)
     estimated_fee = get_estimated_fee(calls, account_address, private_key)
     assert estimated_fee > 0
-    max_fee = estimated_fee * FEE_FACTOR
 
-    tx_hash = execute(calls, account_address, private_key, max_fee=max_fee)
+    tx_hash = execute(calls, account_address, private_key, max_fee=estimated_fee)
 
     assert_tx_status(tx_hash, "ACCEPTED_ON_L2")
 

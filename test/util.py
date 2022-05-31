@@ -6,7 +6,6 @@ import json
 import os
 import re
 import subprocess
-import sys
 import time
 
 from starkware.starknet.services.api.contract_definition import ContractDefinition
@@ -43,14 +42,6 @@ def devnet_in_background(*devnet_args, **devnet_kwargs):
                 func(*args, **kwargs)
             except AssertionError as error:
                 proc.kill()
-                stdout, stderr = proc.communicate()
-
-                print("Devnet stdout:", file=sys.stderr)
-                print(stdout.decode("utf-8"), file=sys.stderr)
-
-                print("Devnet stderr:", file=sys.stderr)
-                print(stderr.decode("utf-8"), file=sys.stderr)
-
                 raise error
             finally:
                 proc.kill()

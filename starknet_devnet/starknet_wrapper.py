@@ -14,7 +14,7 @@ from starkware.starknet.services.api.gateway.contract_address import calculate_c
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
-from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee_by_cairo_usage
+from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee
 from starkware.starknet.services.api.feeder_gateway.response_objects import TransactionStatus
 
 from .account import Account
@@ -309,13 +309,13 @@ class StarknetWrapper:
         """Calculates actual fee"""
         state = await self.get_state()
         internal_tx = InternalInvokeFunction.from_external_query_tx(external_tx, state.general_config)
-        execution_info = await call_internal_tx(state.copy(), internal_tx)
 
-        actual_fee = calculate_tx_fee_by_cairo_usage(
-            general_config=state.general_config,
-            cairo_resource_usage=execution_info.call_info.execution_resources.to_dict(),
-            l1_gas_usage=0,
-            gas_price=state.state.block_info.gas_price
+        state_copy = state.copy()
+        execution_info = await call_internal_tx(state_copy, internal_tx)
+        actual_fee = calculate_tx_fee(
+            state=state_copy.state,
+            call_info = execution_info.call_info,
+            general_config=state.general_config
         )
 
         return actual_fee
