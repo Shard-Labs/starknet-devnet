@@ -32,13 +32,14 @@ def run_before_and_after_test():
     # Setup L1 testnet
 
     command = ["npx", "hardhat", "node"]
-    with subprocess.Popen(command, close_fds=True):
+    with subprocess.Popen(command, close_fds=True) as node_proc:
         # before test
         time.sleep(10)
         yield
         # after test
-        for child in psutil.Process().children(recursive=True):
-            child.kill()
+        wrapped_node_proc = psutil.Process(node_proc.pid)
+        for child_proc in wrapped_node_proc.children(recursive=True):
+            child_proc.kill()
 
 def flush():
     """Flushes the postman messages. Returns response data"""
