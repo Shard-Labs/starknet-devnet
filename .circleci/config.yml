@@ -15,7 +15,7 @@ jobs:
   test-py-min: &test-template
     docker:
       - image: cimg/python:3.7.12-node
-    resource_class: large
+    resource_class: medium
     parallelism: 2
     steps:
       - checkout
