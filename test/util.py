@@ -42,6 +42,7 @@ def devnet_in_background(*devnet_args, **devnet_kwargs):
                 func(*args, **kwargs)
             finally:
                 proc.kill()
+                time.sleep(5)
         return inner_wrapper
     return wrapper
 

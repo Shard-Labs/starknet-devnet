@@ -29,6 +29,7 @@ def run_before_and_after_test():
     for path in os.listdir():
         if path.endswith(".pkl"):
             os.remove(path)
+    time.sleep(3)
 
 def send_dump_request(dump_path: str=None):
     """Send HTTP request to trigger dumping."""

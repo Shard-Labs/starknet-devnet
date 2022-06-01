@@ -40,6 +40,7 @@ def run_before_and_after_test():
         wrapped_node_proc = psutil.Process(node_proc.pid)
         for child_proc in wrapped_node_proc.children(recursive=True):
             child_proc.kill()
+            time.sleep(3)
 
 def flush():
     """Flushes the postman messages. Returns response data"""
