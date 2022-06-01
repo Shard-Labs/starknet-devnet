@@ -61,7 +61,9 @@ Run a local instance of Starknet Devnet
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         Print the version
-  --host HOST           Specify the address to listen at; defaults to 127.0.0.1 (use the address the program outputs on start)
+  --host HOST           Specify the address to listen at; defaults to
+                        127.0.0.1 (use the address the program outputs on
+                        start)
   --port PORT, -p PORT  Specify the port to listen at; defaults to 5050
   --load-path LOAD_PATH
                         Specify the path from which the state is loaded on
@@ -69,16 +71,24 @@ optional arguments:
   --dump-path DUMP_PATH
                         Specify the path to dump to
   --dump-on DUMP_ON     Specify when to dump; can dump on: exit, transaction
-  --lite-mode           Applies all optimizations by disabling some
-                        features. These can be applied individually
-                        by using other flags instead of this one.
+  --lite-mode           Applies all lite-mode-* optimizations by disabling some features.
   --lite-mode-block-hash
                         Disables block hash calculation
   --lite-mode-deploy-hash
                         Disables deploy tx hash calculation
+  --accounts ACCOUNTS   Specify the number of accounts to be predeployed;
+                        defaults to 10
+  --initial-balance INITIAL_BALANCE, -e INITIAL_BALANCE
+                        Specify the initial balance of accounts to be
+                        predeployed; defaults to 1e+21
+  --seed SEED           Specify the seed for randomness of accounts to be
+                        predeployed
   --start-time START_TIME
-                        Specify the start time of the genesis block
-                        in Unix time
+                        Specify the start time of the genesis block in Unix
+                        time seconds
+  --gas-price GAS_PRICE, -g GAS_PRICE
+                        Specify the gas price in wei per gas unit; defaults to
+                        1e+11
 ```
 
 You can run `starknet-devnet` in a separate shell, or you can run it in background with `starknet-devnet &`.

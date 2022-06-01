@@ -91,7 +91,7 @@ def int_or_float(value: str):
         float_value = float(value)
         int_value = int(float_value)
         if float_value != int_value:
-            warnings.warn(f"Warning: {value} had to be rounded!")
+            warnings.warn(f"Warning: {value} lost precision due to rounding!")
         return int_value
     except ValueError:
         pass
@@ -99,8 +99,8 @@ def int_or_float(value: str):
     sys.exit(f"Error: {value} is neither an integer nor a float")
 
 DEFAULT_ACCOUNTS = 10
-DEFAULT_INITIAL_BALANCE = 1000
-DEFAULT_GAS_PRICE = 100_000_000_000
+DEFAULT_INITIAL_BALANCE = 10 ** 21
+DEFAULT_GAS_PRICE = 10 ** 11
 
 class NonNegativeAction(argparse.Action):
     """
@@ -127,7 +127,7 @@ def parse_args():
     )
     parser.add_argument(
         "--host",
-        help=f"Specify the address to listen at; defaults to {DEFAULT_HOST}" +
+        help=f"Specify the address to listen at; defaults to {DEFAULT_HOST} " +
              "(use the address the program outputs on start)",
         default=DEFAULT_HOST
     )
@@ -153,7 +153,7 @@ def parse_args():
     parser.add_argument(
         "--lite-mode",
         action='store_true',
-        help="Applies all optimizations by disabling some features. These can be applied individually by using other flags instead of this one."
+        help="Applies all lite-mode-* optimizations by disabling some features."
     )
     parser.add_argument(
         "--lite-mode-block-hash",
@@ -174,7 +174,8 @@ def parse_args():
     parser.add_argument(
         "--initial-balance", "-e",
         type=int_or_float,
-        help=f"Specify the initial balance of accounts to be predeployed; defaults to {DEFAULT_INITIAL_BALANCE}",
+        help="Specify the initial balance of accounts to be predeployed; " + 
+             f"defaults to {DEFAULT_INITIAL_BALANCE:g}",
         default=DEFAULT_INITIAL_BALANCE
     )
     parser.add_argument(
@@ -191,7 +192,8 @@ def parse_args():
         "--gas-price", "-g",
         type=int_or_float,
         default=DEFAULT_GAS_PRICE,
-        help="Specify the gas price in wei per gas unit; defaults to {DEFAULT_GAS_PRICE}"
+        help="Specify the gas price in wei per gas unit; " +
+             f"defaults to {DEFAULT_GAS_PRICE:g}"
     )
     # Uncomment this once fork support is added
     # parser.add_argument(
