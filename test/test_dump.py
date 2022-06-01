@@ -86,6 +86,7 @@ def test_load_if_no_file():
     assert devnet_proc.returncode != 0
     expected_msg = f"Error: Cannot load from {DUMP_PATH}. Make sure the file exists and contains a Devnet dump.\n"
     assert devnet_proc.stderr.read().decode("utf-8") == expected_msg
+    devnet_proc.kill() # to assure devnet is killed
 
 def test_dumping_if_path_not_provided():
     """Assert failure if dumping attempted without a known path."""
@@ -143,6 +144,7 @@ def test_dumping_on_exit():
     assert_no_dump_present(DUMP_PATH)
     devnet_proc.send_signal(signal.SIGINT) # simulate Ctrl+C because devnet can't handle kill
     assert_dump_present(DUMP_PATH, sleep_seconds=3)
+    devnet_proc.kill() # to assure devnet is killed
 
 def test_invalid_dump_on_option():
     """Test behavior when invalid dump-on is provided."""
@@ -156,6 +158,7 @@ def test_invalid_dump_on_option():
     assert devnet_proc.returncode != 0
     expected_msg = b"Error: Invalid --dump-on option: obviously-invalid. Valid options: exit, transaction\n"
     assert devnet_proc.stderr.read() == expected_msg
+    devnet_proc.kill() # to assure devnet is killed
 
 def test_dump_path_not_present_with_dump_on_present():
     """Test behavior when dump-path is not present and dump-on is."""
@@ -165,6 +168,7 @@ def test_dump_path_not_present_with_dump_on_present():
     assert devnet_proc.returncode != 0
     expected_msg = b"Error: --dump-path required if --dump-on present\n"
     assert devnet_proc.stderr.read() == expected_msg
+    devnet_proc.kill() # to assure devnet is killed
 
 def assert_load(dump_path: str, contract_address: str, expected_value: str):
     """Load from `dump_path` and assert get_balance at `contract_address` returns `expected_value`."""
