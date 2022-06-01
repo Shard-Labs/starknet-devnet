@@ -13,6 +13,7 @@ from .util import (
     assert_tx_status,
     deploy,
     devnet_in_background,
+    get_transaction_receipt,
     load_file_content,
     call,
     estimate_fee
@@ -37,6 +38,12 @@ def deploy_empty_contract():
     """Deploy sample contract with balance = 0."""
     return deploy(CONTRACT_PATH, inputs=["0"], salt=SALT)
 
+def get_account_balance(address: str) -> int:
+    """Get balance (wei) of account with `address` (hex)."""
+    resp = requests.get(f"{GATEWAY_URL}/get_account_balance?address={address}")
+    assert resp.status_code == 200
+    return int(resp.json()["amount"])
+
 @pytest.mark.account
 @devnet_in_background()
 def test_account_contract_deploy():
@@ -54,7 +61,7 @@ def test_account_contract_deploy():
 
 @pytest.mark.account
 @devnet_in_background()
-def test_invoke_another_contract():
+def test_invoke_and_another_contract():
     """Test invoking another contract."""
     deploy_info = deploy_empty_contract()
     deploy_account_contract(salt=SALT)
@@ -71,7 +78,10 @@ def test_invoke_another_contract():
     assert nonce == "1"
 
     # check if balance is increased
-    balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
+    balance_raw = execute([(to_address, "get_balance", [])], ACCOUNT_ADDRESS, PRIVATE_KEY, query=True)
+    balance_arr = balance_raw.split()
+    assert_equal(len(balance_arr), 2)
+    balance = balance_arr[1]
     assert balance == "30"
 
 @pytest.mark.account
@@ -128,32 +138,33 @@ def test_low_max_fee():
     assert_equal(balance, initial_balance)
 
 @pytest.mark.account
-@devnet_in_background("--accounts", "1", "--seed", "42", "--gas-price", "1e11", "--initial-balance", "1e24")
+@devnet_in_background("--accounts", "1", "--seed", "42", "--gas-price", "1e8", "--initial-balance", "1e21")
 def test_sufficient_max_fee():
     """Test invoking with a sufficient max fee."""
     deploy_info = deploy_empty_contract()
     account_address = "0x981c460a0b96bf4439df5a320aa12d4177400190638693988a92cd2df896ed"
     private_key = 0xbdd640fb06671ad11c80317fa3b1799d
     to_address = int(deploy_info["address"], 16)
+    initial_account_balance = get_account_balance(account_address)
 
-    # initial_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
-    initial_balance_raw = execute([(to_address, "get_balance", [])], account_address, private_key, query=True)
-    initial_balance_arr = initial_balance_raw.split()
-    assert_equal(len(initial_balance_arr), 2)
-    initial_balance = initial_balance_arr[1]
+    initial_contract_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
 
     args = [10, 20]
     calls = [(to_address, "increase_balance", args)]
-    execute(calls, account_address, private_key, query=True)
     estimated_fee = get_estimated_fee(calls, account_address, private_key)
     assert estimated_fee > 0
 
-    tx_hash = execute(calls, account_address, private_key, max_fee=estimated_fee)
+    invoke_tx_hash = execute(calls, account_address, private_key, max_fee=estimated_fee)
+    assert_tx_status(invoke_tx_hash, "ACCEPTED_ON_L2")
 
-    assert_tx_status(tx_hash, "ACCEPTED_ON_L2")
+    invoke_receipt = get_transaction_receipt(invoke_tx_hash)
+    actual_fee = int(invoke_receipt["actual_fee"], 16)
 
-    final_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
-    assert_equal(int(final_balance), int(initial_balance) + sum(args))
+    final_contract_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
+    assert_equal(int(final_contract_balance), int(initial_contract_balance) + sum(args))
+
+    final_account_balance = get_account_balance(account_address)
+    assert_equal(final_account_balance, initial_account_balance - actual_fee)
 
 @pytest.mark.account
 @devnet_in_background()
