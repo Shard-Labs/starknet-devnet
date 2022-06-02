@@ -31,7 +31,7 @@ app.register_blueprint(gateway)
 app.register_blueprint(feeder_gateway)
 app.register_blueprint(postman)
 
-def handle_accounts(args):
+def generate_accounts(args):
     """Generate accounts """
     if args.accounts:
         state.generate_accounts(
@@ -40,20 +40,20 @@ def handle_accounts(args):
             seed=args.seed
         )
 
-def handle_dump(args):
+def set_dump_options(args):
     """Assign dumping options from args to state."""
     state.dumper.dump_path = args.dump_path
     state.dumper.dump_on = args.dump_on
 
-def handle_load(args):
-    """Load state if specified."""
+def load_dumped(args):
+    """Load a previously dumped state if specified."""
     if args.load_path:
         try:
             state.load(args.load_path)
         except (FileNotFoundError, pickle.UnpicklingError):
             sys.exit(f"Error: Cannot load from {args.load_path}. Make sure the file exists and contains a Devnet dump.")
 
-def handle_lite_mode(args):
+def enable_lite_mode(args):
     """Enable lite mode if specified."""
     if args.lite_mode:
         config = DevnetConfig(
@@ -68,12 +68,12 @@ def handle_lite_mode(args):
 
     state.starknet_wrapper.set_config(config)
 
-def handle_start_time(args):
+def set_start_time(args):
     """Assign start time if specified."""
     if args.start_time is not None:
         state.starknet_wrapper.set_block_time(args.start_time)
 
-def handle_gas_price(args):
+def set_gas_price(args):
     """Assign gas_price"""
     state.starknet_wrapper.set_gas_price(args.gas_price)
 
@@ -86,12 +86,12 @@ def main():
     # origin = Origin(args.fork) if args.fork else NullOrigin()
     # starknet_wrapper.origin = origin
 
-    handle_accounts(args)
-    handle_load(args)
-    handle_dump(args)
-    handle_lite_mode(args)
-    handle_start_time(args)
-    handle_gas_price(args)
+    generate_accounts(args)
+    load_dumped(args)
+    set_dump_options(args)
+    enable_lite_mode(args)
+    set_start_time(args)
+    set_gas_price(args)
 
     try:
         meinheld.listen((args.host, args.port))
