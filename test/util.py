@@ -41,9 +41,14 @@ def devnet_in_background(*devnet_args, **devnet_kwargs):
             try:
                 func(*args, **kwargs)
             finally:
-                proc.kill()
+                terminate_and_wait(proc)
         return inner_wrapper
     return wrapper
+
+def terminate_and_wait(proc: subprocess.Popen):
+    """Terminates the process and waits."""
+    proc.terminate()
+    proc.wait()
 
 def assert_equal(actual, expected, explanation=None):
     """Assert that the two values are equal. Optionally provide explanation."""

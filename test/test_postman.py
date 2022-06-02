@@ -8,7 +8,7 @@ import subprocess
 
 from test.web3_util import web3_call, web3_deploy, web3_transact
 from test.settings import L1_URL, GATEWAY_URL
-from test.util import call, deploy, devnet_in_background, invoke, load_file_content
+from test.util import call, deploy, devnet_in_background, invoke, load_file_content, terminate_and_wait
 
 import psutil
 import pytest
@@ -41,9 +41,9 @@ def run_before_and_after_test():
         children = wrapped_node_proc.children(recursive=True)
         print("Killing children", children)
         for child_proc in children:
-            child_proc.kill()
+            terminate_and_wait(child_proc)
         print("Children after killing", wrapped_node_proc.children(recursive=True))
-        node_proc.kill()
+        terminate_and_wait(node_proc)
 
 def flush():
     """Flushes the postman messages. Returns response data"""
