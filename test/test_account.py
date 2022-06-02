@@ -138,7 +138,12 @@ def test_low_max_fee():
     assert_equal(balance, initial_balance)
 
 @pytest.mark.account
-@devnet_in_background("--accounts", "1", "--seed", "42", "--gas-price", "1e8", "--initial-balance", "1e21")
+@devnet_in_background(
+    "--accounts", "1",
+    "--seed", "42",
+    "--gas-price", "100_000_000",
+    "--initial-balance", "1_000_000_000_000_000_000_000"
+)
 def test_sufficient_max_fee():
     """Test invoking with a sufficient max fee."""
     deploy_info = deploy_empty_contract()

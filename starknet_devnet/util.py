@@ -7,7 +7,6 @@ from enum import Enum, auto
 import argparse
 import sys
 from typing import List, Dict
-import warnings
 
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.testing.contract import StarknetContract
@@ -84,24 +83,6 @@ def parse_dump_on(option: str):
         return DumpOn[option.upper()]
     sys.exit(f"Error: Invalid --dump-on option: {option}. Valid options: {DUMP_ON_OPTIONS_STRINGIFIED}")
 
-def int_or_float(value: str):
-    """Parses the value as either an int or a float."""
-    try:
-        return int(value)
-    except ValueError:
-        pass
-
-    try:
-        float_value = float(value)
-        int_value = int(float_value)
-        if float_value != int_value:
-            warnings.warn(f"Warning: {value} lost precision due to rounding!")
-        return int_value
-    except ValueError:
-        pass
-
-    sys.exit(f"Error: {value} is neither an integer nor a float")
-
 class NonNegativeAction(argparse.Action):
     """
     Action for parsing the non negative int argument.
@@ -173,7 +154,7 @@ def parse_args():
     )
     parser.add_argument(
         "--initial-balance", "-e",
-        type=int_or_float,
+        type=int,
         help="Specify the initial balance of accounts to be predeployed; " +
              f"defaults to {DEFAULT_INITIAL_BALANCE:g}",
         default=DEFAULT_INITIAL_BALANCE
@@ -190,7 +171,7 @@ def parse_args():
     )
     parser.add_argument(
         "--gas-price", "-g",
-        type=int_or_float,
+        type=int,
         default=DEFAULT_GAS_PRICE,
         help="Specify the gas price in wei per gas unit; " +
              f"defaults to {DEFAULT_GAS_PRICE:g}"
