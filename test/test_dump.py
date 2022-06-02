@@ -84,8 +84,8 @@ def test_load_if_no_file():
     devnet_proc.wait()
     try:
         assert devnet_proc.returncode != 0
-        expected_msg = f"Error: Cannot load from {DUMP_PATH}. Make sure the file exists and contains a Devnet dump."
-        assert expected_msg in devnet_proc.stderr.read().decode("utf-8")
+        expected_msg = f"Error: Cannot load from {DUMP_PATH}. Make sure the file exists and contains a Devnet dump.\n"
+        assert expected_msg == devnet_proc.stderr.read().decode("utf-8")
     finally:
         terminate_and_wait(devnet_proc)
 

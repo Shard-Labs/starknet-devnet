@@ -86,8 +86,8 @@ def main():
     # origin = Origin(args.fork) if args.fork else NullOrigin()
     # starknet_wrapper.origin = origin
 
-    generate_accounts(args)
     load_dumped(args)
+    generate_accounts(args)
     set_dump_options(args)
     enable_lite_mode(args)
     set_start_time(args)
