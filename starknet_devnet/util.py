@@ -17,9 +17,13 @@ from starkware.starknet.services.api.feeder_gateway.response_objects import (
 )
 
 from . import __version__
-
-DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 5050
+from .constants import (
+    DEFAULT_ACCOUNTS,
+    DEFAULT_GAS_PRICE,
+    DEFAULT_HOST,
+    DEFAULT_INITIAL_BALANCE,
+    DEFAULT_PORT
+)
 
 def custom_int(arg: str) -> int:
     """
@@ -97,10 +101,6 @@ def int_or_float(value: str):
         pass
 
     sys.exit(f"Error: {value} is neither an integer nor a float")
-
-DEFAULT_ACCOUNTS = 10
-DEFAULT_INITIAL_BALANCE = 10 ** 21
-DEFAULT_GAS_PRICE = 10 ** 11
 
 class NonNegativeAction(argparse.Action):
     """
