@@ -14,7 +14,6 @@ from starknet_devnet.util import Uint256
 class FeeToken:
     """Wrapper of token for charging fees."""
 
-    DEFINITION = ContractDefinition.load(load_nearby_contract("ERC20"))
     # HASH = to_bytes(compute_contract_hash(contract_definition=DEFINITION))
     HASH = 375899817338126263298463755162657787890597705735749339531748983767835688120
     HASH_BYTES = to_bytes(HASH)
@@ -29,6 +28,13 @@ class FeeToken:
     contract: StarknetContract = None
 
     @classmethod
+    def get_definition(cls):
+        """Returns contract definition via lazy loading."""
+        if not cls.DEFINITION:
+            cls.DEFINITION = ContractDefinition.load(load_nearby_contract("ERC20"))
+        return cls.DEFINITION
+
+    @classmethod
     async def deploy(cls, starknet: Starknet):
         """Deploy token contract for charging fees."""
 
@@ -36,7 +42,7 @@ class FeeToken:
         fee_token_state = fee_token_carried_state.state
         assert not fee_token_state.initialized
 
-        starknet.state.state.contract_definitions[cls.HASH_BYTES] = cls.DEFINITION
+        starknet.state.state.contract_definitions[cls.HASH_BYTES] = cls.get_definition()
         newly_deployed_fee_token_state = await ContractState.create(
             contract_hash=cls.HASH_BYTES,
             storage_commitment_tree=fee_token_state.storage_commitment_tree
@@ -53,7 +59,7 @@ class FeeToken:
 
         cls.contract = StarknetContract(
             state=starknet.state,
-            abi=cls.DEFINITION.abi,
+            abi=cls.get_definition().abi,
             contract_address=cls.ADDRESS,
             deploy_execution_info=None
         )
