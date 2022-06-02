@@ -163,7 +163,7 @@ class StarknetWrapper:
         starknet = await self.__get_starknet()
         for account in self.accounts:
             contract = await account.deploy(starknet)
-            self.contracts.store(account.address, ContractWrapper(contract, Account.DEFINITION))
+            self.contracts.store(account.address, ContractWrapper(contract, Account.get_definition()))
 
     def set_config(self, config: DevnetConfig):
         """

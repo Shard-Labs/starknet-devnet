@@ -12,7 +12,7 @@ from .util import assert_equal
 @pytest.mark.fee_token
 def test_precomputed_contract_hash():
     """Assert that the precomputed hash in fee_token is correct."""
-    recalculated_hash = compute_contract_hash(FeeToken.DEFINITION)
+    recalculated_hash = compute_contract_hash(FeeToken.get_definition())
     assert_equal(recalculated_hash, FeeToken.HASH)
 
 @pytest.mark.fee_token
