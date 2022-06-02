@@ -40,7 +40,7 @@ def deploy_empty_contract():
 
 def get_account_balance(address: str) -> int:
     """Get balance (wei) of account with `address` (hex)."""
-    resp = requests.get(f"{GATEWAY_URL}/get_account_balance?address={address}")
+    resp = requests.get(f"{GATEWAY_URL}/account_balance?address={address}")
     assert resp.status_code == 200
     return int(resp.json()["amount"])
 

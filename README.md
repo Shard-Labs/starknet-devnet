@@ -80,7 +80,7 @@ optional arguments:
                         defaults to 10
   --initial-balance INITIAL_BALANCE, -e INITIAL_BALANCE
                         Specify the initial balance of accounts to be
-                        predeployed; defaults to 1e+21
+                        predeployed; defaults to 1e+21 (wei)
   --seed SEED           Specify the seed for randomness of accounts to be
                         predeployed
   --start-time START_TIME
@@ -317,6 +317,25 @@ To enable printing with a dockerized version of Devnet set `PYTHONUNBUFFERED=1`:
 
 ```
 docker run -p 127.0.0.1:5050:5050 -e PYTHONUNBUFFERED=1 shardlabs/starknet-devnet
+```
+
+## Predeployed accounts
+
+Devnet predeploys `--accounts` with some `--initial-balance`. The accounts get charged for transactions according to the `--gas-price`. A `--seed` can be used to regenerate the same set of accounts. Read more about it in the [Run section](#run).
+
+The balance of an account can be checked using:
+
+```
+GET /account_balance?address=<HEX_ADDRESS>
+```
+
+Response:
+
+```json
+{
+  "amount": <AMOUNT>,
+  "unit": "wei"
+}
 ```
 
 ## Devnet speed-up troubleshooting

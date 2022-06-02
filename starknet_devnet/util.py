@@ -174,7 +174,7 @@ def parse_args():
     parser.add_argument(
         "--initial-balance", "-e",
         type=int_or_float,
-        help="Specify the initial balance of accounts to be predeployed; " + 
+        help="Specify the initial balance of accounts to be predeployed; " +
              f"defaults to {DEFAULT_INITIAL_BALANCE:g}",
         default=DEFAULT_INITIAL_BALANCE
     )

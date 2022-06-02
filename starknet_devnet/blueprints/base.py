@@ -66,7 +66,7 @@ def set_time():
 
     return jsonify({"next_block_timestamp": time_s})
 
-@base.route("/get_account_balance", methods=["GET"])
+@base.route("/account_balance", methods=["GET"])
 async def get_balance():
     """Gets balance for the address"""
 
