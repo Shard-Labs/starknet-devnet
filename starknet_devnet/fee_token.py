@@ -14,6 +14,7 @@ from starknet_devnet.util import Uint256
 class FeeToken:
     """Wrapper of token for charging fees."""
 
+    DEFINITION: ContractDefinition = None # loaded lazily
     # HASH = to_bytes(compute_contract_hash(contract_definition=DEFINITION))
     HASH = 375899817338126263298463755162657787890597705735749339531748983767835688120
     HASH_BYTES = to_bytes(HASH)

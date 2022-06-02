@@ -18,6 +18,7 @@ from starknet_devnet.util import Uint256
 class Account:
     """Account contract wrapper."""
 
+    DEFINITION: ContractDefinition = None # loaded lazily
     CONTRACT_PATH = "accounts_artifacts/OpenZeppelin/0.1.0/Account.cairo/Account"
     # HASH = compute_contract_hash(contract_definition=Account.get_definition()))
     HASH = 361479646297615797917493841430922492724680358320444679508058603177506550951
