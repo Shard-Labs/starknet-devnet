@@ -20,9 +20,13 @@ class Account:
 
     DEFINITION: ContractDefinition = None # loaded lazily
     CONTRACT_PATH = "accounts_artifacts/OpenZeppelin/0.1.0/Account.cairo/Account"
+
+    # Precalculated to save time
     # HASH = compute_contract_hash(contract_definition=Account.get_definition()))
     HASH = 361479646297615797917493841430922492724680358320444679508058603177506550951
     HASH_BYTES = to_bytes(HASH)
+
+    # Random value to make the constructor_calldata the only thing that affects the account address
     SALT = 20
 
     def __init__(self, private_key: int, public_key: int, initial_balance: int):

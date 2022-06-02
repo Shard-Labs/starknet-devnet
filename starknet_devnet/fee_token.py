@@ -15,11 +15,17 @@ class FeeToken:
     """Wrapper of token for charging fees."""
 
     DEFINITION: ContractDefinition = None # loaded lazily
-    # HASH = to_bytes(compute_contract_hash(contract_definition=DEFINITION))
+
+    # Precalcuated to save time
+    # HASH = to_bytes(compute_contract_hash(contract_definition=FeeToken.get_definition()))
     HASH = 375899817338126263298463755162657787890597705735749339531748983767835688120
     HASH_BYTES = to_bytes(HASH)
+
+    # Random value to fix the token contract address
     SALT = 10
     CONSTRUCTOR_CALLDATA = []
+
+    # Precalculated to save time
     # ADDRESS = calculate_contract_address_from_hash(salt=SALT, contract_hash=HASH,
     #     constructor_calldata=CONSTRUCTOR_CALLDATA,
     #     caller_address=0
