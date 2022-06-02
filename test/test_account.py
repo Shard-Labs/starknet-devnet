@@ -172,6 +172,37 @@ def test_sufficient_max_fee():
     assert_equal(final_account_balance, initial_account_balance - actual_fee)
 
 @pytest.mark.account
+@devnet_in_background(
+    "--accounts", "1",
+    "--seed", "42",
+    "--gas-price", "100_000_000",
+    "--initial-balance", "10"
+)
+def test_insufficient_balance():
+    """Test handling of insufficient account balance"""
+    deploy_info = deploy_empty_contract()
+    account_address = "0x981c460a0b96bf4439df5a320aa12d4177400190638693988a92cd2df896ed"
+    private_key = 0xbdd640fb06671ad11c80317fa3b1799d
+    to_address = int(deploy_info["address"], 16)
+    initial_account_balance = get_account_balance(account_address)
+
+    initial_contract_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
+
+    args = [10, 20]
+    calls = [(to_address, "increase_balance", args)]
+    invoke_tx_hash = execute(calls, account_address, private_key, max_fee=10 ** 21) # big enough
+
+    assert_tx_status(invoke_tx_hash, "REJECTED")
+    invoke_receipt = get_transaction_receipt(invoke_tx_hash)
+    assert "subtraction overflow" in invoke_receipt["transaction_failure_reason"]["error_message"]
+
+    final_contract_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
+    assert_equal(final_contract_balance, initial_contract_balance)
+
+    final_account_balance = get_account_balance(account_address)
+    assert_equal(initial_account_balance, final_account_balance)
+
+@pytest.mark.account
 @devnet_in_background()
 def test_multicall():
     """Test making multiple calls."""
