@@ -5,7 +5,7 @@ import pytest
 
 from starkware.starknet.services.api.contract_definition import ContractDefinition
 from starkware.starknet.services.api.gateway.transaction import Deploy
-from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address
+from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address
 from starkware.starknet.business_logic.internal_transaction import InternalDeploy
 from starkware.starknet.services.api.feeder_gateway.response_objects import TransactionStatus
 

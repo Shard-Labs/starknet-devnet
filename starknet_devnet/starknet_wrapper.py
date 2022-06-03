@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple
 import dill as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction, InternalDeploy
 from starkware.starknet.business_logic.state.state import CarriedState
-from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address
+from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
@@ -25,7 +25,7 @@ from .util import (
     DummyExecutionInfo,
     enable_pickling, generate_state_update
 )
-from .contract_wrapper import ContractWrapper, call_internal_tx
+from .contract_wrapper import ContractWrapper
 from .postman_wrapper import DevnetL1L2
 from .transactions import DevnetTransactions, DevnetTransaction
 from .contracts import DevnetContracts
@@ -208,10 +208,10 @@ class StarknetWrapper:
             state_update = None
 
             contract_address = calculate_contract_address(
-                caller_address=0,
+                deployer_address=0,
                 constructor_calldata=deploy_transaction.constructor_calldata,
                 salt=deploy_transaction.contract_address_salt,
-                contract_definition=deploy_transaction.contract_definition
+                contract_class=deploy_transaction.contract_definition
             )
 
         internal_tx = InternalDeploy.from_external(deploy_transaction, state.general_config)
@@ -315,15 +315,14 @@ class StarknetWrapper:
         state = await self.get_state()
         internal_tx = InternalInvokeFunction.from_external_query_tx(external_tx, state.general_config)
 
-        state_copy = state.copy()
-        execution_info = await call_internal_tx(state_copy, internal_tx)
-        actual_fee = calculate_tx_fee(
-            state=state_copy.state,
-            call_info = execution_info.call_info,
+        child_state = state.state.create_child_state_for_querying()
+        call_info = await internal_tx.execute(child_state, state.general_config, only_query=True)
+
+        return calculate_tx_fee(
+            state=child_state,
+            call_info=call_info,
             general_config=state.general_config
         )
-
-        return actual_fee
 
     def increase_block_time(self, time_s: int):
         """Increases the block time by `time_s`."""
