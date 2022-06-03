@@ -5,11 +5,11 @@ Test get_state_update endpoint
 import pytest
 import requests
 
-from starkware.starknet.core.os.contract_hash import compute_contract_hash
+from starkware.starknet.core.os.class_hash import compute_class_hash
 from starkware.starknet.public.abi import get_selector_from_name
 
 from .util import (
-    deploy, invoke, load_contract_definition, devnet_in_background, get_block, assert_equal
+    deploy, invoke, load_contract_class, devnet_in_background, get_block, assert_equal
 )
 from .settings import FEEDER_GATEWAY_URL
 from .shared import STORAGE_CONTRACT_PATH, STORAGE_ABI_PATH
@@ -46,9 +46,8 @@ def deploy_empty_contract():
 
 def get_contract_hash():
     """Get contract hash of the sample contract"""
-    contract_definition = load_contract_definition(STORAGE_CONTRACT_PATH)
-
-    return compute_contract_hash(contract_definition)
+    contract_class = load_contract_class(STORAGE_CONTRACT_PATH)
+    return compute_class_hash(contract_class)
 
 @pytest.mark.state_update
 @devnet_in_background()

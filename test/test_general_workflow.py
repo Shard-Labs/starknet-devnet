@@ -5,7 +5,7 @@ Tests the general workflow of the devnet.
 import pytest
 
 from .util import (
-    assert_contract_definition,
+    assert_contract_class,
     assert_negative_block_input,
     assert_transaction_not_received,
     assert_transaction_receipt_not_received,
@@ -50,8 +50,8 @@ def test_general_workflow():
     # check code
     assert_contract_code(deploy_info["address"])
 
-    # check contract definition
-    assert_contract_definition(deploy_info["address"], CONTRACT_PATH)
+    # check contract class
+    assert_contract_class(deploy_info["address"], CONTRACT_PATH)
 
     # increase and assert balance
     invoke_tx_hash = invoke(

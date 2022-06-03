@@ -6,8 +6,8 @@ from starkware.cairo.lang.vm.crypto import pedersen_hash
 from starkware.solidity.utils import load_nearby_contract
 from starkware.starknet.business_logic.state.objects import ContractState, ContractCarriedState
 from starkware.starknet.public.abi import get_selector_from_name
-from starkware.starknet.services.api.contract_definition import ContractDefinition
-from starkware.starknet.services.api.gateway.contract_address import calculate_contract_address_from_hash
+from starkware.starknet.services.api.contract_class import ContractClass
+from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address_from_hash
 from starkware.starknet.storage.starknet_storage import StorageLeaf
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.contract import StarknetContract
@@ -18,11 +18,11 @@ from starknet_devnet.util import Uint256
 class Account:
     """Account contract wrapper."""
 
-    DEFINITION: ContractDefinition = None # loaded lazily
+    CONTRACT_CLASS: ContractClass = None # loaded lazily
     CONTRACT_PATH = "accounts_artifacts/OpenZeppelin/0.1.0/Account.cairo/Account"
 
     # Precalculated to save time
-    # HASH = compute_contract_hash(contract_definition=Account.get_definition()))
+    # HASH = compute_class_hash(contract_class=Account.get_contract_class()))
     HASH = 361479646297615797917493841430922492724680358320444679508058603177506550951
     HASH_BYTES = to_bytes(HASH)
 
@@ -34,18 +34,18 @@ class Account:
         self.public_key = public_key
         self.address = calculate_contract_address_from_hash(
             salt=Account.SALT,
-            contract_hash=Account.HASH,
+            class_hash=Account.HASH,
             constructor_calldata=[public_key],
-            caller_address=0
+            deployer_address=0
         )
         self.initial_balance = initial_balance
 
     @classmethod
-    def get_definition(cls):
-        """Returns contract definition via lazy loading."""
-        if not cls.DEFINITION:
-            cls.DEFINITION = ContractDefinition.load(load_nearby_contract(cls.CONTRACT_PATH))
-        return cls.DEFINITION
+    def get_contract_class(cls):
+        """Returns contract class via lazy loading."""
+        if not cls.CONTRACT_CLASS:
+            cls.CONTRACT_CLASS = ContractClass.load(load_nearby_contract(cls.CONTRACT_PATH))
+        return cls.CONTRACT_CLASS
 
     async def deploy(self, starknet: Starknet) -> StarknetContract:
         """Deploy this account."""
@@ -53,7 +53,7 @@ class Account:
         account_state = account_carried_state.state
         assert not account_state.initialized
 
-        starknet.state.state.contract_definitions[Account.HASH_BYTES] = Account.get_definition()
+        starknet.state.state.contract_definitions[Account.HASH_BYTES] = Account.get_contract_class()
 
         newly_deployed_account_state = await ContractState.create(
             contract_hash=Account.HASH_BYTES,
@@ -78,7 +78,7 @@ class Account:
 
         return StarknetContract(
             state=starknet.state,
-            abi=Account.get_definition().abi,
+            abi=Account.get_contract_class().abi,
             contract_address=self.address,
             deploy_execution_info=None
         )

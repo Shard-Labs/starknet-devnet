@@ -144,8 +144,8 @@ def get_transaction_trace(transaction_hash:str):
         f"{GATEWAY_URL}/feeder_gateway/get_transaction_trace?transactionHash={transaction_hash}"
     )
 
-def get_get_full_contract(contract_adress):
-    """Get full contract definition of a contract at a specific address"""
+def get_full_contract(contract_adress):
+    """Get full contract class of a contract at a specific address"""
     return requests.get(
         f"{GATEWAY_URL}/feeder_gateway/get_full_contract?contractAddress={contract_adress}"
     )
@@ -200,7 +200,7 @@ def test_error_response_call_with_invalid_transaction_hash():
 @devnet_in_background()
 def test_error_response_call_with_unavailable_contract():
     """Call with unavailable contract"""
-    resp = get_get_full_contract(INVALID_HASH)
+    resp = get_full_contract(INVALID_HASH)
 
     json_error_message = resp.json()["message"]
     assert resp.status_code == 500

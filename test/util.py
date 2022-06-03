@@ -8,7 +8,7 @@ import re
 import subprocess
 import time
 
-from starkware.starknet.services.api.contract_definition import ContractDefinition
+from starkware.starknet.services.api.contract_class import ContractClass
 
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
 from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT
@@ -216,11 +216,11 @@ def call(function, address, abi_path, inputs=None, signature=None, max_fee=None)
     print("Call successful!")
     return output.stdout.rstrip()
 
-def load_contract_definition(contract_path: str):
-    """Loads the contract defintion from the contract path"""
+def load_contract_class(contract_path: str):
+    """Loads the contract class from the contract path"""
     loaded_contract = load_json_from_path(contract_path)
 
-    return ContractDefinition.load(loaded_contract)
+    return ContractClass.load(loaded_contract)
 
 def assert_tx_status(tx_hash, expected_tx_status):
     """Asserts the tx_status of the tx with tx_hash."""
@@ -239,14 +239,14 @@ def assert_contract_code(address):
     # just checking key equality
     assert_equal(sorted(code.keys()), ["abi", "bytecode"])
 
-def assert_contract_definition(address, contract_path):
-    """Asserts the content of the contract definition of a contract at address."""
+def assert_contract_class(address, contract_path):
+    """Asserts the content of the contract class of a contract at address."""
     output = run_starknet(["get_full_contract", "--contract_address", address])
-    contract_definition: ContractDefinition = ContractDefinition.load(json.loads(output.stdout))
+    contract_class: ContractClass = ContractClass.load(json.loads(output.stdout))
 
-    loaded_contract_definition = load_contract_definition(contract_path)
+    loaded_contract_class = load_contract_class(contract_path)
 
-    assert_equal(contract_definition, loaded_contract_definition.remove_debug_info())
+    assert_equal(contract_class, loaded_contract_class.remove_debug_info())
 
 def assert_storage(address, key, expected_value):
     """Asserts the storage value stored at (address, key)."""

@@ -3,7 +3,7 @@ Fee token and its predefined constants.
 """
 
 from starkware.solidity.utils import load_nearby_contract
-from starkware.starknet.services.api.contract_definition import ContractDefinition
+from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.business_logic.state.objects import ContractState, ContractCarriedState
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
@@ -14,10 +14,10 @@ from starknet_devnet.util import Uint256
 class FeeToken:
     """Wrapper of token for charging fees."""
 
-    DEFINITION: ContractDefinition = None # loaded lazily
+    CONTRACT_CLASS: ContractClass = None # loaded lazily
 
     # Precalcuated to save time
-    # HASH = to_bytes(compute_contract_hash(contract_definition=FeeToken.get_definition()))
+    # HASH = to_bytes(compute_class_hash(contract_class=FeeToken.get_contract_class()))
     HASH = 375899817338126263298463755162657787890597705735749339531748983767835688120
     HASH_BYTES = to_bytes(HASH)
 
@@ -26,7 +26,7 @@ class FeeToken:
     CONSTRUCTOR_CALLDATA = []
 
     # Precalculated to save time
-    # ADDRESS = calculate_contract_address_from_hash(salt=SALT, contract_hash=HASH,
+    # ADDRESS = calculate_contract_address_from_hash(salt=SALT, class_hash=HASH,
     #     constructor_calldata=CONSTRUCTOR_CALLDATA,
     #     caller_address=0
     # )
@@ -35,11 +35,11 @@ class FeeToken:
     contract: StarknetContract = None
 
     @classmethod
-    def get_definition(cls):
-        """Returns contract definition via lazy loading."""
-        if not cls.DEFINITION:
-            cls.DEFINITION = ContractDefinition.load(load_nearby_contract("ERC20"))
-        return cls.DEFINITION
+    def get_contract_class(cls):
+        """Returns contract class via lazy loading."""
+        if not cls.CONTRACT_CLASS:
+            cls.CONTRACT_CLASS = ContractClass.load(load_nearby_contract("ERC20"))
+        return cls.CONTRACT_CLASS
 
     @classmethod
     async def deploy(cls, starknet: Starknet):
@@ -49,7 +49,7 @@ class FeeToken:
         fee_token_state = fee_token_carried_state.state
         assert not fee_token_state.initialized
 
-        starknet.state.state.contract_definitions[cls.HASH_BYTES] = cls.get_definition()
+        starknet.state.state.contract_definitions[cls.HASH_BYTES] = cls.get_contract_class()
         newly_deployed_fee_token_state = await ContractState.create(
             contract_hash=cls.HASH_BYTES,
             storage_commitment_tree=fee_token_state.storage_commitment_tree
@@ -66,7 +66,7 @@ class FeeToken:
 
         cls.contract = StarknetContract(
             state=starknet.state,
-            abi=cls.get_definition().abi,
+            abi=cls.get_contract_class().abi,
             contract_address=cls.ADDRESS,
             deploy_execution_info=None
         )

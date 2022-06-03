@@ -5,7 +5,7 @@ Class for generating and handling blocks
 from typing import Dict
 
 from starkware.starknet.testing.state import StarknetState
-from starkware.starknet.services.api.feeder_gateway.block_hash import calculate_block_hash
+from starkware.starknet.core.os.block_hash.block_hash import calculate_block_hash
 from starkware.starknet.services.api.feeder_gateway.response_objects import StarknetBlock, BlockStatus
 from starkware.starknet.services.api.feeder_gateway.response_objects import BlockStateUpdate
 

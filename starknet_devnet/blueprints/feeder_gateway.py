@@ -85,7 +85,7 @@ def get_code():
 @feeder_gateway.route("/get_full_contract", methods=["GET"])
 def get_full_contract():
     """
-    Returns the contract definition of the contract whose contractAddress is provided.
+    Returns the contract class of the contract whose contractAddress is provided.
     """
     _check_block_hash(request.args)
 

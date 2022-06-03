@@ -55,4 +55,4 @@ class DevnetContracts:
         Get the contract wrapper by address.
         """
         contract = self.get_by_address(address)
-        return contract.contract_definition
+        return contract.contract_class

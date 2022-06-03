@@ -270,7 +270,7 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
             deployed_contracts.append(
                 DeployedContract(
                     address=contract_address,
-                    contract_hash=current_state.contract_states[contract_address].state.contract_hash
+                    class_hash=current_state.contract_states[contract_address].state.contract_hash
                 )
             )
         else:

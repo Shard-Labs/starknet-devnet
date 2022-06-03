@@ -162,13 +162,13 @@ class StarknetWrapper:
     async def __deploy_fee_token(self):
         starknet = await self.__get_starknet()
         await FeeToken.deploy(starknet)
-        self.contracts.store(FeeToken.ADDRESS, ContractWrapper(FeeToken.contract, FeeToken.get_definition()))
+        self.contracts.store(FeeToken.ADDRESS, ContractWrapper(FeeToken.contract, FeeToken.get_contract_class()))
 
     async def __deploy_accounts(self):
         starknet = await self.__get_starknet()
         for account in self.accounts:
             contract = await account.deploy(starknet)
-            self.contracts.store(account.address, ContractWrapper(contract, Account.get_definition()))
+            self.contracts.store(account.address, ContractWrapper(contract, Account.get_contract_class()))
 
     def set_config(self, config: DevnetConfig):
         """
@@ -184,13 +184,13 @@ class StarknetWrapper:
         """
 
         state = await self.get_state()
-        contract_definition = deploy_transaction.contract_definition
+        contract_class = deploy_transaction.contract_class
 
         starknet = await self.__get_starknet()
 
         try:
             contract = await starknet.deploy(
-                contract_def=contract_definition,
+                contract_class=contract_class,
                 constructor_calldata=deploy_transaction.constructor_calldata,
                 contract_address_salt=deploy_transaction.contract_address_salt
             )
@@ -199,7 +199,7 @@ class StarknetWrapper:
             error_message = None
             status = TransactionStatus.ACCEPTED_ON_L2
 
-            self.contracts.store(contract.contract_address, ContractWrapper(contract, contract_definition))
+            self.contracts.store(contract.contract_address, ContractWrapper(contract, contract_class))
             state_update = await self.__update_state()
         except StarkException as err:
             error_message = err.message
@@ -211,7 +211,7 @@ class StarknetWrapper:
                 deployer_address=0,
                 constructor_calldata=deploy_transaction.constructor_calldata,
                 salt=deploy_transaction.contract_address_salt,
-                contract_class=deploy_transaction.contract_definition
+                contract_class=deploy_transaction.contract_class
             )
 
         internal_tx = InternalDeploy.from_external(deploy_transaction, state.general_config)

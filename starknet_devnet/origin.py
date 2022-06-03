@@ -46,7 +46,7 @@ class Origin:
         raise NotImplementedError
 
     def get_full_contract(self, contract_address: int) -> dict:
-        """Returns the contract definition"""
+        """Returns the contract class"""
         raise NotImplementedError
 
     def get_storage_at(self, contract_address: int, key: int) -> str:
