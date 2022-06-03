@@ -75,7 +75,7 @@ class StarknetWrapper:
         if not self.__initialized:
             starknet = await self.__get_starknet()
 
-            await FeeToken.deploy(starknet)
+            await self.__deploy_fee_token()
             await self.__deploy_accounts()
 
             await self.__preserve_current_state(starknet.state.state)
@@ -158,6 +158,11 @@ class StarknetWrapper:
             transaction.set_block(block=block)
 
         self.transactions.store(tx_hash, transaction)
+
+    async def __deploy_fee_token(self):
+        starknet = await self.__get_starknet()
+        await FeeToken.deploy(starknet)
+        self.contracts.store(FeeToken.ADDRESS, ContractWrapper(FeeToken.contract, FeeToken.get_definition()))
 
     async def __deploy_accounts(self):
         starknet = await self.__get_starknet()
