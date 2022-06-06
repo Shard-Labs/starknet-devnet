@@ -157,7 +157,7 @@ def test_sufficient_max_fee():
     """Test invoking with a sufficient max fee."""
     deploy_info = deploy_empty_contract()
     account_address = PREDEPLOYED_ACCOUNT_ADDRESS
-    private_key = PREDEPLOYED_ACCOUNT_ADDRESS
+    private_key = PREDEPLOYED_ACCOUNT_PRIVATE_KEY
     to_address = int(deploy_info["address"], 16)
     initial_account_balance = get_account_balance(account_address)
 
