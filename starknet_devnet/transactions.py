@@ -52,7 +52,7 @@ class DevnetTransaction:
 
     def __get_events(self) -> List[Event]:
         """Returns the events"""
-        if hasattr(self.execution_info, "raw_events"):
+        if isinstance(self.execution_info, StarknetTransactionExecutionInfo):
             return self.execution_info.raw_events
 
         return self.execution_info.get_sorted_events()
