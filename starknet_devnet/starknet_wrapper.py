@@ -184,7 +184,7 @@ class StarknetWrapper:
         """
 
         state = await self.get_state()
-        contract_class = deploy_transaction.contract_class
+        contract_class = deploy_transaction.contract_definition
 
         starknet = await self.__get_starknet()
 
@@ -211,11 +211,10 @@ class StarknetWrapper:
                 deployer_address=0,
                 constructor_calldata=deploy_transaction.constructor_calldata,
                 salt=deploy_transaction.contract_address_salt,
-                contract_class=deploy_transaction.contract_class
+                contract_class=contract_class
             )
 
-        internal_tx = InternalDeploy.from_external(deploy_transaction, state.general_config)
-
+        internal_tx: InternalDeploy = InternalDeploy.from_external(deploy_transaction, state.general_config)
         if self.config.lite_mode_deploy_hash:
             tx_hash = self.transactions.get_count()
         else:

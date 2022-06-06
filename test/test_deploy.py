@@ -24,7 +24,7 @@ def get_deploy_transaction(inputs: List[int], salt=0):
 
     return Deploy(
         contract_address_salt=salt,
-        contract_class=contract_class,
+        contract_definition=contract_class,
         constructor_calldata=inputs,
         version=constants.TRANSACTION_VERSION
     )
@@ -44,7 +44,7 @@ async def test_deploy():
         deployer_address=0,
         constructor_calldata=deploy_transaction.constructor_calldata,
         salt=deploy_transaction.contract_address_salt,
-        contract_class=deploy_transaction.contract_class
+        contract_class=deploy_transaction.contract_definition
     )
 
     assert contract_address == expected_contract_address
@@ -72,7 +72,7 @@ async def test_deploy_lite():
         deployer_address=0,
         constructor_calldata=deploy_transaction.constructor_calldata,
         salt=deploy_transaction.contract_address_salt,
-        contract_class=deploy_transaction.contract_class
+        contract_class=deploy_transaction.contract_definition
     )
 
     assert contract_address == expected_contract_address
