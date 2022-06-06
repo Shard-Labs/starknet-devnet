@@ -52,8 +52,10 @@ class DevnetTransaction:
 
     def __get_events(self) -> List[Event]:
         """Returns the events"""
-        contract_address = self.execution_info.call_info.contract_address
-        return [Event.create(event_content=e, emitting_contract_address=contract_address) for e in self.execution_info.call_info.events]
+        if hasattr(self.execution_info, "raw_events"):
+            return self.execution_info.raw_events
+
+        return self.execution_info.get_sorted_events()
 
     def __get_l2_to_l1_messages(self) -> List[L2ToL1Message]:
         """Returns the l2 to l1 messages"""
