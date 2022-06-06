@@ -2,7 +2,7 @@
 Classes for storing and handling transactions.
 """
 
-from typing import List
+from typing import List, Union
 
 from web3 import Web3
 
@@ -32,7 +32,7 @@ class DevnetTransaction:
         self,
         internal_tx: InternalTransaction,
         status: TransactionStatus,
-        execution_info: TransactionExecutionInfo or StarknetTransactionExecutionInfo,
+        execution_info: Union[TransactionExecutionInfo, StarknetTransactionExecutionInfo],
         transaction_hash: int = None,
     ):
         self.block = None
