@@ -1,14 +1,14 @@
 {
+    "call_type": "CALL",
     "calldata": ["0x0"],
     "caller_address": "0x0",
-    "code_address": "0x1850e072cd2e93c5a6fef566d2ed90f510c50410931235c4e32979f60838abd",
-    "contract_address": "0x1850e072cd2e93c5a6fef566d2ed90f510c50410931235c4e32979f60838abd",
+    "class_hash": "0x36467a3bcb2c67c4dc49b8b9dbbbaecb98f157dc48d6c40893ec8fe7a0888b0",
+    "contract_address": "0x32c43fea1349081ffe5eff5aeb2581be8ce196a65d7cfe3922ad3cd89cd7b0f",
     "entry_point_type": "CONSTRUCTOR",
     "events": [],
     "execution_resources": {
         "builtin_instance_counter": {
             "bitwise_builtin": 0,
-            "ec_op_builtin": 0,
             "ecdsa_builtin": 0,
             "output_builtin": 0,
             "pedersen_builtin": 0,

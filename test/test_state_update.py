@@ -69,7 +69,7 @@ def test_deployed_contracts():
     assert_equal(len(deployed_contracts), 1)
     assert_equal(int(deployed_contracts[0]["address"], 16), int(contract_address, 16))
 
-    deployed_contract_hash =  deployed_contracts[0]["contract_hash"]
+    deployed_contract_hash =  deployed_contracts[0]["class_hash"]
 
     assert_equal(int(deployed_contract_hash, 16), get_contract_hash())
 

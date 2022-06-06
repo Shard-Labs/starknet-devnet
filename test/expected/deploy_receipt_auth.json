@@ -6,7 +6,6 @@
     "execution_resources": {
         "builtin_instance_counter": {
             "bitwise_builtin": 0,
-            "ec_op_builtin": 0,
             "ecdsa_builtin": 0,
             "output_builtin": 0,
             "pedersen_builtin": 1,
