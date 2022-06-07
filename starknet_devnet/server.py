@@ -3,11 +3,11 @@ A server exposing Starknet functionalities as API endpoints.
 """
 
 import sys
-import meinheld
-import dill as pickle
+from pickle import UnpicklingError
 
 from flask import Flask
 from flask_cors import CORS
+import meinheld
 
 from starkware.starkware_utils.error_handling import StarkException
 from .blueprints.base import base
@@ -50,7 +50,7 @@ def load_dumped(args):
     if args.load_path:
         try:
             state.load(args.load_path)
-        except (FileNotFoundError, pickle.UnpicklingError):
+        except (FileNotFoundError, UnpicklingError):
             sys.exit(f"Error: Cannot load from {args.load_path}. Make sure the file exists and contains a Devnet dump.")
 
 def enable_lite_mode(args):

@@ -2,7 +2,7 @@
 
 import multiprocessing
 
-import dill as pickle
+import cloudpickle as pickle
 
 from .util import DumpOn
 

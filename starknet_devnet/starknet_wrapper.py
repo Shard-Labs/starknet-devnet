@@ -7,7 +7,7 @@ import dataclasses
 from copy import deepcopy
 from typing import Dict, List, Tuple
 
-import dill as pickle
+import cloudpickle as pickle
 from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction, InternalDeploy
 from starkware.starknet.business_logic.state.state import CarriedState
 from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address
