@@ -2,7 +2,7 @@
 Classes for storing and handling transactions.
 """
 
-from typing import List
+from typing import List, Union
 
 from web3 import Web3
 
@@ -32,7 +32,7 @@ class DevnetTransaction:
         self,
         internal_tx: InternalTransaction,
         status: TransactionStatus,
-        execution_info: TransactionExecutionInfo or StarknetTransactionExecutionInfo,
+        execution_info: Union[TransactionExecutionInfo, StarknetTransactionExecutionInfo],
         transaction_hash: int = None,
     ):
         self.block = None
@@ -52,8 +52,10 @@ class DevnetTransaction:
 
     def __get_events(self) -> List[Event]:
         """Returns the events"""
-        contract_address = self.execution_info.call_info.contract_address
-        return [Event.create(event_content=e, emitting_contract_address=contract_address) for e in self.execution_info.call_info.events]
+        if isinstance(self.execution_info, StarknetTransactionExecutionInfo):
+            return self.execution_info.raw_events
+
+        return self.execution_info.get_sorted_events()
 
     def __get_l2_to_l1_messages(self) -> List[L2ToL1Message]:
         """Returns the l2 to l1 messages"""
