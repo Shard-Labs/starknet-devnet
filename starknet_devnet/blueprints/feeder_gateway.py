@@ -8,7 +8,7 @@ from starkware.starknet.services.api.gateway.transaction import InvokeFunction
 from werkzeug.datastructures import MultiDict
 
 from starknet_devnet.state import state
-from starknet_devnet.util import StarknetDevnetException, custom_int
+from starknet_devnet.util import StarknetDevnetException, custom_int, fixed_length_hex
 from .shared import validate_transaction
 
 feeder_gateway = Blueprint("feeder_gateway", __name__, url_prefix="/feeder_gateway")
@@ -91,9 +91,25 @@ def get_full_contract():
 
     contract_address = request.args.get("contractAddress", type=custom_int)
 
-    result_dict = state.starknet_wrapper.contracts.get_full_contract(contract_address)
+    contract_class = state.starknet_wrapper.contracts.get_full_contract(contract_address)
 
-    return jsonify(result_dict)
+    return jsonify(contract_class.dump())
+
+@feeder_gateway.route("/get_class_hash_at", methods=["GET"])
+def get_class_hash_at():
+    """Get contract class hash by contract address"""
+
+    contract_address = request.args.get("contractAddress", type=custom_int)
+    class_hash = state.starknet_wrapper.contracts.get_class_hash_at(contract_address)
+    return jsonify(fixed_length_hex(class_hash))
+
+@feeder_gateway.route("/get_class_by_hash", methods=["GET"])
+def get_class_by_hash():
+    """Get contract class by class hash"""
+
+    class_hash = request.args.get("classHash", type=custom_int)
+    contract_class = state.starknet_wrapper.contracts.get_class_by_hash(class_hash)
+    return jsonify(contract_class.dump())
 
 @feeder_gateway.route("/get_storage_at", methods=["GET"])
 async def get_storage_at():

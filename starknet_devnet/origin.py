@@ -2,6 +2,7 @@
 Contains classes that provide the abstraction of L2 blockchain.
 """
 
+from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.services.api.feeder_gateway.response_objects import (
     TransactionStatus,
     TransactionInfo,
@@ -47,6 +48,14 @@ class Origin:
 
     def get_full_contract(self, contract_address: int) -> dict:
         """Returns the contract class"""
+        raise NotImplementedError
+
+    def get_class_by_hash(self, class_hash: int) -> ContractClass:
+        """Returns the contract class from its hash"""
+        raise NotImplementedError
+
+    def get_class_hash_at(self, contract_address: int) -> int:
+        """Returns the class hash at the provided address"""
         raise NotImplementedError
 
     def get_storage_at(self, contract_address: int, key: int) -> str:
@@ -120,6 +129,14 @@ class NullOrigin(Origin):
             "program": {}
         }
 
+    def get_class_by_hash(self, class_hash: int) -> ContractClass:
+        message = f"Class with hash {class_hash} is not declared"
+        raise StarknetDevnetException(message=message)
+
+    def get_class_hash_at(self, contract_address: int) -> int:
+        message = f"Contract with address {contract_address} is not deployed"
+        raise StarknetDevnetException(message=message)
+
     def get_storage_at(self, contract_address: int, key: int) -> str:
         return hex(0)
 
@@ -163,6 +180,12 @@ class ForkedOrigin(Origin):
         raise NotImplementedError
 
     def get_full_contract(self, contract_address: int) -> dict:
+        raise NotImplementedError
+
+    def get_class_by_hash(self, class_hash: int) -> ContractClass:
+        raise NotImplementedError
+
+    def get_class_hash_at(self, contract_address: int) -> int:
         raise NotImplementedError
 
     def get_storage_at(self, contract_address: int, key: int) -> str:

@@ -239,14 +239,11 @@ def assert_contract_code(address):
     # just checking key equality
     assert_equal(sorted(code.keys()), ["abi", "bytecode"])
 
-def assert_contract_class(address, contract_path):
-    """Asserts the content of the contract class of a contract at address."""
-    output = run_starknet(["get_full_contract", "--contract_address", address])
-    contract_class: ContractClass = ContractClass.load(json.loads(output.stdout))
+def assert_contract_class(actual_class: ContractClass, expected_class_path: str):
+    """Asserts equality between `actual_class` and class at `expected_class_path`."""
 
-    loaded_contract_class = load_contract_class(contract_path)
-
-    assert_equal(contract_class, loaded_contract_class.remove_debug_info())
+    loaded_contract_class = load_contract_class(expected_class_path)
+    assert_equal(actual_class, loaded_contract_class.remove_debug_info())
 
 def assert_storage(address, key, expected_value):
     """Asserts the storage value stored at (address, key)."""
@@ -266,6 +263,21 @@ def get_transaction_receipt(tx_hash):
     """Fetches the transaction receipt of transaction with tx_hash"""
     output = run_starknet(["get_transaction_receipt", "--hash", tx_hash])
     return json.loads(output.stdout)
+
+def get_full_contract(contract_address: str) -> ContractClass:
+    """Gets contract class by contract address"""
+    output = run_starknet(["get_full_contract", "--contract_address", contract_address])
+    return ContractClass.loads(output.stdout)
+
+def get_class_hash_at(contract_address: str) -> str:
+    """Gets class hash at given contract address"""
+    output = run_starknet(["get_class_hash_at", "--contract_address", contract_address])
+    return json.loads(output.stdout)
+
+def get_class_by_hash(class_hash: str) -> str:
+    """Gets contract class by contract hash"""
+    output = run_starknet(["get_class_by_hash", "--class_hash", class_hash])
+    return ContractClass.loads(output.stdout)
 
 def assert_receipt(tx_hash, expected_path):
     """Asserts the content of the receipt of tx with tx_hash."""

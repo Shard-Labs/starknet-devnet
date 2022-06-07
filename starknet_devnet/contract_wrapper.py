@@ -2,25 +2,25 @@
 Contains code for wrapping StarknetContract instances.
 """
 
-from dataclasses import dataclass
 from typing import List
 
 from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.utils.api_utils import cast_to_felts
 
-@dataclass
 class ContractWrapper:
     """
     Wraps a StarknetContract, storing its types and code for later use.
     """
     def __init__(self, contract: StarknetContract, contract_class: ContractClass):
         self.contract: StarknetContract = contract
-        self.contract_class = contract_class.remove_debug_info().dump()
+        self.contract_class = contract_class
+
+        contract_class_dumped = contract_class.remove_debug_info().dump()
 
         self.code: dict = {
             "abi": contract_class.abi,
-            "bytecode": self.contract_class["program"]["data"]
+            "bytecode": contract_class_dumped["program"]["data"]
         }
 
     # pylint: disable=too-many-arguments

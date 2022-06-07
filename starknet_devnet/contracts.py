@@ -3,6 +3,9 @@ Class for storing and handling contracts
 """
 
 from typing import Dict
+
+from starkware.starknet.services.api.contract_class import ContractClass
+
 from .origin import Origin
 from .util import (
     StarknetDevnetException,
@@ -18,12 +21,16 @@ class DevnetContracts:
     def __init__(self, origin: Origin):
         self.origin = origin
         self.__instances: Dict[int, ContractWrapper] = {}
+        self.__classes: Dict[int, ContractClass] = {}
 
-    def store(self, address: int, contract: ContractWrapper) -> None:
+    def store(self, address: int, contract_wrapper: ContractWrapper) -> None:
         """
         Store the contract wrapper.
         """
-        self.__instances[address] = contract
+        self.__instances[address] = contract_wrapper
+
+        contract_hash = self.get_class_hash_at(address)
+        self.__classes[contract_hash] = contract_wrapper.contract_class
 
     def is_deployed(self, address: int) -> bool:
         """
@@ -50,9 +57,25 @@ class DevnetContracts:
 
         return self.__instances[address].code
 
-    def get_full_contract(self, address: int) -> ContractWrapper:
+    def get_full_contract(self, address: int) -> ContractClass:
         """
         Get the contract wrapper by address.
         """
-        contract = self.get_by_address(address)
-        return contract.contract_class
+        contract_wrapper = self.get_by_address(address)
+        return contract_wrapper.contract_class
+
+    def get_class_by_hash(self, class_hash: int) -> ContractClass:
+        """Gets the class from the provided class_hash."""
+        if class_hash not in self.__classes:
+            return self.origin.get_class_by_hash(self, class_hash)
+
+        return self.__classes[class_hash]
+
+    def get_class_hash_at(self, address: int) -> int:
+        """Gets the class hash at the provided address."""
+        if not self.is_deployed(address):
+            return self.origin.get_class_hash_at(address)
+
+        contract_states = self.__instances[address].contract.state.state.contract_states
+        class_hash_hexed = contract_states[address].state.contract_hash.hex()
+        return int(class_hash_hexed, 16)

@@ -12,7 +12,10 @@ from .util import (
     devnet_in_background,
     assert_block, assert_contract_code, assert_equal, assert_failing_deploy, assert_receipt, assert_salty_deploy,
     assert_storage, assert_transaction, assert_tx_status, assert_events,
-    call, deploy, invoke
+    call, deploy,
+    get_class_by_hash,
+    get_class_hash_at,
+    get_full_contract, invoke
 )
 
 from .shared import (
@@ -51,7 +54,13 @@ def test_general_workflow():
     assert_contract_code(deploy_info["address"])
 
     # check contract class
-    assert_contract_class(deploy_info["address"], CONTRACT_PATH)
+    class_by_address = get_full_contract(deploy_info["address"])
+    assert_contract_class(class_by_address, CONTRACT_PATH)
+
+    # check contract class through class hash
+    class_hash = get_class_hash_at(deploy_info["address"])
+    class_by_hash = get_class_by_hash(class_hash)
+    assert_equal(class_by_address, class_by_hash)
 
     # increase and assert balance
     invoke_tx_hash = invoke(

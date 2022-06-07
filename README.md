@@ -139,6 +139,8 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `deploy`
   - `estimate_fee`
   - `get_block` (currently pending block is not supported)
+  - `get_class_by_hash`
+  - `get_class_hash_at`
   - `get_code`
   - `get_full_contract`
   - `get_state_update`
