@@ -14,11 +14,11 @@ class ContractWrapper:
     """
     def __init__(self, contract: StarknetContract, contract_class: ContractClass):
         self.contract: StarknetContract = contract
-        self.contract_class = contract_class
+        self.contract_class = contract_class.remove_debug_info()
 
         self.code: dict = {
             "abi": contract_class.abi,
-            "bytecode": self.contract_class.remove_debug_info().dump()["program"]["data"]
+            "bytecode": self.contract_class.dump()["program"]["data"]
         }
 
     # pylint: disable=too-many-arguments
