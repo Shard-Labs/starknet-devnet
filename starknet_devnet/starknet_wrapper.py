@@ -8,10 +8,14 @@ from copy import deepcopy
 from typing import Dict, List, Tuple
 
 import cloudpickle as pickle
-from starkware.starknet.business_logic.internal_transaction import InternalInvokeFunction, InternalDeploy
+from starkware.starknet.business_logic.internal_transaction import (
+    InternalInvokeFunction,
+    InternalDeclare,
+    InternalDeploy,
+)
 from starkware.starknet.business_logic.state.state import CarriedState
 from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address
-from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy
+from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Declare
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee
@@ -177,9 +181,44 @@ class StarknetWrapper:
         self.config = config
         self.blocks.lite = config.lite_mode_block_hash
 
+    async def declare(self, declare_transaction: Declare) -> Tuple[int, int]:
+        """
+        Declares the class specified with `declare_transaction`
+        Returns (class_hash, transaction_hash)
+        """
+
+        starknet = await self.__get_starknet()
+        internal_declare: InternalDeclare = InternalDeclare.from_external(
+            declare_transaction,
+            starknet.state.general_config
+        )
+        declared_class = await starknet.declare(
+            contract_class=declare_transaction.contract_class,
+        )
+        self.contracts.store_class(declared_class.class_hash, declare_transaction.contract_class)
+
+        tx_hash = internal_declare.hash_value
+        transaction = DevnetTransaction(
+            internal_tx=internal_declare,
+            status=TransactionStatus.ACCEPTED_ON_L2,
+            execution_info=DummyExecutionInfo(),
+            transaction_hash=tx_hash
+        )
+
+        state_update = await self.__update_state()
+
+        await self.__store_transaction(
+            transaction=transaction,
+            tx_hash=tx_hash,
+            state_update=state_update,
+            error_message=None
+        )
+
+        return declared_class.class_hash, tx_hash
+
     async def deploy(self, deploy_transaction: Deploy) -> Tuple[int, int]:
         """
-        Deploys the contract specified with `transaction`.
+        Deploys the contract specified with `deploy_transaction`.
         Returns (contract_address, transaction_hash).
         """
 

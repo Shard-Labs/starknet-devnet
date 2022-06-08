@@ -29,8 +29,12 @@ class DevnetContracts:
         """
         self.__instances[address] = contract_wrapper
 
-        contract_hash = self.get_class_hash_at(address)
-        self.__classes[contract_hash] = contract_wrapper.contract_class
+        class_hash = self.get_class_hash_at(address)
+        self.__classes[class_hash] = contract_wrapper.contract_class
+
+    def store_class(self, class_hash: int, contract_class: ContractClass) -> None:
+        """Store contract class."""
+        self.__classes[class_hash] = contract_class
 
     def is_deployed(self, address: int) -> bool:
         """

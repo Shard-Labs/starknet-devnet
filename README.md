@@ -136,6 +136,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
 - To use Devnet with Starknet CLI, provide Devnet's URL to the `--gateway_url` and `--feeder_gateway_url` options of Starknet CLI commands.
 - The following Starknet CLI commands are supported:
   - `call`
+  - `declare`
   - `deploy`
   - `estimate_fee`
   - `get_block` (currently pending block is not supported)
