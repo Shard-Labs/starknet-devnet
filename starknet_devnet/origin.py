@@ -130,11 +130,11 @@ class NullOrigin(Origin):
         }
 
     def get_class_by_hash(self, class_hash: int) -> ContractClass:
-        message = f"Class with hash {class_hash} is not declared"
+        message = f"Class with hash {hex(class_hash)} is not declared"
         raise StarknetDevnetException(message=message)
 
     def get_class_hash_at(self, contract_address: int) -> int:
-        message = f"Contract with address {contract_address} is not deployed"
+        message = f"Contract with address {hex(contract_address)} is not deployed"
         raise StarknetDevnetException(message=message)
 
     def get_storage_at(self, contract_address: int, key: int) -> str:

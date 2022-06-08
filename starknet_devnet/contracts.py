@@ -67,7 +67,7 @@ class DevnetContracts:
     def get_class_by_hash(self, class_hash: int) -> ContractClass:
         """Gets the class from the provided class_hash."""
         if class_hash not in self.__classes:
-            return self.origin.get_class_by_hash(self, class_hash)
+            return self.origin.get_class_by_hash(class_hash)
 
         return self.__classes[class_hash]
 

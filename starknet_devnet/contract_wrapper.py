@@ -16,11 +16,9 @@ class ContractWrapper:
         self.contract: StarknetContract = contract
         self.contract_class = contract_class
 
-        contract_class_dumped = contract_class.remove_debug_info().dump()
-
         self.code: dict = {
             "abi": contract_class.abi,
-            "bytecode": contract_class_dumped["program"]["data"]
+            "bytecode": self.contract_class.remove_debug_info().dump()["program"]["data"]
         }
 
     # pylint: disable=too-many-arguments

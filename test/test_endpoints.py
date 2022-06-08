@@ -3,7 +3,7 @@ Test endpoints directly.
 """
 
 from test.util import load_file_content
-from test.settings import FEEDER_GATEWAY_URL, GATEWAY_URL
+from test.settings import GATEWAY_URL
 
 import json
 import requests
@@ -16,6 +16,7 @@ DEPLOY_CONTENT = load_file_content("deploy.json")
 INVOKE_CONTENT = load_file_content("invoke.json")
 CALL_CONTENT = load_file_content("call.json")
 INVALID_HASH = "0x58d4d4ed7580a7a98ab608883ec9fe722424ce52c19f2f369eeea301f535914"
+INVALID_ADDRESS = "0x123"
 
 def send_transaction(req_dict: dict):
     """Sends the dict in a POST request and returns the response data."""
@@ -119,14 +120,14 @@ def test_call_with_complete_request_data():
 def send_transaction_with_requests(req_dict: dict):
     """Sends the dict in a POST request and returns the response data."""
     return requests.post(
-        f"{GATEWAY_URL}/add_transaction",
+        f"{GATEWAY_URL}/gateway/add_transaction",
         json=json.dumps(req_dict)
     )
 
 def send_call_with_requests(req_dict: dict):
     """Sends the call dict in a POST request and returns the response data."""
     return requests.post(
-        f"{FEEDER_GATEWAY_URL}/call_contract",
+        f"{GATEWAY_URL}/feeder_gateway/call_contract",
         json=json.dumps(req_dict)
     )
 
@@ -134,38 +135,38 @@ def get_block_number(req_dict: dict):
     """Get block number from request dict"""
     block_number = req_dict["blockNumber"]
     return requests.get(
-        f"{FEEDER_GATEWAY_URL}/get_block?blockNumber={block_number}"
+        f"{GATEWAY_URL}/feeder_gateway/get_block?blockNumber={block_number}"
     )
 
 def get_transaction_trace(transaction_hash:str):
     """Get transaction trace from request dict"""
     # transactionHash
     return requests.get(
-        f"{FEEDER_GATEWAY_URL}/get_transaction_trace?transactionHash={transaction_hash}"
+        f"{GATEWAY_URL}/feeder_gateway/get_transaction_trace?transactionHash={transaction_hash}"
     )
 
 def get_full_contract(contract_adress):
     """Get full contract class of a contract at a specific address"""
     return requests.get(
-        f"{FEEDER_GATEWAY_URL}/get_full_contract?contractAddress={contract_adress}"
+        f"{GATEWAY_URL}/feeder_gateway/get_full_contract?contractAddress={contract_adress}"
     )
 
 def get_class_by_hash(class_hash: str):
     """Get contract class by class hash"""
     return requests.get(
-        f"{FEEDER_GATEWAY_URL}/get_class_by_hash?classHash={class_hash}"
+        f"{GATEWAY_URL}/feeder_gateway/get_class_by_hash?classHash={class_hash}"
     )
 
 def get_class_hash_at(contract_address: str):
     """Get class hash of a contract at the provided address"""
     return requests.get(
-        f"{FEEDER_GATEWAY_URL}/get_class_hash_at?contractAddress={contract_address}"
+        f"{GATEWAY_URL}/feeder_gateway/get_class_hash_at?contractAddress={contract_address}"
     )
 
 def get_state_update(block_hash, block_number):
     """Get state update"""
     return requests.get(
-        f"{FEEDER_GATEWAY_URL}/get_state_update?blockHash={block_hash}&blockNumber={block_number}"
+        f"{GATEWAY_URL}/feeder_gateway/get_state_update?blockHash={block_hash}&blockNumber={block_number}"
     )
 
 @devnet_in_background()
@@ -226,3 +227,25 @@ def test_error_response_call_with_state_update():
     json_error_message = resp.json()["message"]
     assert resp.status_code == 500
     assert json_error_message is not None
+
+@devnet_in_background()
+def test_error_response_class_hash_at():
+    """Get class hash of invalid address"""
+
+    resp = get_class_hash_at(INVALID_ADDRESS)
+    error_message = resp.json()["message"]
+
+    assert resp.status_code == 500
+    expected_message = f"Contract with address {INVALID_ADDRESS} is not deployed"
+    assert expected_message == error_message
+
+@devnet_in_background()
+def test_error_response_class_by_hash():
+    """Get class by invalid hash"""
+
+    resp = get_class_by_hash(INVALID_HASH)
+    error_message = resp.json()["message"]
+
+    assert resp.status_code == 500
+    expected_message = f"Class with hash {INVALID_HASH} is not declared"
+    assert expected_message == error_message
