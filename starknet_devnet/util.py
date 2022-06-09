@@ -206,6 +206,7 @@ class DummyCallInfo:
         self.execution_resources = None
         self.contract_address = None
         self.events = []
+        self.internal_calls = []
 
 @dataclass
 class DummyExecutionInfo:
