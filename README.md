@@ -47,6 +47,7 @@ brew install gmp
 
 - Devnet should not be used as a replacement for Alpha testnet. After testing on Devnet, be sure to test on testnet (alpha-goerli)!
 - Specifying a block by its hash/number is not supported. All interaction is done with the latest block.
+- Sending transactions with max_fee set to 0 is supported (not supported on alpha-mainnet or alpha-goerli).
 - Read more in [interaction](#interaction).
 
 ## Run
@@ -310,7 +311,7 @@ starknet-devnet --start-time START_TIME_IN_SECONDS
 
 ## Contract debugging
 
-If your contract is using `print` in cairo hints (it was compiled with the `--disable-hint-validation` flag), Devnet will output those lines together with its regular server output. Read more about hints [here](https://www.cairo-lang.org/docs/how_cairo_works/hints.html). To filter out just your debugging print lines, redirect stderr to /dev/null when starting Devnet:
+If your contract is using `print` in cairo hints (it was compiled with the `--disable-hint-validation` flag), Devnet will output those lines together with its regular server output. Read more about hints [here](https://www.cairo-lang.org/docs/how_cairo_works/hints.html). To filter out just your debug lines, redirect stderr to /dev/null when starting Devnet:
 
 ```
 starknet-devnet 2> /dev/null
@@ -325,6 +326,22 @@ docker run -p 127.0.0.1:5050:5050 -e PYTHONUNBUFFERED=1 shardlabs/starknet-devne
 ## Predeployed accounts
 
 Devnet predeploys `--accounts` with some `--initial-balance`. The accounts get charged for transactions according to the `--gas-price`. A `--seed` can be used to regenerate the same set of accounts. Read more about it in the [Run section](#run).
+
+To get the code of the account (currently OpenZeppelin v0.1.0), use one of the following:
+
+- `GET /get_code?contractAddress=<ACCOUNT_ADDRESS>`
+- [Starknet CLI](https://www.cairo-lang.org/docs/hello_starknet/cli.html#get-code): `starknet get_code --contract_address <ACCOUNT_ADDRESS> --feeder_gateway_url <DEVNET_URL>`
+- [OpenZeppelin's cairo-contract repository](https://github.com/OpenZeppelin/cairo-contracts/tree/v0.1.0)
+
+You can use the accounts in e.g. [starknet-hardhat-plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) via:
+
+```typescript
+const account = await starknet.getAccountFromAddress(
+  ADDRESS,
+  PRIVATE_KEY,
+  "OpenZeppelin"
+);
+```
 
 The balance of an account can be checked using:
 
@@ -343,7 +360,7 @@ Response:
 
 ## Devnet speed-up troubleshooting
 
-If you are not satisfied with your Devnet performance, consider the following:
+If you are not satisfied with Devnet's performance, consider the following:
 
 - Make sure you are using the latest version of Devnet because new improvements are added regularly.
 - Try using [lite-mode](#lite-mode).
