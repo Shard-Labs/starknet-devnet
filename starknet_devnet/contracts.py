@@ -34,7 +34,7 @@ class DevnetContracts:
 
     def store_class(self, class_hash: int, contract_class: ContractClass) -> None:
         """Store contract class."""
-        self.__classes[class_hash] = contract_class
+        self.__classes[class_hash] = contract_class.remove_debug_info()
 
     def is_deployed(self, address: int) -> bool:
         """

@@ -37,6 +37,7 @@ markers = [
     "account",
     "account_predeployed",
     "call",
+    "declare",
     "deploy",
     "fee_token",
     "invoke",

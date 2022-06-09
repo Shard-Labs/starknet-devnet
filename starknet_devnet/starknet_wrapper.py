@@ -19,7 +19,10 @@ from starkware.starknet.services.api.gateway.transaction import InvokeFunction, 
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee
+from starkware.starknet.services.api.contract_class import EntryPointType
 from starkware.starknet.services.api.feeder_gateway.response_objects import TransactionStatus
+from starkware.starknet.testing.objects import TransactionExecutionInfo
+from starkware.starknet.testing.contract import StarknetContract
 
 from .account import Account
 from .fee_token import FeeToken
@@ -308,6 +311,8 @@ class StarknetWrapper:
             tx_hash=transaction.transaction_hash
         )
 
+        await self.__register_new_contracts(execution_info)
+
         return invoke_function.contract_address, invoke_transaction.hash_value, { "result": adapted_result }
 
     async def call(self, transaction: InvokeFunction):
@@ -323,6 +328,15 @@ class StarknetWrapper:
         )
 
         return { "result": adapted_result }
+
+    async def __register_new_contracts(self, execution_info: TransactionExecutionInfo):
+        for internal_call in execution_info.call_info.internal_calls:
+            if internal_call.entry_point_type == EntryPointType.CONSTRUCTOR:
+                state = await self.get_state()
+                contract_class = state.state.get_contract_class(internal_call.class_hash)
+                contract = StarknetContract(state, contract_class.abi, internal_call.contract_address, None)
+                contract_wrapper = ContractWrapper(contract, contract_class)
+                self.contracts.store(internal_call.contract_address, contract_wrapper)
 
     async def get_storage_at(self, contract_address: int, key: int) -> str:
         """

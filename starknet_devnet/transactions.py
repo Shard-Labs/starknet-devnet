@@ -18,9 +18,11 @@ from starkware.starknet.services.api.feeder_gateway.response_objects import (
     L2ToL1Message
 )
 from starkware.starknet.business_logic.internal_transaction import InternalTransaction
-from starkware.starknet.testing.objects import TransactionExecutionInfo
+from starkware.starknet.testing.objects import (
+    TransactionExecutionInfo,
+    StarknetTransactionExecutionInfo
+)
 from starkware.starknet.definitions.error_codes import StarknetErrorCode
-from starkware.starknet.testing.objects import StarknetTransactionExecutionInfo
 from services.everest.business_logic.transaction_execution_objects import TransactionFailureReason
 
 from .origin import Origin

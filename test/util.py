@@ -54,6 +54,10 @@ def assert_equal(actual, expected, explanation=None):
     """Assert that the two values are equal. Optionally provide explanation."""
     assert actual == expected, f"\nActual: {actual}\nExpected: {expected}\nAdditional_info: {explanation}"
 
+def assert_hex_equal(actual, expected):
+    """Assert that two hex strings are equal when converted to ints"""
+    assert int(actual, 16) == int(expected, 16)
+
 def extract(regex, stdout):
     """Extract from `stdout` what matches `regex`."""
     matched = re.search(regex, stdout)
@@ -61,7 +65,11 @@ def extract(regex, stdout):
         return matched.group(1)
     raise RuntimeError(f"Cannot extract from {stdout}")
 
-def extract_hash(stdout):
+def extract_class_hash(stdout):
+    """Extract class hash from stdout."""
+    return extract(r"Contract class hash: (\w*)", stdout)
+
+def extract_tx_hash(stdout):
     """Extract tx_hash from stdout."""
     return extract(r"Transaction hash: (\w*)", stdout)
 
@@ -88,6 +96,15 @@ def run_starknet(args, raise_on_nonzero=True, add_gateway_urls=True):
         raise ReturnCodeAssertionError(output.stdout)
     return output
 
+def declare(contract):
+    """Wrapper around starknet declare"""
+    args = ["declare", "--contract", contract]
+    output = run_starknet(args)
+    return {
+        "tx_hash": extract_tx_hash(output.stdout),
+        "class_hash": extract_class_hash(output.stdout)
+    }
+
 def deploy(contract, inputs=None, salt=None):
     """Wrapper around starknet deploy"""
     args = ["deploy", "--contract", contract]
@@ -97,7 +114,7 @@ def deploy(contract, inputs=None, salt=None):
         args.extend(["--salt", salt])
     output = run_starknet(args)
     return {
-        "tx_hash": extract_hash(output.stdout),
+        "tx_hash": extract_tx_hash(output.stdout),
         "address": extract_address(output.stdout)
     }
 
@@ -175,7 +192,7 @@ def invoke(function, inputs, address, abi_path, signature=None, max_fee=None):
     output = run_starknet(args)
 
     print("Invoke successful!")
-    return extract_hash(output.stdout)
+    return extract_tx_hash(output.stdout)
 
 
 def estimate_fee(function, inputs, address, abi_path, signature=None):
