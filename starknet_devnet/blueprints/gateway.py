@@ -38,7 +38,7 @@ async def add_transaction():
     elif tx_type == TransactionType.INVOKE_FUNCTION:
         contract_address, transaction_hash, result_dict = await state.starknet_wrapper.invoke(transaction)
         response_dict["address"] = fixed_length_hex(contract_address)
-        response_dict |= result_dict
+        response_dict.update(result_dict)
 
     else:
         raise StarknetDevnetException(message=f"Invalid tx_type: {tx_type.name}.", status_code=400)
