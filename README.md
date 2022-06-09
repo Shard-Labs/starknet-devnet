@@ -310,7 +310,7 @@ starknet-devnet --start-time START_TIME_IN_SECONDS
 
 ## Contract debugging
 
-If your contract is using `print` in cairo hints (it was compiled with the `--disable-hint-validation` flag), Devnet will output those lines together with its regular server output. To filter out just your debugging print lines, redirect stderr to /dev/null when starting Devnet:
+If your contract is using `print` in cairo hints (it was compiled with the `--disable-hint-validation` flag), Devnet will output those lines together with its regular server output. Read more about hints [here](https://www.cairo-lang.org/docs/how_cairo_works/hints.html). To filter out just your debugging print lines, redirect stderr to /dev/null when starting Devnet:
 
 ```
 starknet-devnet 2> /dev/null
@@ -377,10 +377,10 @@ poetry run pylint starknet_devnet test
 
 ### Development - Test
 
-When running tests locally, do it from the project root. First, generate the artifacts:
+When running tests locally, do it from the project root:
 
 ```bash
-./scripts/compile_contracts.sh
+./scripts/compile_contracts.sh # first generate the artifacts
 
 poetry run pytest test/
 
