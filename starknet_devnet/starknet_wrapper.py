@@ -5,7 +5,7 @@ starkware.starknet.testing.starknet.Starknet.
 
 import dataclasses
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import cloudpickle as pickle
 from starkware.starknet.business_logic.internal_transaction import (
@@ -13,6 +13,7 @@ from starkware.starknet.business_logic.internal_transaction import (
     InternalDeclare,
     InternalDeploy,
 )
+from starkware.starknet.business_logic.internal_transaction import CallInfo
 from starkware.starknet.business_logic.state.state import CarriedState
 from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Declare
@@ -21,8 +22,8 @@ from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.business_logic.transaction_fee import calculate_tx_fee
 from starkware.starknet.services.api.contract_class import EntryPointType
 from starkware.starknet.services.api.feeder_gateway.response_objects import TransactionStatus
-from starkware.starknet.testing.objects import TransactionExecutionInfo
 from starkware.starknet.testing.contract import StarknetContract
+from starkware.starknet.testing.objects import FunctionInvocation
 
 from .account import Account
 from .fee_token import FeeToken
@@ -30,7 +31,9 @@ from .general_config import DEFAULT_GENERAL_CONFIG
 from .origin import NullOrigin, Origin
 from .util import (
     DummyExecutionInfo,
-    enable_pickling, generate_state_update
+    enable_pickling,
+    generate_state_update,
+    to_bytes
 )
 from .contract_wrapper import ContractWrapper
 from .postman_wrapper import DevnetL1L2
@@ -276,6 +279,8 @@ class StarknetWrapper:
             tx_hash=tx_hash
         )
 
+        await self.__register_new_contracts(execution_info.call_info.internal_calls)
+
         return contract_address, tx_hash
 
     async def invoke(self, invoke_function: InvokeFunction):
@@ -311,7 +316,7 @@ class StarknetWrapper:
             tx_hash=transaction.transaction_hash
         )
 
-        await self.__register_new_contracts(execution_info)
+        await self.__register_new_contracts(execution_info.call_info.internal_calls)
 
         return invoke_function.contract_address, invoke_transaction.hash_value, { "result": adapted_result }
 
@@ -329,14 +334,19 @@ class StarknetWrapper:
 
         return { "result": adapted_result }
 
-    async def __register_new_contracts(self, execution_info: TransactionExecutionInfo):
-        for internal_call in execution_info.call_info.internal_calls:
+
+
+    async def __register_new_contracts(self, internal_calls: List[Union[FunctionInvocation, CallInfo]]):
+        for internal_call in internal_calls:
             if internal_call.entry_point_type == EntryPointType.CONSTRUCTOR:
                 state = await self.get_state()
-                contract_class = state.state.get_contract_class(internal_call.class_hash)
+                class_hash = to_bytes(internal_call.class_hash)
+                contract_class = state.state.get_contract_class(class_hash)
+
                 contract = StarknetContract(state, contract_class.abi, internal_call.contract_address, None)
                 contract_wrapper = ContractWrapper(contract, contract_class)
                 self.contracts.store(internal_call.contract_address, contract_wrapper)
+            await self.__register_new_contracts(internal_call.internal_calls)
 
     async def get_storage_at(self, contract_address: int, key: int) -> str:
         """

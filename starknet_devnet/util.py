@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 import argparse
 import sys
-from typing import List, Dict
+from typing import List, Dict, Union
 
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.testing.contract import StarknetContract
@@ -295,3 +295,10 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
         old_root=old_root,
         state_diff=state_diff
     )
+
+def to_bytes(value: Union[int, bytes]) -> bytes:
+    """
+    If int, convert to 32-byte big-endian bytes instance
+    If bytes, return the received value
+    """
+    return value if isinstance(value, bytes) else value.to_bytes(32, "big")

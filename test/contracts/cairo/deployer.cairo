@@ -22,8 +22,11 @@ func constructor{
     syscall_ptr : felt*,
     pedersen_ptr : HashBuiltin*,
     range_check_ptr,
-}(class_hash : felt):
+}(class_hash : felt, initial_balance : felt):
     deployable_class_hash.write(value=class_hash)
+
+    # deploy an instance from the constructor
+    deploy_contract(initial_balance)
     return ()
 end
 
