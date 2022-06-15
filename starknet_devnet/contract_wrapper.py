@@ -12,9 +12,10 @@ class ContractWrapper:
     """
     Wraps a StarknetContract, storing its types and code for later use.
     """
-    def __init__(self, contract: StarknetContract, contract_class: ContractClass):
+    def __init__(self, contract: StarknetContract, contract_class: ContractClass, deployment_tx_hash: int = None):
         self.contract: StarknetContract = contract
         self.contract_class = contract_class.remove_debug_info()
+        self.deployment_tx_hash = deployment_tx_hash
 
         self.code: dict = {
             "abi": contract_class.abi,

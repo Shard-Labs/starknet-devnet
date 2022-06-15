@@ -15,7 +15,6 @@ from starkware.starknet.business_logic.internal_transaction import (
 )
 from starkware.starknet.business_logic.internal_transaction import CallInfo
 from starkware.starknet.business_logic.state.state import CarriedState
-from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Declare
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
@@ -231,6 +230,18 @@ class StarknetWrapper:
         state = await self.get_state()
         contract_class = deploy_transaction.contract_definition
 
+        internal_tx: InternalDeploy = InternalDeploy.from_external(deploy_transaction, state.general_config)
+        contract_address = internal_tx.contract_address
+
+        if self.contracts.is_deployed(contract_address):
+            tx_hash = self.contracts.get_by_address(contract_address).deployment_tx_hash
+            return contract_address, tx_hash
+
+        if self.config.lite_mode_deploy_hash:
+            tx_hash = self.transactions.get_count()
+        else:
+            tx_hash = internal_tx.hash_value
+
         starknet = await self.__get_starknet()
 
         try:
@@ -239,31 +250,17 @@ class StarknetWrapper:
                 constructor_calldata=deploy_transaction.constructor_calldata,
                 contract_address_salt=deploy_transaction.contract_address_salt
             )
-            contract_address = contract.contract_address
             execution_info = contract.deploy_execution_info
             error_message = None
             status = TransactionStatus.ACCEPTED_ON_L2
 
-            self.contracts.store(contract.contract_address, ContractWrapper(contract, contract_class))
+            self.contracts.store(contract.contract_address, ContractWrapper(contract, contract_class, tx_hash))
             state_update = await self.__update_state()
         except StarkException as err:
             error_message = err.message
             status = TransactionStatus.REJECTED
             execution_info = DummyExecutionInfo()
             state_update = None
-
-            contract_address = calculate_contract_address(
-                deployer_address=0,
-                constructor_calldata=deploy_transaction.constructor_calldata,
-                salt=deploy_transaction.contract_address_salt,
-                contract_class=contract_class
-            )
-
-        internal_tx: InternalDeploy = InternalDeploy.from_external(deploy_transaction, state.general_config)
-        if self.config.lite_mode_deploy_hash:
-            tx_hash = self.transactions.get_count()
-        else:
-            tx_hash = internal_tx.hash_value
 
         transaction = DevnetTransaction(
             internal_tx=internal_tx,
@@ -279,7 +276,7 @@ class StarknetWrapper:
             tx_hash=tx_hash
         )
 
-        await self.__register_new_contracts(execution_info.call_info.internal_calls)
+        await self.__register_new_contracts(execution_info.call_info.internal_calls, tx_hash)
 
         return contract_address, tx_hash
 
@@ -308,17 +305,18 @@ class StarknetWrapper:
             state_update = None
 
         transaction = DevnetTransaction(invoke_transaction, status, execution_info)
+        tx_hash = transaction.transaction_hash
 
         await self.__store_transaction(
             transaction=transaction,
             state_update=state_update,
             error_message=error_message,
-            tx_hash=transaction.transaction_hash
+            tx_hash=tx_hash
         )
 
-        await self.__register_new_contracts(execution_info.call_info.internal_calls)
+        await self.__register_new_contracts(execution_info.call_info.internal_calls, tx_hash)
 
-        return invoke_function.contract_address, invoke_transaction.hash_value, { "result": adapted_result }
+        return invoke_function.contract_address, tx_hash, { "result": adapted_result }
 
     async def call(self, transaction: InvokeFunction):
         """Perform call according to specifications in `transaction`."""
@@ -336,7 +334,7 @@ class StarknetWrapper:
 
 
 
-    async def __register_new_contracts(self, internal_calls: List[Union[FunctionInvocation, CallInfo]]):
+    async def __register_new_contracts(self, internal_calls: List[Union[FunctionInvocation, CallInfo]], tx_hash: int):
         for internal_call in internal_calls:
             if internal_call.entry_point_type == EntryPointType.CONSTRUCTOR:
                 state = await self.get_state()
@@ -344,9 +342,9 @@ class StarknetWrapper:
                 contract_class = state.state.get_contract_class(class_hash)
 
                 contract = StarknetContract(state, contract_class.abi, internal_call.contract_address, None)
-                contract_wrapper = ContractWrapper(contract, contract_class)
+                contract_wrapper = ContractWrapper(contract, contract_class, tx_hash)
                 self.contracts.store(internal_call.contract_address, contract_wrapper)
-            await self.__register_new_contracts(internal_call.internal_calls)
+            await self.__register_new_contracts(internal_call.internal_calls, tx_hash)
 
     async def get_storage_at(self, contract_address: int, key: int) -> str:
         """

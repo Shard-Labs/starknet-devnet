@@ -104,7 +104,7 @@ def test_general_workflow():
         contract_path=EVENTS_CONTRACT_PATH,
         salt="0x99",
         inputs=None,
-        expected_status="REJECTED",
+        expected_status="ACCEPTED_ON_L2",
         expected_address=EXPECTED_SALTY_DEPLOY_ADDRESS,
         expected_tx_hash=EXPECTED_SALTY_DEPLOY_HASH
     )
