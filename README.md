@@ -160,13 +160,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
 
 Devnet also supports JSON-RPC API (v0.8.0: [specifications](https://github.com/starkware-libs/starknet-specs/blob/ec01ba5fd12d4a51a9202146a2d6247eebc08644/api/starknet_api_openrpc.json)). It can be reached under `/rpc`. For an example:
 
-```text
-POST /rpc
 ```
-
-Request body:
-
-```json
 POST /rpc
 {
   "jsonrpc": "2.0",
@@ -176,9 +170,9 @@ POST /rpc
 }
 ```
 
-Response body:
+Response:
 
-```json
+```
 {
   "id": 0,
   "jsonrpc": "2.0",
@@ -382,7 +376,7 @@ GET /account_balance?address=<HEX_ADDRESS>
 
 Response:
 
-```json
+```
 {
   "amount": 123...456,
   "unit": "wei"
