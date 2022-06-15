@@ -167,6 +167,7 @@ POST /rpc
 Request body:
 
 ```json
+POST /rpc
 {
   "jsonrpc": "2.0",
   "method": "starknet_protocolVersion",
