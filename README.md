@@ -10,6 +10,7 @@ Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 - [Disclaimer](#disclaimer)
 - [Run](#run)
 - [Interaction](#interaction)
+- [JSON-RPC API](#json-rpc-api)
 - [Dumping and Loading](#dumping)
 - [Hardhat Integration](#hardhat-integration)
 - [L1-L2 Postman Communication](#postman-integration)
@@ -49,7 +50,6 @@ brew install gmp
 - Devnet should not be used as a replacement for Alpha testnet. After testing on Devnet, be sure to test on testnet (alpha-goerli)!
 - Specifying a block by its hash/number is not supported. All interaction is done with the latest block.
 - Sending transactions with max_fee set to 0 is supported (not supported on alpha-mainnet or alpha-goerli).
-- Read more in [interaction](#interaction).
 
 ## Run
 
@@ -155,6 +155,35 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `tx_status`
 - The following Starknet CLI commands are **not** supported:
   - `get_contract_addresses`
+
+## JSON-RPC API
+
+Devnet also supports JSON-RPC API (v0.8.0: [specifications](https://github.com/starkware-libs/starknet-specs/blob/ec01ba5fd12d4a51a9202146a2d6247eebc08644/api/starknet_api_openrpc.json)). It can be reached under `/rpc`. For an example:
+
+```text
+POST /rpc
+```
+
+Request body:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "starknet_protocolVersion",
+  "params": [],
+  "id": 0
+}
+```
+
+Response body:
+
+```json
+{
+  "id": 0,
+  "jsonrpc": "2.0",
+  "result": "0x302e382e30"
+}
+```
 
 ## Hardhat integration
 
