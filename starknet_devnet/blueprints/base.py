@@ -32,6 +32,18 @@ def dump():
     state.dumper.dump(dump_path)
     return Response(status=200)
 
+@base.route("/load", methods=["POST"])
+def load():
+    """Loads the starknet_wrapper"""
+
+    request_dict = request.json or {}
+    load_path = request_dict.get("path")
+    if not load_path:
+        raise StarknetDevnetException(message="No path provided.", status_code=400)
+
+    state.load(load_path)
+    return Response(status=200)
+
 def validate_time_value(value: int):
     """Validates the time value"""
     if value is None:

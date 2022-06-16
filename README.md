@@ -239,6 +239,12 @@ starknet-devnet --dump-on transaction --dump-path <PATH>
 curl -X POST http://<HOST>:<PORT>/dump -d '{ "path": <PATH> }' -H "Content-Type: application/json"
 ```
 
+- Loading state on request `/load`:
+
+```
+curl -X POST http://<HOST>:<PORT>/load -d '{ "path": <PATH> }' -H "Content-Type: application/json"
+```
+
 ### Loading
 
 To load a preserved Devnet instance, run:

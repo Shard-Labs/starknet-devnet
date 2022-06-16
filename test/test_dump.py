@@ -35,6 +35,11 @@ def send_dump_request(dump_path: str=None):
     json_load = { "path": dump_path } if dump_path else None
     return requests.post(f"{GATEWAY_URL}/dump", json=json_load)
 
+def send_load_request(load_path: str=None):
+    """Send HTTP request to trigger loading."""
+    json_load = { "path": load_path } if load_path else None
+    return requests.post(f"{GATEWAY_URL}/load", json=json_load)
+
 def send_error_request():
     """Send HTTP request to trigger error response."""
     json_body = { "dummy": "dummy_value" }
@@ -108,8 +113,8 @@ def test_dumping_if_path_provided_as_cli_option():
     finally:
         terminate_and_wait(devnet_proc)
 
-def test_dumping_via_endpoint():
-    """Test dumping via endpoint."""
+def test_loading_via_cli():
+    """Test dumping via endpoint and loading via CLI."""
     # init devnet + contract
     devnet_proc = run_devnet_in_background()
     contract_address = deploy_empty_contract()
@@ -123,8 +128,40 @@ def test_dumping_via_endpoint():
     terminate_and_wait(devnet_proc)
     assert_not_alive()
 
-    # spawn new devnet, load from dump path
+    # spawn new devnet and load path through CLI
     loaded_devnet_proc = run_devnet_in_background("--load-path", DUMP_PATH)
+  
+    loaded_balance = call("get_balance", contract_address, ABI_PATH)
+    assert loaded_balance == balance_after_invoke
+
+    # assure that new invokes can be made
+    invoke("increase_balance", ["15", "25"], contract_address, ABI_PATH)
+    balance_after_invoke_on_loaded = call("get_balance", contract_address, abi_path=ABI_PATH)
+    assert balance_after_invoke_on_loaded == "70"
+
+    os.remove(DUMP_PATH)
+    terminate_and_wait(loaded_devnet_proc)
+    assert_no_dump_present(DUMP_PATH)
+
+def test_dumping_and_loading_via_endpoint():
+    """Test dumping and loading via endpoint."""
+    # init devnet + contract
+    devnet_proc = run_devnet_in_background()
+    contract_address = deploy_empty_contract()
+
+    invoke("increase_balance", ["10", "20"], contract_address, ABI_PATH)
+    balance_after_invoke = call("get_balance", contract_address, ABI_PATH)
+    assert balance_after_invoke == "30"
+
+    dump_and_assert(DUMP_PATH)
+
+    terminate_and_wait(devnet_proc)
+    assert_not_alive()
+
+    # spawn new devnet and load path via endpoint call
+    loaded_devnet_proc = run_devnet_in_background()
+    send_load_request(DUMP_PATH)
+  
     loaded_balance = call("get_balance", contract_address, ABI_PATH)
     assert loaded_balance == balance_after_invoke
 
