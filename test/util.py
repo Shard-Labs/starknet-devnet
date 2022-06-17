@@ -53,13 +53,17 @@ def terminate_and_wait(proc: subprocess.Popen):
 
 def ensure_server_alive(url: str, proc: subprocess.Popen, check_period=0.5, max_wait=60):
     """
-    Ensures server at provided `url` is alive.
+    Ensures that server at provided `url` is alive or that `proc` has terminated.
     Checks every `check_period` seconds.
     Fails after `max_wait` seconds - terminates the server's `proc`.
     """
 
     n_checks = int(max_wait // check_period)
     for _ in range(n_checks):
+        if proc.poll() is not None:
+            # if process has terminated, return
+            return
+
         try:
             requests.get(url)
             return
