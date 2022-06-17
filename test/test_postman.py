@@ -3,12 +3,11 @@ Test postman usage. This test has one single pytest case, because the whole flow
 """
 
 import json
-import time
 import subprocess
 
 from test.web3_util import web3_call, web3_deploy, web3_transact
-from test.settings import L1_URL, GATEWAY_URL
-from test.util import call, deploy, devnet_in_background, invoke, load_file_content, terminate_and_wait
+from test.settings import L1_HOST, L1_PORT, L1_URL, GATEWAY_URL
+from test.util import call, deploy, devnet_in_background, ensure_server_alive, invoke, load_file_content, terminate_and_wait
 
 import psutil
 import pytest
@@ -31,11 +30,13 @@ def run_before_and_after_test():
     """Run l1 testnet before and kill it after the test run"""
     # Setup L1 testnet
 
-    command = ["npx", "hardhat", "node"]
+    command = ["npx", "hardhat", "node", "--hostname", L1_HOST, "--port", L1_PORT]
     with subprocess.Popen(command, close_fds=True) as node_proc:
         # before test
-        time.sleep(10)
+        ensure_server_alive(L1_URL, node_proc)
+
         yield
+
         # after test
         wrapped_node_proc = psutil.Process(node_proc.pid)
         children = wrapped_node_proc.children(recursive=True)

@@ -21,10 +21,10 @@ class DevnetBackgroundProc:
     def __init__(self):
         self.proc = None
 
-    def start(self, *args, sleep_seconds=5, stderr=None, stdout=None):
+    def start(self, *args, stderr=None, stdout=None):
         """ Starts a new devnet-server instance. Previously active instance will be stopped. """
         self.stop()
-        self.proc = run_devnet_in_background(*args, sleep_seconds=sleep_seconds, stderr=stderr, stdout=stdout)
+        self.proc = run_devnet_in_background(*args, stderr=stderr, stdout=stdout)
         return self.proc
 
     def stop(self):
@@ -197,7 +197,7 @@ def test_dumping_and_loading_via_endpoint():
 
 def test_dumping_on_exit():
     """Test dumping on exit."""
-    devnet_proc = ACTIVE_DEVNET.start("--dump-on", "exit", "--dump-path", DUMP_PATH, sleep_seconds=3)
+    devnet_proc = ACTIVE_DEVNET.start("--dump-on", "exit", "--dump-path", DUMP_PATH)
     try:
         contract_address = deploy_empty_contract()
 

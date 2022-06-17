@@ -7,19 +7,20 @@ import os
 import re
 import subprocess
 import time
+import requests
 
 from starkware.starknet.services.api.contract_class import ContractClass
 
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
-from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT
+from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT, APP_URL
 
 class ReturnCodeAssertionError(AssertionError):
     """Error to be raised when the return code of an executed process is not as expected."""
 
-def run_devnet_in_background(*args, sleep_seconds=5, stderr=None, stdout=None):
+def run_devnet_in_background(*args, stderr=None, stdout=None):
     """
     Runs starknet-devnet in background.
-    By default sleeps 5 second after spawning devnet.
+    Sleep before devnet is responsive.
     Accepts extra args to pass to `starknet-devnet` command.
     Returns the process handle.
     """
@@ -27,7 +28,7 @@ def run_devnet_in_background(*args, sleep_seconds=5, stderr=None, stdout=None):
     # pylint: disable=consider-using-with
     proc = subprocess.Popen(command, close_fds=True, stderr=stderr, stdout=stdout)
 
-    time.sleep(sleep_seconds)
+    ensure_server_alive(f"{APP_URL}/is_alive", proc)
     return proc
 
 def devnet_in_background(*devnet_args, **devnet_kwargs):
@@ -49,6 +50,26 @@ def terminate_and_wait(proc: subprocess.Popen):
     """Terminates the process and waits."""
     proc.terminate()
     proc.wait()
+
+def ensure_server_alive(url: str, proc: subprocess.Popen, check_period=0.5, max_wait=60):
+    """
+    Ensures server at provided `url` is alive.
+    Checks every `check_period` seconds.
+    Fails after `max_wait` seconds - terminates the server's `proc`.
+    """
+
+    n_checks = int(max_wait // check_period)
+    for _ in range(n_checks):
+        try:
+            requests.get(url)
+            return
+        except requests.exceptions.ConnectionError:
+            pass
+
+        time.sleep(check_period)
+
+    terminate_and_wait(proc)
+    raise RuntimeError(f"max_wait time {max_wait} exceeded while checking {url}")
 
 def assert_equal(actual, expected, explanation=None):
     """Assert that the two values are equal. Optionally provide explanation."""
