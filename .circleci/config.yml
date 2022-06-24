@@ -39,18 +39,9 @@ jobs:
           name: Run pytest tests
           parallel: true
           command: |
-            #set -e
-            #cp -f .circleci/resources/pytest_build_config.ini pytest.ini
-            TEST_FILES_CLASS=$(circleci tests glob test/test*.py | sed  "s/\.py//g; s/\//./g" | circleci tests split --split-by=timings --timings-type=classname)
-            echo "GLOB"
-            echo $(circleci tests glob test/test*.py | sed  "s/\.py//g; s/\//./g")
-            echo "TEST_FILES_CLASS"
-            echo ${TEST_FILES_CLASS}
             mkdir -p test-results
-            #Recombine TEST_FILES_CLASS back to File path
-            TEST_FILES=$(sed "s/\./\//g; s/ /.py /g; s/$/.py/g;" \<<< $TEST_FILES_CLASS)
-            echo "TEST_FILES"
-            echo ${TEST_FILES}
+            SPLITED_FILES_CLASS=$(circleci tests glob test/test*.py | sed  "s/\.py//g; s/\//./g" | circleci tests split --split-by=timings --timings-type=classname)
+            TEST_FILES=$(sed "s/\./\//g; s/ /.py /g; s/$/.py/g;" \<<< $SPLITED_FILES_CLASS)
             poetry run pytest --verbose --junitxml=test-results/junit.xml $TEST_FILES
       - store_test_results:
           path: test-results
