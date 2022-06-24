@@ -16,7 +16,7 @@ jobs:
     docker:
       - image: cimg/python:3.7.12-node
     resource_class: medium
-    parallelism: 2
+    parallelism: 4
     steps:
       - checkout
       - run:
