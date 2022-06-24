@@ -39,8 +39,8 @@ jobs:
           name: Run pytest tests
           parallel: true
           command: |
-            set -e
-            cp -f .circleci/resources/pytest_build_config.ini pytest.ini
+            #set -e
+            #cp -f .circleci/resources/pytest_build_config.ini pytest.ini
             TEST_FILES_CLASS=$(circleci tests glob test/test*.py | sed  "s/\.py//g; s/\//./g" | circleci tests split --split-by=timings --timings-type=classname)
             echo "GLOB"
             echo $(circleci tests glob test/test*.py | sed  "s/\.py//g; s/\//./g")
