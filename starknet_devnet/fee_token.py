@@ -1,7 +1,8 @@
 """
 Fee token and its predefined constants.
 """
-
+import json
+from pprint import pp
 from starkware.solidity.utils import load_nearby_contract
 from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.business_logic.state.objects import (
@@ -11,11 +12,9 @@ from starkware.starknet.business_logic.state.objects import (
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 from starkware.python.utils import to_bytes
-
 from starknet_devnet.util import Uint256
 from starkware.starknet.compiler.compile import get_selector_from_name
-import json
-from pprint import pp
+
 
 
 class FeeToken:
@@ -96,17 +95,17 @@ class FeeToken:
         return balance
 
     @classmethod
-    async def mint(cls, to_address: str, amount: int) -> None:
+    async def mint_lite(cls, to_address: str, amount: int) -> None:
         """Mint `amount` of token at `address`."""
         assert cls.contract
         mount_uint256 = Uint256.from_felt(amount)
         result = await cls.contract.mint(int(to_address, 16), (mount_uint256.low, mount_uint256.high)).invoke()
 
-        pp(result.main_call_events, result.raw_events)
+        pp({"main_call_events":result.main_call_events, "raw_events":result.raw_events})
         return
 
     @classmethod
-    async def mint_transaction(cls, to_address: str, amount: int) -> None:
+    async def mint(cls, to_address: str, amount: int) -> None:
         """Mint with internal transaction"""
         from .state import state
         from starknet_devnet.blueprints.shared import validate_transaction
@@ -128,5 +127,5 @@ class FeeToken:
         transaction = validate_transaction(json.dumps(transaction_data).encode("utf-8"))
         c_address, tx_hash, result = await state.starknet_wrapper.invoke(transaction)
 
-        pp(c_address, tx_hash, result)
+        pp({'c_address':c_address, 'tx_hash':tx_hash, 'result':result})
         return
