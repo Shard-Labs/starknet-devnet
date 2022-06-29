@@ -12,11 +12,9 @@ from starkware.starknet.business_logic.state.objects import (
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 from starkware.python.utils import to_bytes
-from starknet_devnet.util import Uint256
 from starkware.starknet.compiler.compile import get_selector_from_name
-
-
-
+from starknet_devnet.util import Uint256
+from starknet_devnet.blueprints.shared import validate_transaction
 class FeeToken:
     """Wrapper of token for charging fees."""
 
@@ -105,11 +103,8 @@ class FeeToken:
         return
 
     @classmethod
-    async def mint(cls, to_address: str, amount: int) -> None:
+    async def mint(cls, to_address: str, amount: int, starknet_wrapper) -> None:
         """Mint with internal transaction"""
-        from .state import state
-        from starknet_devnet.blueprints.shared import validate_transaction
-
         assert cls.contract
         amount_uint256 = Uint256.from_felt(amount)
 
@@ -125,7 +120,7 @@ class FeeToken:
             "type": "INVOKE_FUNCTION",
         }
         transaction = validate_transaction(json.dumps(transaction_data).encode("utf-8"))
-        c_address, tx_hash, result = await state.starknet_wrapper.invoke(transaction)
+        c_address, tx_hash, result = await starknet_wrapper.invoke(transaction)
 
         pp({'c_address':c_address, 'tx_hash':tx_hash, 'result':result})
         return

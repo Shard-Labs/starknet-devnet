@@ -107,7 +107,7 @@ async def mint():
     if is_lite:
         await FeeToken.mint_lite(address, amount)
     else:
-        await FeeToken.mint(address, amount)
+        await FeeToken.mint(address, amount, state.starknet_wrapper)
 
     new_balance = await FeeToken.get_balance(int(address, 16))
     return jsonify({"new_balance": new_balance, "unit": "wei"})
