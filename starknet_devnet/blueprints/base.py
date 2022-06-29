@@ -94,3 +94,19 @@ def get_predeployed_accounts():
     """Get predeployed accounts"""
     accounts = state.starknet_wrapper.accounts
     return jsonify([account.to_json() for account in accounts])
+
+@base.route("/mint", methods=["POST"])
+async def mint():
+    """Mint token and transfer to the provided address"""
+    request_json = request.json or {}
+
+    address = request_json["address"]
+    amount = request_json["amount"]
+
+    if request_json["lite"]:
+        await FeeToken.mint(address, amount)
+    else:
+        await FeeToken.mint_transaction(address, amount)
+
+    new_balance = await FeeToken.get_balance(int(address, 16))
+    return jsonify({"new_balance": new_balance, "unit": "wei"})
