@@ -18,11 +18,11 @@ from starknet_devnet.blueprints.shared import validate_transaction
 class FeeToken:
     """Wrapper of token for charging fees."""
 
-    CONTRACT_CLASS: ContractClass = None  # loaded lazily
+    CONTRACT_CLASS: ContractClass = None # loaded lazily
 
     # Precalcuated to save time
     # HASH = to_bytes(compute_class_hash(contract_class=FeeToken.get_contract_class()))
-    HASH = 375899817338126263298463755162657787890597705735749339531748983767835688120
+    HASH = 622162576885893966911555913489982941873402447667986332137393761644775003206
     HASH_BYTES = to_bytes(HASH)
 
     # Random value to fix the token contract address
@@ -34,9 +34,8 @@ class FeeToken:
     #     constructor_calldata=CONSTRUCTOR_CALLDATA,
     #     caller_address=0
     # )
-    ADDRESS = (
-        3010087218464233437042494926438213308193618470717965319183989869245145381251
-    )
+    ADDRESS = 3010087218464233437042494926438213308193618470717965319183989869245145381251
+    
 
     contract: StarknetContract = None
 
