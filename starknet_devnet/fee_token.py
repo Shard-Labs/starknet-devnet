@@ -35,7 +35,6 @@ class FeeToken:
     #     caller_address=0
     # )
     ADDRESS = 3290689117291098244070635649148776316499078311384971296169699628362510021171
-    
 
     contract: StarknetContract = None
 
