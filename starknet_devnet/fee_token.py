@@ -2,7 +2,6 @@
 Fee token and its predefined constants.
 """
 import json
-from pprint import pp
 from starkware.solidity.utils import load_nearby_contract
 from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.business_logic.state.objects import (
@@ -97,7 +96,7 @@ class FeeToken:
         mount_uint256 = Uint256.from_felt(amount)
         result = await cls.contract.mint(int(to_address, 16), (mount_uint256.low, mount_uint256.high)).invoke()
 
-        pp({"main_call_events":result.main_call_events, "raw_events":result.raw_events})
+        print({"main_call_events":result.main_call_events, "raw_events":result.raw_events})
         return
 
     @classmethod
@@ -120,5 +119,5 @@ class FeeToken:
         transaction = validate_transaction(json.dumps(transaction_data).encode("utf-8"))
         c_address, tx_hash, result = await starknet_wrapper.invoke(transaction)
 
-        pp({'c_address':c_address, 'tx_hash':tx_hash, 'result':result})
+        print({'c_address':c_address, 'tx_hash':tx_hash, 'result':result})
         return
