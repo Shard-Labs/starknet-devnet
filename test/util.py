@@ -24,7 +24,7 @@ def assigne_test_port():
     sock.bind(('', 0))
     port = sock.getsockname()[1]
     set_port(port)
-    return port
+    return str(port)
 
 def run_devnet_in_background(*args, stderr=None, stdout=None):
     """
@@ -36,8 +36,8 @@ def run_devnet_in_background(*args, stderr=None, stdout=None):
     PORT = assigne_test_port()
     command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT, *args]
     # pylint: disable=consider-using-with
-    proc = subprocess.Popen(command, close_fds=True, stderr=stderr, stdout=subprocess.PIPE)
-    
+    proc = subprocess.Popen(command, close_fds=True, stderr=stderr, stdout=stdout)
+
     ensure_server_alive(f"{get_app_url()}/is_alive", proc)
     return proc
 
