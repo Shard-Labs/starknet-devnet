@@ -8,14 +8,23 @@ import re
 import subprocess
 import time
 import requests
+import socket
 
 from starkware.starknet.services.api.contract_class import ContractClass
 
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
-from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT, APP_URL
+from .settings import get_app_url, HOST, set_port
 
 class ReturnCodeAssertionError(AssertionError):
     """Error to be raised when the return code of an executed process is not as expected."""
+
+def assigne_test_port():
+    '''assigne free port to be used for testing'''
+    sock = socket.socket()
+    sock.bind(('', 0))
+    port = sock.getsockname()[1]
+    set_port(port)
+    return port
 
 def run_devnet_in_background(*args, stderr=None, stdout=None):
     """
@@ -24,11 +33,12 @@ def run_devnet_in_background(*args, stderr=None, stdout=None):
     Accepts extra args to pass to `starknet-devnet` command.
     Returns the process handle.
     """
+    PORT = assigne_test_port()
     command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT, *args]
     # pylint: disable=consider-using-with
-    proc = subprocess.Popen(command, close_fds=True, stderr=stderr, stdout=stdout)
-
-    ensure_server_alive(f"{APP_URL}/is_alive", proc)
+    proc = subprocess.Popen(command, close_fds=True, stderr=stderr, stdout=subprocess.PIPE)
+    
+    ensure_server_alive(f"{get_app_url()}/is_alive", proc)
     return proc
 
 def devnet_in_background(*devnet_args, **devnet_kwargs):
@@ -111,8 +121,8 @@ def run_starknet(args, raise_on_nonzero=True, add_gateway_urls=True):
     my_args = ["poetry", "run", "starknet", *args]
     if add_gateway_urls:
         my_args.extend([
-            "--gateway_url", GATEWAY_URL,
-            "--feeder_gateway_url", FEEDER_GATEWAY_URL
+            "--gateway_url", get_app_url(),
+            "--feeder_gateway_url", get_app_url()
         ])
     output = subprocess.run(my_args, encoding="utf-8", check=False, capture_output=True)
     if output.returncode != 0 and raise_on_nonzero:

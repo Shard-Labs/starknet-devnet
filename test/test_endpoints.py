@@ -3,7 +3,7 @@ Test endpoints directly.
 """
 
 from test.util import load_file_content
-from test.settings import GATEWAY_URL
+from test.settings import get_app_url
 
 import json
 import requests
@@ -120,14 +120,14 @@ def test_call_with_complete_request_data():
 def send_transaction_with_requests(req_dict: dict):
     """Sends the dict in a POST request and returns the response data."""
     return requests.post(
-        f"{GATEWAY_URL}/gateway/add_transaction",
+        f"{get_app_url()}/gateway/add_transaction",
         json=json.dumps(req_dict)
     )
 
 def send_call_with_requests(req_dict: dict):
     """Sends the call dict in a POST request and returns the response data."""
     return requests.post(
-        f"{GATEWAY_URL}/feeder_gateway/call_contract",
+        f"{get_app_url()}/feeder_gateway/call_contract",
         json=json.dumps(req_dict)
     )
 
@@ -135,38 +135,38 @@ def get_block_number(req_dict: dict):
     """Get block number from request dict"""
     block_number = req_dict["blockNumber"]
     return requests.get(
-        f"{GATEWAY_URL}/feeder_gateway/get_block?blockNumber={block_number}"
+        f"{get_app_url()}/feeder_gateway/get_block?blockNumber={block_number}"
     )
 
 def get_transaction_trace(transaction_hash:str):
     """Get transaction trace from request dict"""
     # transactionHash
     return requests.get(
-        f"{GATEWAY_URL}/feeder_gateway/get_transaction_trace?transactionHash={transaction_hash}"
+        f"{get_app_url()}/feeder_gateway/get_transaction_trace?transactionHash={transaction_hash}"
     )
 
 def get_full_contract(contract_adress):
     """Get full contract class of a contract at a specific address"""
     return requests.get(
-        f"{GATEWAY_URL}/feeder_gateway/get_full_contract?contractAddress={contract_adress}"
+        f"{get_app_url()}/feeder_gateway/get_full_contract?contractAddress={contract_adress}"
     )
 
 def get_class_by_hash(class_hash: str):
     """Get contract class by class hash"""
     return requests.get(
-        f"{GATEWAY_URL}/feeder_gateway/get_class_by_hash?classHash={class_hash}"
+        f"{get_app_url()}/feeder_gateway/get_class_by_hash?classHash={class_hash}"
     )
 
 def get_class_hash_at(contract_address: str):
     """Get class hash of a contract at the provided address"""
     return requests.get(
-        f"{GATEWAY_URL}/feeder_gateway/get_class_hash_at?contractAddress={contract_address}"
+        f"{get_app_url()}/feeder_gateway/get_class_hash_at?contractAddress={contract_address}"
     )
 
 def get_state_update(block_hash, block_number):
     """Get state update"""
     return requests.get(
-        f"{GATEWAY_URL}/feeder_gateway/get_state_update?blockHash={block_hash}&blockNumber={block_number}"
+        f"{get_app_url()}/feeder_gateway/get_state_update?blockHash={block_hash}&blockNumber={block_number}"
     )
 
 @devnet_in_background()

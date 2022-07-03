@@ -19,6 +19,7 @@ meinheld = "~1.0.2"
 Werkzeug = "~2.0.3"
 cloudpickle = "~2.1.0"
 crypto-cpp-py = "~1.0.4"
+pytest-xdist = "^2.5.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "~2.12.2"

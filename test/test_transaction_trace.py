@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from .util import deploy, invoke, load_json_from_path, devnet_in_background
-from .settings import FEEDER_GATEWAY_URL
+from .settings import get_app_url
 from .shared import ABI_PATH, CONTRACT_PATH, SIGNATURE, NONEXISTENT_TX_HASH
 
 def get_transaction_trace_response(tx_hash=None):
@@ -16,7 +16,7 @@ def get_transaction_trace_response(tx_hash=None):
     }
 
     res = requests.get(
-        f"{FEEDER_GATEWAY_URL}/feeder_gateway/get_transaction_trace",
+        f"{get_app_url()}/feeder_gateway/get_transaction_trace",
         params=params
     )
 
