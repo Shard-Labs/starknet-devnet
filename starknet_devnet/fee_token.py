@@ -1,19 +1,18 @@
 """
 Fee token and its predefined constants.
 """
+
 import json
 from starkware.solidity.utils import load_nearby_contract
 from starkware.starknet.services.api.contract_class import ContractClass
-from starkware.starknet.business_logic.state.objects import (
-    ContractState,
-    ContractCarriedState,
-)
+from starkware.starknet.business_logic.state.objects import (ContractState, ContractCarriedState)
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 from starkware.python.utils import to_bytes
 from starkware.starknet.compiler.compile import get_selector_from_name
 from starknet_devnet.util import Uint256
 from starknet_devnet.blueprints.shared import validate_transaction
+
 class FeeToken:
     """Wrapper of token for charging fees."""
 
@@ -41,9 +40,7 @@ class FeeToken:
     def get_contract_class(cls):
         """Returns contract class via lazy loading."""
         if not cls.CONTRACT_CLASS:
-            cls.CONTRACT_CLASS = ContractClass.load(
-                load_nearby_contract("ERC20_Mintable")
-            )
+            cls.CONTRACT_CLASS = ContractClass.load(load_nearby_contract("ERC20_Mintable"))
         return cls.CONTRACT_CLASS
 
     @classmethod
@@ -54,12 +51,10 @@ class FeeToken:
         fee_token_state = fee_token_carried_state.state
         assert not fee_token_state.initialized
 
-        starknet.state.state.contract_definitions[
-            cls.HASH_BYTES
-        ] = cls.get_contract_class()
+        starknet.state.state.contract_definitions[cls.HASH_BYTES] = cls.get_contract_class()
         newly_deployed_fee_token_state = await ContractState.create(
             contract_hash=cls.HASH_BYTES,
-            storage_commitment_tree=fee_token_state.storage_commitment_tree,
+            storage_commitment_tree=fee_token_state.storage_commitment_tree
         )
 
         starknet.state.state.contract_states[cls.ADDRESS] = ContractCarriedState(
@@ -68,14 +63,14 @@ class FeeToken:
                 # Running the constructor doesn't need to be simulated
                 # If it was, it would be done like this:
                 # get_selector_from_name("ERC20_name_"): StorageLeaf(42)
-            },
+            }
         )
 
         cls.contract = StarknetContract(
             state=starknet.state,
             abi=cls.get_contract_class().abi,
             contract_address=cls.ADDRESS,
-            deploy_execution_info=None,
+            deploy_execution_info=None
         )
 
     @classmethod
@@ -83,9 +78,10 @@ class FeeToken:
         """Return the balance of the contract under `address`."""
         assert cls.contract
         response = await cls.contract.balanceOf(address).call()
-        print("original balance value:", response.result.balance)
+        print("balance:", response.result.balance)
         balance = Uint256(
-            low=response.result.balance.low, high=response.result.balance.high
+            low=response.result.balance.low,
+            high=response.result.balance.high
         ).to_felt()
         return balance
 
