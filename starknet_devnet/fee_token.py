@@ -93,10 +93,7 @@ class FeeToken:
         """Mint `amount` of token at `address`."""
         assert cls.contract
         amount_uint256 = Uint256.from_felt(amount)
-        result = await cls.contract.mint(int(to_address, 16), (amount_uint256.low, amount_uint256.high)).invoke()
-
-        print({"main_call_events":result.main_call_events, "raw_events":result.raw_events})
-        return
+        return await cls.contract.mint(int(to_address, 16), (amount_uint256.low, amount_uint256.high)).invoke()
 
     @classmethod
     async def mint(cls, to_address: str, amount: int, starknet_wrapper) -> None:
@@ -116,7 +113,4 @@ class FeeToken:
             "type": "INVOKE_FUNCTION",
         }
         transaction = validate_transaction(json.dumps(transaction_data).encode("utf-8"))
-        c_address, tx_hash, result = await starknet_wrapper.invoke(transaction)
-
-        print({'c_address':c_address, 'tx_hash':tx_hash, 'result':result})
-        return
+        return await starknet_wrapper.invoke(transaction)
