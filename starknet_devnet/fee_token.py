@@ -63,6 +63,9 @@ class FeeToken:
                 # Running the constructor doesn't need to be simulated
                 # If it was, it would be done like this:
                 # get_selector_from_name("ERC20_name_"): StorageLeaf(42)
+                #'ERC20_name': 'TestST',
+                #'ERC20_symbol': 'TST',
+                #'ERC20_decimals': 18
             }
         )
 
@@ -78,7 +81,7 @@ class FeeToken:
         """Return the balance of the contract under `address`."""
         assert cls.contract
         response = await cls.contract.balanceOf(address).call()
-        print("balance:", response.result.balance)
+
         balance = Uint256(
             low=response.result.balance.low,
             high=response.result.balance.high
@@ -89,8 +92,8 @@ class FeeToken:
     async def mint_lite(cls, to_address: str, amount: int) -> None:
         """Mint `amount` of token at `address`."""
         assert cls.contract
-        mount_uint256 = Uint256.from_felt(amount)
-        result = await cls.contract.mint(int(to_address, 16), (mount_uint256.low, mount_uint256.high)).invoke()
+        amount_uint256 = Uint256.from_felt(amount)
+        result = await cls.contract.mint(int(to_address, 16), (amount_uint256.low, amount_uint256.high)).invoke()
 
         print({"main_call_events":result.main_call_events, "raw_events":result.raw_events})
         return
