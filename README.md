@@ -411,6 +411,30 @@ Response:
 }
 ```
 
+## Mintable
+
+Used ERC20 Mintable fee Token
+
+### Mint fee token
+
+```
+POST /mint
+{
+    "address": "0x6e3205f...",
+    "amount": 500000
+}
+```
+
+Response:
+
+```
+{
+    "new_balance": 500000,
+    "unit": "wei",
+    "tx_hash": 242245223...
+}
+```
+
 ## Devnet speed-up troubleshooting
 
 If you are not satisfied with Devnet's performance, consider the following:
