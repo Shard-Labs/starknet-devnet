@@ -1,12 +1,12 @@
 """Fee token related tests."""
 from test.settings import GATEWAY_URL
+from test.test_account import deploy_empty_contract, execute, assert_tx_status, get_transaction_receipt, get_account_balance, call, ABI_PATH
 import pytest
 import requests
 from starkware.starknet.core.os.class_hash import compute_class_hash
 from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address_from_hash
 from starknet_devnet.fee_token import FeeToken
 from .util import assert_equal, devnet_in_background
-from test.test_account import deploy_empty_contract, execute, assert_tx_status, get_transaction_receipt, get_account_balance, call, ABI_PATH
 
 @pytest.mark.fee_token
 def test_precomputed_contract_hash():

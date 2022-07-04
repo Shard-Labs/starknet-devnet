@@ -2,16 +2,15 @@
 Fee token and its predefined constants.
 """
 
-import json
 from starkware.solidity.utils import load_nearby_contract
 from starkware.starknet.services.api.contract_class import ContractClass
+from starkware.starknet.services.api.gateway.transaction import InvokeFunction
 from starkware.starknet.business_logic.state.objects import (ContractState, ContractCarriedState)
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 from starkware.python.utils import to_bytes
 from starkware.starknet.compiler.compile import get_selector_from_name
 from starknet_devnet.util import Uint256
-from starknet_devnet.blueprints.shared import validate_transaction
 
 class FeeToken:
     """Wrapper of token for charging fees."""
@@ -109,8 +108,7 @@ class FeeToken:
                 str(amount_uint256.high),
             ],
             "signature": [],
-            "contract_address": hex(cls.ADDRESS),
-            "type": "INVOKE_FUNCTION",
+            "contract_address": hex(cls.ADDRESS)
         }
-        transaction = validate_transaction(json.dumps(transaction_data).encode("utf-8"))
+        transaction = InvokeFunction.load(transaction_data)
         return await starknet_wrapper.invoke(transaction)
