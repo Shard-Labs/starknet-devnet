@@ -9,6 +9,34 @@ from starknet_devnet.util import StarknetDevnetException
 
 base = Blueprint("base", __name__)
 
+def extract_positive(request_json, prop_name: str):
+    """Expects `prop_name` from `request_json` and expects it to be positive"""
+    value = request_json.get(prop_name)
+
+    if value is None:
+        raise StarknetDevnetException(message=f"{prop_name} value must be provided.", status_code=400)
+
+    if not isinstance(value, int):
+        raise StarknetDevnetException(message=f"{prop_name} value must be an integer.", status_code=400)
+
+    if value < 0:
+        raise StarknetDevnetException(message=f"{prop_name} value must be greater than 0.", status_code=400)
+
+    return value
+
+def extract_hex_string(request_json, prop_name: str) -> int:
+    """Parse value from hex string to int"""
+    value = request_json.get(prop_name)
+    if value is None:
+        raise StarknetDevnetException(status_code=400, message=f"{prop_name} value must be provided.")
+
+    try:
+        return int(value, 16)
+    except (ValueError, TypeError) as error:
+        message = f"{prop_name} value must be a hex string."
+        raise StarknetDevnetException(status_code=400, message=message) from error
+
+
 @base.route("/is_alive", methods=["GET"])
 def is_alive():
     """Health check endpoint."""
@@ -43,22 +71,6 @@ def load():
 
     state.load(load_path)
     return Response(status=200)
-
-def extract_positive(request_json, prop_name: str):
-    """Expects the received `value` to be positive"""
-    value = request_json.get(prop_name)
-
-    if value is None:
-        raise StarknetDevnetException(message=f"{prop_name} value must be provided.", status_code=400)
-
-    if not isinstance(value, int):
-        raise StarknetDevnetException(message=f"{prop_name} value must be an integer.", status_code=400)
-
-    if value < 0:
-        raise StarknetDevnetException(message=f"{prop_name} value must be greater than 0.", status_code=400)
-
-    return value
-
 
 @base.route("/increase_time", methods=["POST"])
 def increase_time():
@@ -96,18 +108,6 @@ def get_predeployed_accounts():
     """Get predeployed accounts"""
     accounts = state.starknet_wrapper.accounts
     return jsonify([account.to_json() for account in accounts])
-
-def extract_hex_string(request_json, prop_name: str) -> int:
-    """Parse value from hex string to int"""
-    value = request_json.get(prop_name)
-    if value is None:
-        raise StarknetDevnetException(status_code=400, message=f"{prop_name} value must be provided.")
-
-    try:
-        return int(value, 16)
-    except (ValueError, TypeError) as error:
-        message = f"{prop_name} value must be a hex string."
-        raise StarknetDevnetException(status_code=400, message=message) from error
 
 @base.route("/mint", methods=["POST"])
 async def mint():
