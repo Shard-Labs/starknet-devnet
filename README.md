@@ -411,11 +411,13 @@ Response:
 }
 ```
 
-## Mintable
+## Mint token - Local faucet
 
-Used ERC20 Mintable fee Token
+Other than using prefunded predeployed accounts, you can also add funds to an account that you deployed yourself.
 
-### Mint fee token
+### Mint with a transaction
+
+By not setting the `lite` parameter or by setting it to `false`, new tokens will be minted in a separate transaction. You will receive the hash of this transaction, as well as the new balance after minting in the response.
 
 ```
 POST /mint
@@ -431,7 +433,30 @@ Response:
 {
     "new_balance": 500000,
     "unit": "wei",
-    "tx_hash": 242245223...
+    "tx_hash": "0xa24f23..."
+}
+```
+
+### Mint lite
+
+By setting the `lite` parameter, new tokens will be minted without generating a transaction, thus executing faster.
+
+```
+POST /mint
+{
+    "address": "0x6e3205f...",
+    "amount": 500000,
+    "lite": true
+}
+```
+
+Response:
+
+```
+{
+    "new_balance": 500000,
+    "unit": "wei",
+    "tx_hash": null
 }
 ```
 
