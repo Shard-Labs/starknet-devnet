@@ -1,12 +1,12 @@
 """Fee token related tests."""
-from test.settings import GATEWAY_URL
-from test.test_account import deploy_empty_contract, execute, assert_tx_status, get_transaction_receipt, get_account_balance, call, ABI_PATH
+from test.settings import APP_URL
+from test.test_account import deploy_empty_contract, execute, assert_tx_status, get_transaction_receipt, get_account_balance
 import pytest
 import requests
 from starkware.starknet.core.os.class_hash import compute_class_hash
 from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address_from_hash
 from starknet_devnet.fee_token import FeeToken
-from .util import assert_equal, devnet_in_background
+from .util import assert_equal, devnet_in_background, get_block
 
 @pytest.mark.fee_token
 def test_precomputed_contract_hash():
@@ -25,40 +25,49 @@ def test_precomputed_address():
     )
     assert_equal(recalculated_address, FeeToken.ADDRESS)
 
+def mint(address: str, amount: int, lite=False):
+    """Sends mint request; returns parsed json body"""
+    response = requests.post(f"{APP_URL}/mint", json={
+        "address": address,
+        "amount": amount,
+        "lite": lite
+    })
+    assert response.status_code == 200
+    return response.json()
+
 @pytest.mark.fee_token
 @devnet_in_background()
 def test_mint():
     """Assert that mint will increase account balance and latest block created with correct transaction amount"""
 
-    json_load = {
-        "address": "0x6e3205f9b7c4328f00f718fdecf56ab31acfb3cd6ffeb999dcbac4123655502",
-        "amount": 50_000
-    }
-    response = requests.post(f"{GATEWAY_URL}/mint", json=json_load)
-    assert response.status_code == 200
-    assert response.json().get('new_balance') == 50_000
+    account_address = "0x6e3205f9b7c4328f00f718fdecf56ab31acfb3cd6ffeb999dcbac4123655502"
+    response = mint(address=account_address, amount=50_000)
+    assert response.get("new_balance") == 50_000
+    assert response.get("unit") == "wei"
+    assert response.get("tx_hash").startswith("0x")
 
-    response = requests.get(f"{GATEWAY_URL}/feeder_gateway/get_block?blockNumber=latest")
+    get_block(block_number="latest")
+    response = requests.get(f"{APP_URL}/feeder_gateway/get_block?blockNumber=latest")
     assert response.status_code == 200
-    assert response.json().get('block_number') == 0
-    assert int(response.json().get('transactions')[0].get('calldata')[1], 16) == 50_000
+    assert response.json().get("block_number") == 0
+    assert int(response.json().get("transactions")[0].get("calldata")[1], 16) == 50_000
 
 @pytest.mark.fee_token
 @devnet_in_background()
 def test_mint_lite():
     """Assert that mint lite will increase account balance without producing block"""
-    json_load = {
-        "address": "0x34d09711b5c047471fd21d424afbf405c09fd584057e1d69c77223b535cf769",
-        "amount": 50_000,
-        "lite": True
-    }
-    response = requests.post(f"{GATEWAY_URL}/mint", json=json_load)
-    assert response.status_code == 200
-    assert response.json().get('new_balance') == 50000
+    response = mint(
+        address="0x34d09711b5c047471fd21d424afbf405c09fd584057e1d69c77223b535cf769",
+        amount=50_000,
+        lite=True
+    )
+    assert response.get("new_balance") == 50000
+    assert response.get("unit") == "wei"
+    assert response.get("tx_hash") is None
 
-    response = requests.get(f"{GATEWAY_URL}/feeder_gateway/get_block?blockNumber=latest")
+    response = requests.get(f"{APP_URL}/feeder_gateway/get_block?blockNumber=latest")
     assert response.status_code == 500
-    assert response.json().get('message') == 'Requested the latest block, but there are no blocks so far.'
+    assert response.json().get("message") == "Requested the latest block, but there are no blocks so far."
 
 @pytest.mark.fee_token
 @devnet_in_background(
@@ -68,13 +77,13 @@ def test_mint_lite():
     "--initial-balance", "10"
 )
 def test_increase_balance():
-    '''Assert no funds for transaction than mint funds and success transaction'''
+    """Assert tx failure if insufficient funds; assert tx success after mint"""
+
     deploy_info = deploy_empty_contract()
     account_address = "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a"
     private_key = 0xbdd640fb06671ad11c80317fa3b1799d
     to_address = int(deploy_info["address"], 16)
     initial_account_balance = get_account_balance(account_address)
-    initial_contract_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
 
     args = [10, 20]
     calls = [(to_address, "increase_balance", args)]
@@ -84,19 +93,19 @@ def test_increase_balance():
     invoke_receipt = get_transaction_receipt(invoke_tx_hash)
     assert "subtraction overflow" in invoke_receipt["transaction_failure_reason"]["error_message"]
 
-    final_contract_balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
-    assert_equal(final_contract_balance, initial_contract_balance)
+    intermediate_account_balance = get_account_balance(account_address)
+    assert_equal(initial_account_balance, intermediate_account_balance)
 
-    final_account_balance = get_account_balance(account_address)
-    assert_equal(initial_account_balance, final_account_balance)
+    mint_amount = 200_000_000_000_000
+    mint(address=account_address, amount=mint_amount)
+    balance_after_mint = get_account_balance(account_address)
+    assert_equal(balance_after_mint, initial_account_balance + mint_amount)
 
-    json_load = {
-        "address": "0x347be35996a21f6bf0623e75dbce52baba918ad5ae8d83b6f416045ab22961a",
-        "amount": 200_000_000_000_000
-    }
-    response = requests.post(f"{GATEWAY_URL}/mint", json=json_load)
-    assert response.status_code == 200
     invoke_tx_hash = execute(calls, account_address, private_key, max_fee=10 ** 21) # big enough
     assert_tx_status(invoke_tx_hash, "ACCEPTED_ON_L2")
+
+    invoke_receipt = get_transaction_receipt(invoke_tx_hash)
+    actual_fee = int(invoke_receipt["actual_fee"], 16)
+
     final_account_balance = get_account_balance(account_address)
-    assert initial_account_balance != final_account_balance
+    assert_equal(final_account_balance, initial_account_balance + mint_amount - actual_fee)

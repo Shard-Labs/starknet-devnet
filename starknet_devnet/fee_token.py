@@ -88,22 +88,22 @@ class FeeToken:
         return balance
 
     @classmethod
-    async def mint_lite(cls, to_address: str, amount: int) -> None:
-        """Mint `amount` of token at `address`."""
+    async def mint_lite(cls, to_address: int, amount: int) -> None:
+        """Mint `amount` of token at `to_address` without creating a tx."""
         assert cls.contract
         amount_uint256 = Uint256.from_felt(amount)
-        return await cls.contract.mint(int(to_address, 16), (amount_uint256.low, amount_uint256.high)).invoke()
+        await cls.contract.mint(to_address, (amount_uint256.low, amount_uint256.high)).invoke()
 
     @classmethod
-    async def mint(cls, to_address: str, amount: int, starknet_wrapper) -> None:
-        """Mint with internal transaction"""
+    async def mint(cls, to_address: int, amount: int, starknet_wrapper):
+        """Mint `amoutn` of token at `to_address` with creating a tx."""
         assert cls.contract
         amount_uint256 = Uint256.from_felt(amount)
 
         transaction_data = {
             "entry_point_selector": hex(get_selector_from_name("mint")),
             "calldata": [
-                str(int(to_address, 0)),
+                str(to_address),
                 str(amount_uint256.low),
                 str(amount_uint256.high),
             ],
@@ -111,4 +111,5 @@ class FeeToken:
             "contract_address": hex(cls.ADDRESS)
         }
         transaction = InvokeFunction.load(transaction_data)
-        return await starknet_wrapper.invoke(transaction)
+        _, tx_hash, _ = await starknet_wrapper.invoke(transaction)
+        return tx_hash
