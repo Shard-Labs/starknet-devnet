@@ -5,6 +5,7 @@ Fee token and its predefined constants.
 from starkware.solidity.utils import load_nearby_contract
 from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction
+from starkware.starknet.storage.starknet_storage import StorageLeaf
 from starkware.starknet.business_logic.state.objects import (ContractState, ContractCarriedState)
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
@@ -39,7 +40,7 @@ class FeeToken:
     def get_contract_class(cls):
         """Returns contract class via lazy loading."""
         if not cls.CONTRACT_CLASS:
-            cls.CONTRACT_CLASS = ContractClass.load(load_nearby_contract("ERC20_Mintable"))
+            cls.CONTRACT_CLASS = ContractClass.load(load_nearby_contract("ERC20_Mintable_OZ_0.2.0"))
         return cls.CONTRACT_CLASS
 
     @classmethod
@@ -62,9 +63,9 @@ class FeeToken:
                 # Running the constructor doesn't need to be simulated
                 # If it was, it would be done like this:
                 # get_selector_from_name("ERC20_name_"): StorageLeaf(42)
-                #'ERC20_name': 'TestST',
-                #'ERC20_symbol': 'TST',
-                #'ERC20_decimals': 18
+                get_selector_from_name('ERC20_name'): StorageLeaf(int.from_bytes(bytes('DevnetST', "ascii"), "big")),
+                get_selector_from_name('ERC20_symbol'): StorageLeaf(int.from_bytes(bytes('DST', "ascii"), "big")),
+                get_selector_from_name('ERC20_decimals'): StorageLeaf(18)
             }
         )
 
