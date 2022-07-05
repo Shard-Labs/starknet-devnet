@@ -96,7 +96,7 @@ class FeeToken:
 
     @classmethod
     async def mint(cls, to_address: int, amount: int, starknet_wrapper):
-        """Mint `amoutn` of token at `to_address` with creating a tx."""
+        """Mint `amount` of token at `to_address` with creating a tx."""
         assert cls.contract
         amount_uint256 = Uint256.from_felt(amount)
 
