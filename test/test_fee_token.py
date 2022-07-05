@@ -1,11 +1,14 @@
 """Fee token related tests."""
+
 from test.settings import APP_URL
 from test.test_account import deploy_empty_contract, execute, assert_tx_status, get_transaction_receipt, get_account_balance
+import json
 import pytest
 import requests
 from starkware.starknet.core.os.class_hash import compute_class_hash
 from starkware.starknet.core.os.contract_address.contract_address import calculate_contract_address_from_hash
 from starknet_devnet.fee_token import FeeToken
+from starknet_devnet.server import app
 from .util import assert_equal, devnet_in_background, get_block
 
 @pytest.mark.fee_token
@@ -34,6 +37,62 @@ def mint(address: str, amount: int, lite=False):
     })
     assert response.status_code == 200
     return response.json()
+
+def mint_client(data: dict):
+    """Send mint request to app test client"""
+    return app.test_client().post(
+        "/mint",
+        content_type="application/json",
+        data=json.dumps(data)
+    )
+
+def test_negative_mint():
+    """Assert failure if mint amount negative"""
+    resp = mint_client({
+        "amount": -10,
+        "address": "0x1"
+    })
+
+    assert resp.status_code == 400
+    assert resp.json["message"] == "amount value must be greater than 0."
+
+def test_mint_amount_not_int():
+    """Assert failure if mint amount not int"""
+    resp = mint_client({
+        "amount": "abc",
+        "address": "0x1"
+    })
+
+    assert resp.status_code == 400
+    assert resp.json["message"] == "amount value must be an integer."
+
+def test_missing_mint_amount():
+    """Assert failure if mint amount missing"""
+    resp = mint_client({
+        "address": "0x1"
+    })
+
+    assert resp.status_code == 400
+    assert resp.json["message"] == "amount value must be provided."
+
+def test_wrong_mint_address_format():
+    """Assert failure if mint address of wrong format"""
+    resp = mint_client({
+        "amount": 10,
+        "address": "invalid_address"
+    })
+
+    assert resp.status_code == 400
+    assert resp.json["message"] == "address value must be a hex string."
+
+def test_missing_mint_address():
+    """Assert failure if mint address missing"""
+    resp = mint_client({
+        "amount": 10
+    })
+
+    assert resp.status_code == 400
+    assert resp.json["message"] == "address value must be provided."
 
 @pytest.mark.fee_token
 @devnet_in_background()
