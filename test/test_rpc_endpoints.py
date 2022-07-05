@@ -1,10 +1,12 @@
 """
 Tests RPC endpoints.
 """
+# pylint: disable=too-many-lines
 from __future__ import annotations
 
 import json
 import typing
+from typing import List, Union
 
 import pytest
 from starkware.starknet.public.abi import get_storage_var_address, get_selector_from_name
@@ -21,9 +23,10 @@ from .test_endpoints import send_transaction
 
 DEPLOY_CONTENT = load_file_content("deploy_rpc.json")
 INVOKE_CONTENT = load_file_content("invoke_rpc.json")
+DECLARE_CONTENT = load_file_content("declare.json")
 
 
-def rpc_call(method: str, params: dict | list) -> dict:
+def rpc_call(method: str, params: Union[dict, list]) -> dict:
     """
     Make a call to the RPC endpoint
     """
@@ -62,6 +65,15 @@ def fixture_contract_class() -> ContractClass:
     return transaction.contract_definition
 
 
+@pytest.fixture(name="class_hash")
+def fixture_class_hash(deploy_info) -> str:
+    """
+    Class hash of deployed contract
+    """
+    class_hash = gateway_call("get_class_hash_at", contractAddress=deploy_info["address"])
+    return class_hash
+
+
 @pytest.fixture(name="deploy_info", scope="module")
 def fixture_deploy_info() -> dict:
     """
@@ -81,7 +93,18 @@ def fixture_invoke_info() -> dict:
     invoke_tx["calldata"] = ["0"]
     resp = send_transaction(invoke_tx)
     invoke_info = json.loads(resp.data.decode("utf-8"))
-    return invoke_info
+    return {**invoke_info, **invoke_tx}
+
+
+@pytest.fixture(name="declare_info", scope="module")
+def fixture_declare_info() -> dict:
+    """
+    Make a declare transaction on devnet and return declare info dict
+    """
+    declare_tx = json.loads(DECLARE_CONTENT)
+    resp = send_transaction(declare_tx)
+    declare_info = json.loads(resp.data.decode("utf-8"))
+    return {**declare_info, **declare_tx}
 
 
 def get_block_with_transaction(transaction_hash: str) -> dict:
@@ -122,8 +145,7 @@ def test_get_block_by_number(deploy_info):
     assert block["parent_hash"] == pad_zero(gateway_block["parent_block_hash"])
     assert block["block_number"] == block_number
     assert block["status"] == "ACCEPTED_ON_L2"
-    assert block["sequencer"] == hex(DEFAULT_GENERAL_CONFIG.sequencer_address)
-    assert block["old_root"] != ""
+    assert block["sequencer_address"] == hex(DEFAULT_GENERAL_CONFIG.sequencer_address)
     assert block["new_root"] == pad_zero(new_root)
     assert block["transactions"] == [transaction_hash]
 
@@ -160,8 +182,7 @@ def test_get_block_by_hash(deploy_info):
     assert block["parent_hash"] == pad_zero(gateway_block["parent_block_hash"])
     assert block["block_number"] == gateway_block["block_number"]
     assert block["status"] == "ACCEPTED_ON_L2"
-    assert block["sequencer"] == hex(DEFAULT_GENERAL_CONFIG.sequencer_address)
-    assert block["old_root"] != ""
+    assert block["sequencer_address"] == hex(DEFAULT_GENERAL_CONFIG.sequencer_address)
     assert block["new_root"] == pad_zero(new_root)
     assert block["transactions"] == [transaction_hash]
 
@@ -187,8 +208,10 @@ def test_get_block_by_hash_full_txn_scope(deploy_info):
         "txn_hash": transaction_hash,
         "max_fee": "0x0",
         "contract_address": contract_address,
-        "calldata": None,
+        "calldata": [],
         "entry_point_selector": None,
+        "signature": [],
+        "version": "0x0"
     }]
 
 
@@ -213,14 +236,13 @@ def test_get_block_by_hash_full_txn_and_receipts_scope(deploy_info):
         "txn_hash": transaction_hash,
         "max_fee": "0x0",
         "contract_address": contract_address,
-        "calldata": None,
+        "calldata": [],
         "entry_point_selector": None,
+        "signature": [],
+        "version": "0x0",
         "actual_fee": "0x0",
         "status": "ACCEPTED_ON_L2",
-        "statusData": "",
-        "messages_sent": [],
-        "l1_origin_message": None,
-        "events": []
+        "statusData": None,
     }]
 
 
@@ -274,6 +296,7 @@ def test_get_state_update_by_hash(deploy_info, invoke_info, contract_class):
                 "contract_hash": pad_zero(hex(compute_class_hash(contract_class))),
             }
         ],
+        "nonces": [],
     }
 
     storage = gateway_call("get_storage_at", contractAddress=contract_address, key=get_storage_var_address("balance"))
@@ -298,6 +321,7 @@ def test_get_state_update_by_hash(deploy_info, invoke_info, contract_class):
             }
         ],
         "contracts": [],
+        "nonces": [],
     }
 
 
@@ -408,10 +432,73 @@ def test_get_transaction_by_hash_deploy(deploy_info):
     assert transaction == {
         "txn_hash": pad_zero(transaction_hash),
         "contract_address": contract_address,
+        "max_fee": "0x0",
+        "calldata": [],
         "entry_point_selector": None,
-        "calldata": None,
-        "max_fee": "0x0"
+        "signature": [],
+        "version": "0x0"
     }
+
+
+def test_get_transaction_by_hash_invoke(invoke_info):
+    """
+    Get transaction by hash
+    """
+    transaction_hash: str = invoke_info["transaction_hash"]
+    contract_address: str = invoke_info["address"]
+    entry_point_selector: str = invoke_info["entry_point_selector"]
+    signature: List[str] = [pad_zero(hex(int(sig))) for sig in invoke_info["signature"]]
+    calldata: List[str] = [pad_zero(hex(int(data))) for data in invoke_info["calldata"]]
+
+    resp = rpc_call(
+        "starknet_getTransactionByHash", params={"transaction_hash": transaction_hash}
+    )
+    transaction = resp["result"]
+
+    assert transaction == {
+        "txn_hash": pad_zero(transaction_hash),
+        "contract_address": contract_address,
+        "max_fee": "0x0",
+        "calldata": calldata,
+        "entry_point_selector": pad_zero(entry_point_selector),
+        "signature": signature,
+        "version": "0x0"
+    }
+
+
+def test_get_transaction_by_hash_declare(declare_info):
+    """
+    Get transaction by hash
+    """
+    transaction_hash: str = declare_info["transaction_hash"]
+    signature: List[str] = [pad_zero(hex(int(sig))) for sig in declare_info["signature"]]
+    sender_address: str = declare_info["sender_address"]
+
+    resp = rpc_call(
+        "starknet_getTransactionByHash", params={"transaction_hash": transaction_hash}
+    )
+    transaction = resp["result"]
+
+    assert transaction["txn_hash"] == pad_zero(transaction_hash)
+    assert transaction["max_fee"] == "0x0"
+    assert transaction["signature"] == signature
+    assert transaction["version"] == "0x0"
+    assert transaction["sender_address"] == pad_zero(sender_address)
+    assert transaction["contract_class"]["entry_points_by_type"] == {
+        "CONSTRUCTOR": [],
+        "EXTERNAL": [
+            {
+                "offset": pad_zero("0x3a"),
+                "selector": pad_zero("0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320")
+            },
+            {
+                "offset": pad_zero("0x5b"),
+                "selector": pad_zero("0x39e11d48192e4333233c7eb19d10ad67c362bb28580c604d67884c85da39695")
+            }
+        ],
+        "L1_HANDLER": []
+    }
+    assert transaction["contract_class"]["program"] != ""
 
 
 def test_get_transaction_by_hash_raises_on_incorrect_hash(deploy_info):
@@ -449,9 +536,11 @@ def test_get_transaction_by_block_hash_and_index(deploy_info):
     assert transaction == {
         "txn_hash": pad_zero(transaction_hash),
         "contract_address": contract_address,
-        "entry_point_selector": None,
-        "calldata": None,
         "max_fee": "0x0",
+        "calldata": [],
+        "entry_point_selector": None,
+        "signature": [],
+        "version": "0x0"
     }
 
 
@@ -513,9 +602,11 @@ def test_get_transaction_by_block_number_and_index(deploy_info):
     assert transaction == {
         "txn_hash": pad_zero(transaction_hash),
         "contract_address": contract_address,
-        "entry_point_selector": None,
-        "calldata": None,
         "max_fee": "0x0",
+        "calldata": [],
+        "entry_point_selector": None,
+        "signature": [],
+        "version": "0x0"
     }
 
 
@@ -555,7 +646,7 @@ def test_get_transaction_by_block_number_and_index_raises_on_incorrect_index(dep
     }
 
 
-def test_get_transaction_receipt(deploy_info, invoke_info):
+def test_get_deploy_transaction_receipt(deploy_info):
     """
     Get transaction receipt
     """
@@ -571,12 +662,52 @@ def test_get_transaction_receipt(deploy_info, invoke_info):
     assert receipt == {
         "txn_hash": pad_zero(transaction_hash),
         "status": "ACCEPTED_ON_L2",
-        "statusData": "",
-        "messages_sent": [],
-        "l1_origin_message": None,
-        "events": [],
+        "statusData": None,
         "actual_fee": "0x0"
     }
+
+
+def test_get_declare_transaction_receipt(declare_info):
+    """
+    Get transaction receipt
+    """
+    transaction_hash: str = declare_info["transaction_hash"]
+
+    resp = rpc_call(
+        "starknet_getTransactionReceipt", params={
+            "transaction_hash": transaction_hash
+        }
+    )
+    receipt = resp["result"]
+
+    assert receipt == {
+        "txn_hash": pad_zero(transaction_hash),
+        "status": "ACCEPTED_ON_L2",
+        "statusData": None,
+        "actual_fee": "0x0"
+    }
+
+
+def test_get_invoke_transaction_receipt(invoke_info):
+    """
+    Get transaction receipt
+    """
+    transaction_hash: str = invoke_info["transaction_hash"]
+
+    resp = rpc_call(
+        "starknet_getTransactionReceipt", params={
+            "transaction_hash": transaction_hash
+        }
+    )
+    receipt = resp["result"]
+
+    # Standard == receipt dict test cannot be done here, because invoke transaction fails since no contracts
+    # are actually deployed on devnet, when running test without @devnet_in_background
+    assert receipt["txn_hash"] == pad_zero(transaction_hash)
+    assert receipt["actual_fee"] == "0x0"
+    assert receipt["l1_origin_message"] is None
+    assert receipt["events"] == []
+    assert receipt["messages_sent"] == []
 
 
 def test_get_transaction_receipt_on_incorrect_hash(deploy_info):
@@ -822,7 +953,7 @@ def test_protocol_version(deploy_info):
     """
     Test protocol version
     """
-    protocol_version = "0.8.0"
+    protocol_version = "0.15.0"
 
     resp = rpc_call("starknet_protocolVersion", params={})
     version_hex: str = resp["result"]
@@ -830,3 +961,62 @@ def test_protocol_version(deploy_info):
     version = version_bytes.decode("utf-8")
 
     assert version == protocol_version
+
+
+def test_get_class(class_hash):
+    """
+    Test get contract class
+    """
+    resp = rpc_call(
+        "starknet_getClass",
+        params={"class_hash": class_hash}
+    )
+    contract_class = resp["result"]
+
+    assert contract_class["entry_points_by_type"] == {
+            "CONSTRUCTOR": [],
+            "EXTERNAL": [
+                {"offset": "0x03a", "selector": "0x0362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320"},
+                {"offset": "0x05b", "selector": "0x039e11d48192e4333233c7eb19d10ad67c362bb28580c604d67884c85da39695"}
+            ],
+            "L1_HANDLER": []
+    }
+    assert isinstance(contract_class["program"], str)
+
+
+def test_get_class_hash_at(deploy_info, class_hash):
+    """
+    Test get contract class at given hash
+    """
+    contract_address: str = deploy_info["address"]
+
+    resp = rpc_call(
+        "starknet_getClassHashAt",
+        params={"contract_address": contract_address}
+    )
+    rpc_class_hash = resp["result"]
+
+    assert rpc_class_hash == class_hash
+
+
+def test_get_class_at(deploy_info):
+    """
+    Test get contract class at given contract address
+    """
+    contract_address: str = deploy_info["address"]
+
+    resp = rpc_call(
+        "starknet_getClassAt",
+        params={"contract_address": contract_address}
+    )
+    contract_class = resp["result"]
+
+    assert contract_class["entry_points_by_type"] == {
+        "CONSTRUCTOR": [],
+        "EXTERNAL": [
+            {"offset": "0x03a", "selector": "0x0362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320"},
+            {"offset": "0x05b", "selector": "0x039e11d48192e4333233c7eb19d10ad67c362bb28580c604d67884c85da39695"}
+        ],
+        "L1_HANDLER": []
+    }
+    assert isinstance(contract_class["program"], str)
