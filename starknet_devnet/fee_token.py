@@ -20,7 +20,7 @@ class FeeToken:
 
     # Precalcuated to save time
     # HASH = to_bytes(compute_class_hash(contract_class=FeeToken.get_contract_class()))
-    HASH = 622162576885893966911555913489982941873402447667986332137393761644775003206
+    HASH = 3000409729603134799471314790024123407246450023546294072844903167350593031855
     HASH_BYTES = to_bytes(HASH)
 
     # Random value to fix the token contract address
@@ -32,7 +32,7 @@ class FeeToken:
     #     constructor_calldata=CONSTRUCTOR_CALLDATA,
     #     caller_address=0
     # )
-    ADDRESS = 3290689117291098244070635649148776316499078311384971296169699628362510021171
+    ADDRESS = 2774287484619332564597403632816768868845110259953541691709975889937073775752
 
     contract: StarknetContract = None
 
