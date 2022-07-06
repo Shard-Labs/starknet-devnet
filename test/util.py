@@ -2,7 +2,6 @@
 File containing functions that wrap Starknet CLI commands.
 """
 
-from ast import arg
 import json
 import os
 import re
@@ -35,7 +34,7 @@ def run_devnet_in_background(*args, stderr=None, stdout=None):
 
     ensure_server_alive(f"{APP_URL}/is_alive", proc)
     return proc
- 
+
 def devnet_in_background(*devnet_args, **devnet_kwargs):
     """
     Decorator that runs devnet in background and later kills it.
