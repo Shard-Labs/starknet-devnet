@@ -24,6 +24,10 @@ def run_devnet_in_background(*args, stderr=None, stdout=None):
     Accepts extra args to pass to `starknet-devnet` command.
     Returns the process handle.
     """
+    # If accounts argument is not passed 0 is used as default
+    if "--accounts" not in args:
+        args = [*args, "--accounts", "0"]
+
     command = ["poetry", "run", "starknet-devnet", "--host", settings.HOST, "--port", settings.PORT, *args]
     # pylint: disable=consider-using-with
     proc = subprocess.Popen(command, close_fds=True, stderr=stderr, stdout=stdout)
