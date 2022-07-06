@@ -12,7 +12,7 @@ from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
 
 from .shared import ARTIFACTS_PATH
 from .util import devnet_in_background, deploy, call, get_block
-from .settings import get_app_url
+from .settings import settings
 
 TS_CONTRACT_PATH = f"{ARTIFACTS_PATH}/timestamp.cairo/timestamp.json"
 TS_ABI_PATH = f"{ARTIFACTS_PATH}/timestamp.cairo/timestamp_abi.json"
@@ -37,7 +37,7 @@ def get_ts_from_last_block():
 
 def increase_time(time_s):
     """Increases the block timestamp offset"""
-    increase_time_response = requests.post(f"{get_app_url()}/increase_time", json={"time": time_s})
+    increase_time_response = requests.post(f"{settings.APP_URL}/increase_time", json={"time": time_s})
 
     if increase_time_response.status_code == 200:
         assert increase_time_response.json().get("timestamp_increased_by") == time_s
@@ -46,7 +46,7 @@ def increase_time(time_s):
 
 def set_time(time_s):
     """Sets the block timestamp and offset"""
-    set_time_response = requests.post(f"{get_app_url()}/set_time", json={"time": time_s})
+    set_time_response = requests.post(f"{settings.APP_URL}/set_time", json={"time": time_s})
 
     if set_time_response == 200:
         assert set_time_response.json().get("next_block_timestamp") == time_s

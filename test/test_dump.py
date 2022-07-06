@@ -11,7 +11,7 @@ import requests
 import pytest
 
 from .util import call, deploy, devnet_in_background, invoke, run_devnet_in_background, terminate_and_wait
-from .settings import get_app_url
+from .settings import settings
 from .shared import CONTRACT_PATH, ABI_PATH
 
 DUMP_PATH = "dump.pkl"
@@ -54,17 +54,17 @@ def run_before_and_after_test():
 def send_dump_request(dump_path: str=None):
     """Send HTTP request to trigger dumping."""
     json_load = { "path": dump_path } if dump_path else None
-    return requests.post(f"{get_app_url()}/dump", json=json_load)
+    return requests.post(f"{settings.APP_URL}/dump", json=json_load)
 
 def send_load_request(load_path: str=None):
     """Send HTTP request to trigger loading."""
     json_load = { "path": load_path } if load_path else None
-    return requests.post(f"{get_app_url()}/load", json=json_load)
+    return requests.post(f"{settings.APP_URL}/load", json=json_load)
 
 def send_error_request():
     """Send HTTP request to trigger error response."""
     json_body = { "dummy": "dummy_value" }
-    return requests.post(f"{get_app_url()}/dump", json=json_body)
+    return requests.post(f"{settings.APP_URL}/dump", json=json_body)
 
 def assert_dump_present(dump_path: str, sleep_seconds=2):
     """Assert there is a non-empty dump file."""
@@ -87,7 +87,7 @@ def dump_and_assert(dump_path: str=None):
 def assert_not_alive():
     """Assert devnet is not alive."""
     try:
-        requests.get(f"{get_app_url()}/is_alive")
+        requests.get(f"{settings.APP_URL}/is_alive")
         raise RuntimeError("Should have failed before this line.")
     except requests.exceptions.ConnectionError:
         pass

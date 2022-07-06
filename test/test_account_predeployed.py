@@ -1,6 +1,6 @@
 """Predeployed account tests"""
 
-from test.settings import get_app_url
+from .settings import settings
 
 import pytest
 import requests
@@ -34,6 +34,6 @@ def test_precomputed_contract_hash():
 @devnet_in_background(*ACCOUNTS_SEED_DEVNET_ARGS)
 def test_predeployed_accounts_predefined_values():
     """Test if --account --seed --initial-balance return exact calculated values"""
-    response = requests.get(f"{get_app_url()}/predeployed_accounts")
+    response = requests.get(f"{settings.APP_URL}/predeployed_accounts")
     assert response.status_code == 200
     assert_valid_schema(response.json(), "predeployed_accounts_fixed_seed.json")

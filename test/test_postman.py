@@ -6,7 +6,7 @@ import json
 import subprocess
 
 from test.web3_util import web3_call, web3_deploy, web3_transact
-from test.settings import L1_HOST, L1_PORT, L1_URL, get_app_url
+from test.settings import settings
 from test.util import call, deploy, devnet_in_background, ensure_server_alive, invoke, load_file_content, terminate_and_wait
 
 import psutil
@@ -30,10 +30,10 @@ def run_before_and_after_test():
     """Run l1 testnet before and kill it after the test run"""
     # Setup L1 testnet
 
-    command = ["npx", "hardhat", "node", "--hostname", L1_HOST, "--port", L1_PORT]
+    command = ["npx", "hardhat", "node", "--hostname", settings.L1_HOST, "--port", settings.L1_PORT]
     with subprocess.Popen(command, close_fds=True) as node_proc:
         # before test
-        ensure_server_alive(L1_URL, node_proc)
+        ensure_server_alive(settings.L1_URL, node_proc)
 
         yield
 
@@ -49,7 +49,7 @@ def run_before_and_after_test():
 def flush():
     """Flushes the postman messages. Returns response data"""
     res = requests.post(
-        f"{get_app_url()}/postman/flush"
+        f"{settings.APP_URL}/postman/flush"
     )
 
     return res.json()
@@ -87,10 +87,10 @@ def init_messaging_contract():
     """Initializes the messaging contract"""
 
     deploy_messaging_contract_request = {
-        "networkUrl": L1_URL
+        "networkUrl": settings.L1_URL
     }
     resp = requests.post(
-        f"{get_app_url()}/postman/load_l1_messaging_contract",
+        f"{settings.APP_URL}/postman/load_l1_messaging_contract",
         json=deploy_messaging_contract_request
     )
     return json.loads(resp.text)
@@ -115,12 +115,12 @@ def load_messaging_contract(starknet_messaging_contract_address):
     """Loads a Mock Messaging contract already deployed in the local testnet instance"""
 
     load_messaging_contract_request = {
-        "networkUrl": L1_URL,
+        "networkUrl": settings.L1_URL,
         "address": starknet_messaging_contract_address
     }
 
     resp = requests.post(
-        f"{get_app_url()}/postman/load_l1_messaging_contract",
+        f"{settings.APP_URL}/postman/load_l1_messaging_contract",
         json=load_messaging_contract_request
     )
 
@@ -156,7 +156,7 @@ def init_l2_contract(l1l2_example_contract_address):
             "to_address": l1l2_example_contract_address,
             "payload": [0, 1, 1000] # MESSAGE_WITHDRAW, user, amount
         }],
-        expected_l1_provider=L1_URL
+        expected_l1_provider=settings.L1_URL
     )
 
     #assert balance
@@ -231,7 +231,7 @@ def l1_l2_message_exchange(web3, l1l2_example_contract, l2_contract_address):
             }
         }],
         expected_from_l2=[],
-        expected_l1_provider=L1_URL,
+        expected_l1_provider=settings.L1_URL,
     )
 
     # assert l2 contract balance
@@ -255,17 +255,17 @@ def test_postman():
 
     # Test initializing a local L1 network
     init_resp = init_messaging_contract()
-    web3 = Web3(Web3.HTTPProvider(L1_URL))
+    web3 = Web3(Web3.HTTPProvider(settings.L1_URL))
     web3.eth.default_account = web3.eth.accounts[0]
     assert "address" in init_resp
-    assert init_resp["l1_provider"] == L1_URL
+    assert init_resp["l1_provider"] == settings.L1_URL
 
     starknet_messaging_contract, l1l2_example_contract = deploy_l1_contracts(web3)
 
     # Test loading the messaging contract
     load_resp = load_messaging_contract(starknet_messaging_contract.address)
     assert load_resp["address"] == starknet_messaging_contract.address
-    assert load_resp["l1_provider"] == L1_URL
+    assert load_resp["l1_provider"] == settings.L1_URL
 
     # Test initializing the l2 example contract
     l2_contract_address = init_l2_contract(l1l2_example_contract.address)
@@ -276,7 +276,7 @@ def test_postman():
 def load_l1_messaging_contract(req_dict: dict):
     """Load L1 messaging contract"""
     return requests.post(
-        f"{get_app_url()}/postman/load_l1_messaging_contract",
+        f"{settings.APP_URL}/postman/load_l1_messaging_contract",
         json=(req_dict)
     )
 
