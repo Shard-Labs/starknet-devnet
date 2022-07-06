@@ -1,7 +1,9 @@
 """Constants used in test files."""
+
 import socket
 
-class Settings(object):
+# pylint: disable=invalid-name,too-few-public-methods
+class Settings:
     '''settings'''
     HOST = "127.0.0.1"
     PORT = ""

@@ -1,15 +1,13 @@
 """Predeployed account tests"""
 
-from .settings import settings
-
 import pytest
 import requests
 
 from starkware.starknet.core.os.class_hash import compute_class_hash
-
 from starknet_devnet.account import Account
 from .util import assert_equal, devnet_in_background
 from .support.assertions import assert_valid_schema
+from .settings import settings
 
 ACCOUNTS_SEED_DEVNET_ARGS = [
     "--accounts",

@@ -7,7 +7,7 @@ import os
 import re
 import subprocess
 import time
-import requests 
+import requests
 
 from starkware.starknet.services.api.contract_class import ContractClass
 
