@@ -2,15 +2,13 @@
 Test endpoints directly.
 """
 
-from test.util import load_file_content
-from test.settings import settings
-
 import json
 import requests
 import pytest
 
 from starknet_devnet.server import app
 from .util import devnet_in_background, load_file_content
+from .settings import settings
 
 DEPLOY_CONTENT = load_file_content("deploy.json")
 INVOKE_CONTENT = load_file_content("invoke.json")
