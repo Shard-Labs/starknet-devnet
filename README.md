@@ -511,6 +511,8 @@ When running tests locally, do it from the project root:
 
 poetry run pytest test/
 
+poetry run pytest -n auto --dist loadscope test/  # parallel testing using n CPU workers
+
 poetry run pytest -s -v test/ # for more verbose output
 
 poetry run pytest test/<TEST_FILE> # for a single file
