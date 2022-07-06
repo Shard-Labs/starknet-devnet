@@ -1,17 +1,20 @@
 """
 RPC routes
-rpc version: 0.8.0
+rpc version: 0.15.0
 """
 from __future__ import annotations
 
 import json
 from typing import Callable, Union, List, Tuple, Optional, Any
+
 from typing_extensions import TypedDict
 
 from flask import Blueprint, request
 
-from starkware.starknet.services.api.gateway.transaction import InvokeFunction
+from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starkware_utils.error_handling import StarkException
+from starkware.starknet.services.api.gateway.transaction import InvokeFunction
+from starkware.starknet.services.api.gateway.transaction_utils import compress_program
 from starkware.starknet.services.api.feeder_gateway.response_objects import (
     StarknetBlock,
     InvokeSpecificInfo,
@@ -20,7 +23,8 @@ from starkware.starknet.services.api.feeder_gateway.response_objects import (
     TransactionStatus,
     TransactionSpecificInfo,
     TransactionType,
-    BlockStateUpdate
+    BlockStateUpdate,
+    DeclareSpecificInfo
 )
 
 from starknet_devnet.state import state
@@ -28,7 +32,7 @@ from ..util import StarknetDevnetException
 
 rpc = Blueprint("rpc", __name__, url_prefix="/rpc")
 
-PROTOCOL_VERSION = "0.8.0"
+PROTOCOL_VERSION = "0.15.0"
 
 @rpc.route("", methods=["POST"])
 async def base_route():
@@ -181,6 +185,43 @@ async def get_code(contract_address: str) -> dict:
     }
 
 
+async def get_class(class_hash: str) -> dict:
+    """
+    Get the code of a specific contract
+    """
+    try:
+        result = state.starknet_wrapper.contracts.get_class_by_hash(class_hash=int(class_hash, 16))
+    except StarknetDevnetException as ex:
+        raise RpcError(code=28, message="The supplied contract class hash is invalid or unknown") from ex
+
+    return rpc_contract_class(result)
+
+
+async def get_class_hash_at(contract_address: str) -> str:
+    """
+    Get the contract class hash for the contract deployed at the given address
+    """
+    try:
+        result = state.starknet_wrapper.contracts.get_class_hash_at(address=int(contract_address, 16))
+    except StarknetDevnetException as ex:
+        raise RpcError(code=28, message="The supplied contract class hash is invalid or unknown") from ex
+
+    return rpc_felt(result)
+
+
+async def get_class_at(contract_address: str) -> dict:
+    """
+    Get the contract class definition at the given address
+    """
+    try:
+        class_hash = state.starknet_wrapper.contracts.get_class_hash_at(address=int(contract_address, 16))
+        result = state.starknet_wrapper.contracts.get_class_by_hash(class_hash=class_hash)
+    except StarknetDevnetException as ex:
+        raise RpcError(code=20, message="Contract not found") from ex
+
+    return rpc_contract_class(result)
+
+
 async def get_block_transaction_count_by_hash(block_hash: str) -> int:
     """
     Get the number of transactions in a block given a block hash
@@ -233,6 +274,13 @@ async def call(contract_address: str, entry_point_selector: str, calldata: list,
         if "While handling calldata" in ex.message:
             raise RpcError(code=22, message="Invalid call data") from ex
         raise RpcError(code=-1, message=ex.message) from ex
+
+
+async def estimate_fee():
+    """
+    Get the estimate fee for the transaction
+    """
+    raise NotImplementedError()
 
 
 async def get_block_number() -> int:
@@ -296,6 +344,61 @@ def make_invoke_function(request_body: dict) -> InvokeFunction:
     )
 
 
+class EntryPoint(TypedDict):
+    """
+    TypedDict for rpc contract class entry point
+    """
+    offset: str
+    selector: str
+
+
+class EntryPoints(TypedDict):
+    """
+    TypedDict for rpc contract class entry points
+    """
+    CONSTRUCTOR: List[EntryPoint]
+    EXTERNAL: List[EntryPoint]
+    L1_HANDLER: List[EntryPoint]
+
+
+class RpcContractClass(TypedDict):
+    """
+    TypedDict for rpc contract class
+    """
+    program: str
+    entry_points_by_type: EntryPoints
+
+
+def rpc_contract_class(contract_class: ContractClass) -> RpcContractClass:
+    """
+    Convert gateway contract class to rpc contract class
+    """
+    def program() -> str:
+        _program = contract_class.program.Schema().dump(contract_class.program)
+        return compress_program(_program)
+
+    def entry_points_by_type() -> EntryPoints:
+        _entry_points: EntryPoints = {
+            "CONSTRUCTOR": [],
+            "EXTERNAL": [],
+            "L1_HANDLER": [],
+        }
+        for typ, entry_points in contract_class.entry_points_by_type.items():
+            for entry_point in entry_points:
+                _entry_point: EntryPoint = {
+                    "selector": rpc_felt(entry_point.selector),
+                    "offset": rpc_felt(entry_point.offset)
+                }
+                _entry_points[typ.name].append(_entry_point)
+        return _entry_points
+
+    _contract_class: RpcContractClass = {
+        "program": program(),
+        "entry_points_by_type": entry_points_by_type()
+    }
+    return _contract_class
+
+
 class RpcBlock(TypedDict):
     """
     TypeDict for rpc block
@@ -304,18 +407,17 @@ class RpcBlock(TypedDict):
     parent_hash: str
     block_number: int
     status: str
-    sequencer: str
+    sequencer_address: str
     new_root: str
-    old_root: str
-    accepted_time: int
-    transactions: List[str] | List[dict]
+    timestamp: int
+    transactions: Union[List[str], List[dict]]
 
 
 async def rpc_block(block: StarknetBlock, requested_scope: Optional[str] = "TXN_HASH") -> RpcBlock:
     """
     Convert gateway block to rpc block
     """
-    async def transactions() -> List[RpcTransaction]:
+    async def transactions() -> List[Union[RpcInvokeTransaction, RpcDeclareTransaction]]:
         # pylint: disable=no-member
         return [rpc_transaction(tx) for tx in block.transactions]
 
@@ -335,14 +437,6 @@ async def rpc_block(block: StarknetBlock, requested_scope: Optional[str] = "TXN_
         # pylint: disable=no-member
         return rpc_root(block.state_root.hex())
 
-    def old_root() -> str:
-        _root = state.starknet_wrapper.blocks.get_by_number(block_number=block_number - 1).state_root \
-            if block_number - 1 >= 0 \
-            else b"\x00" * 32
-        return rpc_root(_root.hex())
-
-    block_number = block.block_number
-
     mapping: dict[str, Callable] = {
         "TXN_HASH": transaction_hashes,
         "FULL_TXNS": transactions,
@@ -358,10 +452,9 @@ async def rpc_block(block: StarknetBlock, requested_scope: Optional[str] = "TXN_
         "parent_hash": rpc_felt(block.parent_block_hash) or "0x0",
         "block_number": block.block_number if block.block_number is not None else 0,
         "status": block.status.name,
-        "sequencer": hex(config.sequencer_address),
+        "sequencer_address": hex(config.sequencer_address),
         "new_root": new_root(),
-        "old_root": old_root(),
-        "accepted_time": block.timestamp,
+        "timestamp": block.timestamp,
         "transactions": transactions,
     }
     return block
@@ -384,12 +477,21 @@ class RpcContractDiff(TypedDict):
     contract_hash: str
 
 
+class RpcNonceDiff(TypedDict):
+    """
+    TypedDict for rpc nonce diff
+    """
+    contract_address: str
+    nonce: str
+
+
 class RpcStateDiff(TypedDict):
     """
-    TypedDict for roc state diff
+    TypedDict for rpc state diff
     """
     storage_diffs: List[RpcStorageDiff]
     contracts: List[RpcContractDiff]
+    nonces: List[RpcNonceDiff]
 
 
 class RpcStateUpdate(TypedDict):
@@ -441,6 +543,7 @@ def rpc_state_update(state_update: BlockStateUpdate) -> RpcStateUpdate:
         "state_diff": {
             "storage_diffs": storage_diffs(),
             "contracts": contracts(),
+            "nonces": [],
         }
     }
     return rpc_state
@@ -467,59 +570,93 @@ def rpc_state_diff_storage(contract: dict) -> dict:
     }
 
 
-class RpcTransaction(TypedDict):
+class RpcInvokeTransaction(TypedDict):
     """
-    TypedDict for rpc transaction
+    TypedDict for rpc invoke transaction
     """
     contract_address: str
     entry_point_selector: Optional[str]
     calldata: Optional[List[str]]
-    max_fee: str
+    # Common
     txn_hash: str
+    max_fee: str
+    version: str
+    signature: List[str]
 
 
-def rpc_invoke_transaction(transaction: InvokeSpecificInfo) -> RpcTransaction:
+class RpcDeclareTransaction(TypedDict):
+    """
+    TypedDcit for rpc declare transaction
+    """
+    contract_class: RpcContractClass
+    sender_address: str
+    # Common
+    txn_hash: str
+    max_fee: str
+    version: str
+    signature: List[str]
+
+
+def rpc_invoke_transaction(transaction: InvokeSpecificInfo) -> RpcInvokeTransaction:
     """
     Convert gateway invoke transaction to rpc format
     """
-    transaction: RpcTransaction = {
+    transaction: RpcInvokeTransaction = {
         "contract_address": rpc_felt(transaction.contract_address),
         "entry_point_selector": rpc_felt(transaction.entry_point_selector),
         "calldata": [rpc_felt(data) for data in transaction.calldata],
         "max_fee": rpc_felt(transaction.max_fee),
         "txn_hash": rpc_felt(transaction.transaction_hash),
+        "version": hex(0x0),
+        "signature": [rpc_felt(value) for value in transaction.signature]
     }
     return transaction
 
 
-def rpc_deploy_transaction(transaction: DeploySpecificInfo) -> RpcTransaction:
+def rpc_deploy_transaction(transaction: DeploySpecificInfo) -> RpcInvokeTransaction:
     """
     Convert gateway deploy transaction to rpc format
     """
-    def calldata() -> Optional[List[str]]:
-        # pylint: disable=no-member
-        _calldata = transaction.constructor_calldata
-        if not _calldata:
-            return None
-        return [rpc_felt(data) for data in _calldata]
-
-    transaction: RpcTransaction = {
+    transaction: RpcInvokeTransaction = {
         "contract_address": rpc_felt(transaction.contract_address),
         "entry_point_selector": None,
-        "calldata": calldata(),
-        "max_fee": rpc_felt(0),
+        "calldata": [rpc_felt(data) for data in transaction.constructor_calldata],
+        "max_fee": rpc_felt(0x0),
         "txn_hash": rpc_felt(transaction.transaction_hash),
+        "version": hex(0x0),
+        "signature": []
     }
     return transaction
 
 
-def rpc_transaction(transaction: TransactionSpecificInfo) -> RpcTransaction:
+def rpc_declare_transaction(transaction: DeclareSpecificInfo) -> RpcDeclareTransaction:
+    """
+    Convert gateway declare transaction to rpc format
+    """
+    def contract_class() -> RpcContractClass:
+        # pylint: disable=no-member
+        _contract_claass = state.starknet_wrapper.contracts.get_class_by_hash(transaction.class_hash)
+        return rpc_contract_class(_contract_claass)
+
+    transaction: RpcDeclareTransaction = {
+        "contract_class": contract_class(),
+        "sender_address": rpc_felt(transaction.sender_address),
+        "max_fee": rpc_felt(transaction.max_fee),
+        "txn_hash": rpc_felt(transaction.transaction_hash),
+        "version": hex(transaction.version),
+        "signature": [rpc_felt(value) for value in transaction.signature]
+    }
+    return transaction
+
+
+def rpc_transaction(transaction: TransactionSpecificInfo) -> Union[RpcInvokeTransaction, RpcDeclareTransaction]:
     """
     Convert gateway transaction to rpc transaction
     """
     tx_mapping = {
         TransactionType.DEPLOY: rpc_deploy_transaction,
-        TransactionType.INVOKE_FUNCTION: rpc_invoke_transaction
+        TransactionType.INVOKE_FUNCTION: rpc_invoke_transaction,
+        TransactionType.DECLARE: rpc_declare_transaction,
     }
     return tx_mapping[transaction.tx_type](transaction)
 
@@ -549,22 +686,45 @@ class Event(TypedDict):
     data: List[str]
 
 
-class RpcReceipt(TypedDict):
+class RpcBaseTransactionReceipt(TypedDict):
     """
     TypedDict for rpc transaction receipt
     """
+    # Common
     txn_hash: str
     actual_fee: str
     status: str
-    statusData: str
+    statusData: Optional[str]
+
+
+class RpcInvokeReceipt(TypedDict):
+    """
+    TypedDict for rpc invoke transaction receipt
+    """
     messages_sent: List[MessageToL1]
     l1_origin_message: Optional[MessageToL2]
     events: List[Event]
+    # Common
+    txn_hash: str
+    actual_fee: str
+    status: str
+    statusData: Optional[str]
 
 
-def rpc_transaction_receipt(txr: TransactionReceipt) -> RpcReceipt:
+class RpcDeclareReceipt(TypedDict):
     """
-    Convert gateway transaction receipt to rpc transaction receipt
+    TypedDict for rpc declare transaction receipt
+    """
+    # Common
+    txn_hash: str
+    actual_fee: str
+    status: str
+    statusData: Optional[str]
+
+
+def rpc_invoke_receipt(txr: TransactionReceipt) -> RpcInvokeReceipt:
+    """
+    Convert rpc invoke transaction receipt to rpc format
     """
     def l2_to_l1_messages() -> List[MessageToL1]:
         messages = []
@@ -597,6 +757,44 @@ def rpc_transaction_receipt(txr: TransactionReceipt) -> RpcReceipt:
             _events.append(event)
         return _events
 
+    base_receipt = rpc_base_transaction_receipt(txr)
+    receipt: RpcInvokeReceipt = {
+        "messages_sent": l2_to_l1_messages(),
+        "l1_origin_message": l1_to_l2_message(),
+        "events": events(),
+        "txn_hash": base_receipt["txn_hash"],
+        "status": base_receipt["status"],
+        "statusData": base_receipt["statusData"],
+        "actual_fee": base_receipt["actual_fee"],
+    }
+    return receipt
+
+
+def rpc_declare_receipt(txr) -> RpcDeclareReceipt:
+    """
+    Conver rpc declare transaction receipt to rpc format
+    """
+    base_receipt = rpc_base_transaction_receipt(txr)
+    receipt: RpcDeclareReceipt = {
+        "txn_hash": base_receipt["txn_hash"],
+        "status": base_receipt["status"],
+        "statusData": base_receipt["statusData"],
+        "actual_fee": base_receipt["actual_fee"],
+    }
+    return receipt
+
+
+def rpc_deploy_receipt(txr) -> RpcBaseTransactionReceipt:
+    """
+    Conver rpc deploy transaction receipt to rpc format
+    """
+    return rpc_base_transaction_receipt(txr)
+
+
+def rpc_base_transaction_receipt(txr: TransactionReceipt) -> RpcBaseTransactionReceipt:
+    """
+    Convert gateway transaction receipt to rpc transaction receipt
+    """
     def status() -> str:
         if txr.status is None:
             return "UNKNOWN"
@@ -611,16 +809,33 @@ def rpc_transaction_receipt(txr: TransactionReceipt) -> RpcReceipt:
         }
         return mapping[txr.status]
 
-    receipt: RpcReceipt = {
+    def status_data() -> Union[str, None]:
+        if txr.transaction_failure_reason is not None:
+            if txr.transaction_failure_reason.error_message is not None:
+                return txr.transaction_failure_reason.error_message
+        return None
+
+    receipt: RpcBaseTransactionReceipt = {
         "txn_hash": rpc_felt(txr.transaction_hash),
         "status": status(),
-        "statusData": "",
-        "messages_sent": l2_to_l1_messages(),
-        "l1_origin_message": l1_to_l2_message(),
-        "events": events(),
+        "statusData": status_data(),
         "actual_fee": rpc_felt(txr.actual_fee or 0),
     }
     return receipt
+
+
+def rpc_transaction_receipt(txr: TransactionReceipt) -> dict:
+    """
+    Convert gateway transaction receipt to rpc format
+    """
+    tx_mapping = {
+        TransactionType.DEPLOY: rpc_deploy_receipt,
+        TransactionType.INVOKE_FUNCTION: rpc_invoke_receipt,
+        TransactionType.DECLARE: rpc_declare_receipt,
+    }
+    transaction = state.starknet_wrapper.transactions.get_transaction(hex(txr.transaction_hash)).transaction
+    tx_type = transaction.tx_type
+    return tx_mapping[tx_type](txr)
 
 
 def rpc_response(message_id: int, content: dict) -> dict:
@@ -686,6 +901,10 @@ def parse_body(body: dict) -> Tuple[Callable, Union[List, dict], int]:
         "protocolVersion": protocol_version,
         "syncing": syncing,
         "getEvents": get_events,
+        "getClass": get_class,
+        "getClassHashAt": get_class_hash_at,
+        "getClassAt": get_class_at,
+        "estimateFee": estimate_fee,
     }
 
     method_name = body["method"].lstrip("starknet_")

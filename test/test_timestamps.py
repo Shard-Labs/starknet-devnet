@@ -152,19 +152,19 @@ def test_set_time_errors():
     message = response.json()["message"]
 
     assert response.status_code == 400
-    assert message == "Time value must be greater than 0."
+    assert message == "time value must be greater than 0."
 
     response = set_time(None)
     message = response.json()["message"]
 
     assert response.status_code == 400
-    assert message == "Time value must be provided."
+    assert message == "time value must be provided."
 
     response = set_time("not an int")
     message = response.json()["message"]
 
     assert response.status_code == 400
-    assert message == "Time value must be an integer."
+    assert message == "time value must be an integer."
 
 @pytest.mark.timestamps
 @devnet_in_background()
@@ -176,19 +176,19 @@ def test_increase_time_errors():
     message = response.json()["message"]
 
     assert response.status_code == 400
-    assert message == "Time value must be greater than 0."
+    assert message == "time value must be greater than 0."
 
     response = increase_time(None)
     message = response.json()["message"]
 
     assert response.status_code == 400
-    assert message == "Time value must be provided."
+    assert message == "time value must be provided."
 
     response = increase_time("not an int")
     message = response.json()["message"]
 
     assert response.status_code == 400
-    assert message == "Time value must be an integer."
+    assert message == "time value must be an integer."
 
 
 @pytest.mark.timestamps

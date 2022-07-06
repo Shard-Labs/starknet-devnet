@@ -9,6 +9,34 @@ from starknet_devnet.util import StarknetDevnetException
 
 base = Blueprint("base", __name__)
 
+def extract_positive(request_json, prop_name: str):
+    """Expects `prop_name` from `request_json` and expects it to be positive"""
+    value = request_json.get(prop_name)
+
+    if value is None:
+        raise StarknetDevnetException(message=f"{prop_name} value must be provided.", status_code=400)
+
+    if not isinstance(value, int):
+        raise StarknetDevnetException(message=f"{prop_name} value must be an integer.", status_code=400)
+
+    if value < 0:
+        raise StarknetDevnetException(message=f"{prop_name} value must be greater than 0.", status_code=400)
+
+    return value
+
+def extract_hex_string(request_json, prop_name: str) -> int:
+    """Parse value from hex string to int"""
+    value = request_json.get(prop_name)
+    if value is None:
+        raise StarknetDevnetException(status_code=400, message=f"{prop_name} value must be provided.")
+
+    try:
+        return int(value, 16)
+    except (ValueError, TypeError) as error:
+        message = f"{prop_name} value must be a hex string."
+        raise StarknetDevnetException(status_code=400, message=message) from error
+
+
 @base.route("/is_alive", methods=["GET"])
 def is_alive():
     """Health check endpoint."""
@@ -44,24 +72,11 @@ def load():
     state.load(load_path)
     return Response(status=200)
 
-def validate_time_value(value: int):
-    """Validates the time value"""
-    if value is None:
-        raise StarknetDevnetException(message="Time value must be provided.", status_code=400)
-
-    if not isinstance(value, int):
-        raise StarknetDevnetException(message="Time value must be an integer.", status_code=400)
-
-    if value < 0:
-        raise StarknetDevnetException(message="Time value must be greater than 0.", status_code=400)
-
-
 @base.route("/increase_time", methods=["POST"])
 def increase_time():
     """Increases the block timestamp offset"""
     request_dict = request.json or {}
-    time_s = request_dict.get("time")
-    validate_time_value(time_s)
+    time_s = extract_positive(request_dict, "time")
 
     state.starknet_wrapper.increase_block_time(time_s)
 
@@ -71,8 +86,7 @@ def increase_time():
 def set_time():
     """Sets the block timestamp offset"""
     request_dict = request.json or {}
-    time_s = request_dict.get("time")
-    validate_time_value(time_s)
+    time_s = extract_positive(request_dict, "time")
 
     state.starknet_wrapper.set_block_time(time_s)
 
@@ -94,3 +108,23 @@ def get_predeployed_accounts():
     """Get predeployed accounts"""
     accounts = state.starknet_wrapper.accounts
     return jsonify([account.to_json() for account in accounts])
+
+@base.route("/mint", methods=["POST"])
+async def mint():
+    """Mint token and transfer to the provided address"""
+    request_json = request.json or {}
+
+    address = extract_hex_string(request_json, "address")
+    amount = extract_positive(request_json, "amount")
+
+    is_lite = request_json.get("lite", False)
+
+    tx_hash = None
+    if is_lite:
+        await FeeToken.mint_lite(address, amount)
+    else:
+        tx_hash_int = await FeeToken.mint(address, amount, state.starknet_wrapper)
+        tx_hash = hex(tx_hash_int)
+
+    new_balance = await FeeToken.get_balance(address)
+    return jsonify({"new_balance": new_balance, "unit": "wei", "tx_hash": tx_hash})

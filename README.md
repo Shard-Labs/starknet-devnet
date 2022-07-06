@@ -20,6 +20,7 @@ Aims to mimic Starknet's Alpha testnet, but with simplified functionality.
 - [Advancing time](#advancing-time)
 - [Contract debugging](#contract-debugging)
 - [Predeployed accounts](#predeployed-accounts)
+- [Mint token - Local faucet](#mint-token---local-faucet)
 - [Devnet speed-up troubleshooting](#devnet-speed-up-troubleshooting)
 - [Development](#development)
 
@@ -112,8 +113,8 @@ docker pull shardlabs/starknet-devnet:<TAG>
 
 Image tags correspond to Devnet versions as on PyPI and GitHub, with the `latest` tag used for the latest image. These images are built for linux/amd64. To use the arm64 versions, since `0.1.23` you can append `-arm` to the tag. E.g.:
 
-- `shardlabs/starknet-devnet:0.2.4` - image for the amd64 architecture
-- `shardlabs/starknet-devnet:0.2.4-arm` - image for the arm64 architecture
+- `shardlabs/starknet-devnet:0.2.5` - image for the amd64 architecture
+- `shardlabs/starknet-devnet:0.2.5-arm` - image for the arm64 architecture
 
 The server inside the container listens to the port 5050, which you need to publish to a desired `<PORT>` on your host machine:
 
@@ -158,7 +159,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
 
 ## JSON-RPC API
 
-Devnet also supports JSON-RPC API (v0.8.0: [specifications](https://github.com/starkware-libs/starknet-specs/blob/ec01ba5fd12d4a51a9202146a2d6247eebc08644/api/starknet_api_openrpc.json)). It can be reached under `/rpc`. For an example:
+Devnet also partially supports JSON-RPC API (v0.15.0: [specifications](https://github.com/starkware-libs/starknet-specs/blob/606c21e06be92ea1543fd0134b7f98df622c2fbf/api/starknet_api_openrpc.json)). It can be reached under `/rpc`. For an example:
 
 ```
 POST /rpc
@@ -411,12 +412,62 @@ Response:
 }
 ```
 
+## Mint token - Local faucet
+
+Other than using prefunded predeployed accounts, you can also add funds to an account that you deployed yourself.
+
+### Mint with a transaction
+
+By not setting the `lite` parameter or by setting it to `false`, new tokens will be minted in a separate transaction. You will receive the hash of this transaction, as well as the new balance after minting in the response.
+
+```
+POST /mint
+{
+    "address": "0x6e3205f...",
+    "amount": 500000
+}
+```
+
+Response:
+
+```
+{
+    "new_balance": 500000,
+    "unit": "wei",
+    "tx_hash": "0xa24f23..."
+}
+```
+
+### Mint lite
+
+By setting the `lite` parameter, new tokens will be minted without generating a transaction, thus executing faster.
+
+```
+POST /mint
+{
+    "address": "0x6e3205f...",
+    "amount": 500000,
+    "lite": true
+}
+```
+
+Response:
+
+```
+{
+    "new_balance": 500000,
+    "unit": "wei",
+    "tx_hash": null
+}
+```
+
 ## Devnet speed-up troubleshooting
 
 If you are not satisfied with Devnet's performance, consider the following:
 
 - Make sure you are using the latest version of Devnet because new improvements are added regularly.
 - Try using [lite-mode](#lite-mode).
+- If minting tokens, set the [lite parameter](#mint-lite).
 - Using an [installed Devnet](#install) should be faster than [running it with Docker](#run-with-docker).
 - If you are [running Devnet with Docker](#run-with-docker) on an ARM machine (e.g. M1), make sure you are using [the appropriate image tag](#versions-and-tags)
 - If Devnet has been running for some time, try restarting it (either by killing it or by using the [restart functionality](#restart)).
