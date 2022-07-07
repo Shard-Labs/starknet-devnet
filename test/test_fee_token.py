@@ -1,6 +1,6 @@
 """Fee token related tests."""
 
-from test.settings import settings
+from test.settings import APP_URL
 from test.test_account import deploy_empty_contract, execute, assert_tx_status, get_transaction_receipt, get_account_balance
 import json
 import pytest
@@ -30,7 +30,7 @@ def test_precomputed_address():
 
 def mint(address: str, amount: int, lite=False):
     """Sends mint request; returns parsed json body"""
-    response = requests.post(f"{settings.APP_URL}/mint", json={
+    response = requests.post(f"{APP_URL}/mint", json={
         "address": address,
         "amount": amount,
         "lite": lite
@@ -106,7 +106,7 @@ def test_mint():
     assert response.get("tx_hash").startswith("0x")
 
     get_block(block_number="latest")
-    response = requests.get(f"{settings.APP_URL}/feeder_gateway/get_block?blockNumber=latest")
+    response = requests.get(f"{APP_URL}/feeder_gateway/get_block?blockNumber=latest")
     assert response.status_code == 200
     assert response.json().get("block_number") == 0
     assert int(response.json().get("transactions")[0].get("calldata")[1], 16) == 50_000
@@ -124,7 +124,7 @@ def test_mint_lite():
     assert response.get("unit") == "wei"
     assert response.get("tx_hash") is None
 
-    response = requests.get(f"{settings.APP_URL}/feeder_gateway/get_block?blockNumber=latest")
+    response = requests.get(f"{APP_URL}/feeder_gateway/get_block?blockNumber=latest")
     assert response.status_code == 500
     assert response.json().get("message") == "Requested the latest block, but there are no blocks so far."
 

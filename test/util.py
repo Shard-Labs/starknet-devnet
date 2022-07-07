@@ -12,7 +12,7 @@ import requests
 from starkware.starknet.services.api.contract_class import ContractClass
 
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
-from .settings import settings
+from .settings import HOST, PORT, APP_URL
 
 class ReturnCodeAssertionError(AssertionError):
     """Error to be raised when the return code of an executed process is not as expected."""
@@ -28,11 +28,11 @@ def run_devnet_in_background(*args, stderr=None, stdout=None):
     if "--accounts" not in args:
         args = [*args, "--accounts", "0"]
 
-    command = ["poetry", "run", "starknet-devnet", "--host", settings.HOST, "--port", settings.PORT, *args]
+    command = ["poetry", "run", "starknet-devnet", "--host", HOST, "--port", PORT, *args]
     # pylint: disable=consider-using-with
     proc = subprocess.Popen(command, close_fds=True, stderr=stderr, stdout=stdout)
 
-    ensure_server_alive(f"{settings.APP_URL}/is_alive", proc)
+    ensure_server_alive(f"{APP_URL}/is_alive", proc)
     return proc
 
 def devnet_in_background(*devnet_args, **devnet_kwargs):
@@ -115,8 +115,8 @@ def run_starknet(args, raise_on_nonzero=True, add_gateway_urls=True):
     my_args = ["poetry", "run", "starknet", *args]
     if add_gateway_urls:
         my_args.extend([
-            "--gateway_url", settings.APP_URL,
-            "--feeder_gateway_url", settings.APP_URL
+            "--gateway_url", APP_URL,
+            "--feeder_gateway_url", APP_URL
         ])
     output = subprocess.run(my_args, encoding="utf-8", check=False, capture_output=True)
     if output.returncode != 0 and raise_on_nonzero:

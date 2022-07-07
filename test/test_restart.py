@@ -5,17 +5,17 @@ Test restart endpoint
 import pytest
 import requests
 
-from .settings import settings
+from .settings import APP_URL
 from .util import devnet_in_background, deploy, assert_transaction_not_received, assert_tx_status, call, invoke
 from .shared import CONTRACT_PATH, ABI_PATH
 
 def restart():
     """Get restart response"""
-    return requests.post(f"{settings.APP_URL}/restart")
+    return requests.post(f"{APP_URL}/restart")
 
 def get_state_update():
     """Get state update"""
-    res = requests.get(f"{settings.APP_URL}/feeder_gateway/get_state_update")
+    res = requests.get(f"{APP_URL}/feeder_gateway/get_state_update")
     return res.json()
 
 
