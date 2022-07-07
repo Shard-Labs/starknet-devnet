@@ -9,7 +9,6 @@ def bind_free_port(host):
     port = str(sock.getsockname()[1])
     return port, f"http://{host}:{port}"
 
-
 HOST = "127.0.0.1"
 PORT, APP_URL = bind_free_port(HOST)
 
