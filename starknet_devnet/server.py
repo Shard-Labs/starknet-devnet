@@ -111,17 +111,18 @@ def handle(error: StarkException):
     """Handles the error and responds in JSON. """
     return {"message": error.message, "status_code": error.status_code}, error.status_code
 
-@app.route('/api', methods = ['GET'])
+@app.route("/api", methods = ["GET"])
 def api():
-    """Print available endpoints."""
+    """Return available endpoints."""
     routes = {}
     # pylint: disable=protected-access
     for url in app.url_map._rules:
-        routes[url.rule] = {}
-        routes[url.rule]["functionName"] = url.endpoint
-        routes[url.rule]["methods"] = list(url.methods)
-        routes[url.rule]["doc"] = app.view_functions[url.endpoint].__doc__
-    routes.pop("/static/<path:filename>")
+        routes[url.rule] = {
+            "functionName": url.endpoint,
+            "methods": list(url.methods),
+            "doc": app.view_functions[url.endpoint].__doc__
+        }
+    #routes.pop("/static/<path:filename>")
     return jsonify(routes)
 
 if __name__ == "__main__":
