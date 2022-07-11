@@ -15,7 +15,7 @@ def extract_positive(request_json, prop_name: str):
 
     if value is None:
         raise StarknetDevnetException(message=f"{prop_name} value must be provided.", status_code=400)
-        
+
     if not isinstance(value, (int, float)):
         raise StarknetDevnetException(message=f"{prop_name} value must be an integer.", status_code=400)
 
