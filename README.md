@@ -189,18 +189,33 @@ If you're using [the Hardhat plugin](https://github.com/Shard-Labs/starknet-hard
 
 Postman is a Starknet utility that allows testing L1 <> L2 interaction. To utilize this, you can use [`starknet-hardhat-plugin`](https://github.com/Shard-Labs/starknet-hardhat-plugin), as witnessed in [this example](https://github.com/Shard-Labs/starknet-hardhat-example/blob/master/test/postman.test.ts). Or you can directly interact with the two Postman-specific endpoints:
 
-- Load a `StarknetMockMessaging` contract. The `address` parameter is optional; if provided, the `StarknetMockMessaging` contract will be fetched from that address, otherwise a new one will be deployed:
+### Postman - Load
 
-  - `POST /postman/load_l1_messaging_contract`
-  - body: `{ "networkUrl": "http://localhost:8545", "address": "0x83D76591560d9CD02CE16c060c92118d19F996b3" }`
-  - `networkUrl` - the URL of the L1 network you've run locally or that already exists; possibilities include, and are not limited to:
-    - [Goerli testnet](https://goerli.net/)
-    - [Ganache node](https://www.npmjs.com/package/ganache)
-    - [Hardhat node](https://hardhat.org/hardhat-network/#running-stand-alone-in-order-to-support-wallets-and-other-software).
+```
+POST /postman/load_l1_messaging_contract
+{
+  "networkUrl": "http://localhost:8545",
+  "address": "0x123...def"
+}
+```
 
-- Flush. This will go through the new enqueued messages, sending them from L1 to L2 and from L2 to L1:
-  - `POST /postman/flush`
-  - body: None
+Loads a `StarknetMockMessaging` contract. The `address` parameter is optional; if provided, the `StarknetMockMessaging` contract will be fetched from that address, otherwise a new one will be deployed.
+
+`networkUrl` is the URL of the JSON-RPC API of the L1 node you've run locally or that already exists; possibilities include, and are not limited to:
+
+- [Goerli testnet](https://goerli.net/)
+- [Ganache node](https://www.npmjs.com/package/ganache)
+- [Hardhat node](https://hardhat.org/hardhat-network/#running-stand-alone-in-order-to-support-wallets-and-other-software).
+
+### Postman - Flush
+
+```
+POST /postman/flush
+```
+
+Goes through the newly enqueued messages, sending them from L1 to L2 and from L2 to L1. Requires no body.
+
+### Postman - disclaimer
 
 This method of L1 <> L2 communication testing differs from Starknet Alpha networks. Taking the [L1L2Example.sol](https://www.cairo-lang.org/docs/_static/L1L2Example.sol) contract in the [starknet documentation](https://www.cairo-lang.org/docs/hello_starknet/l1l2.html):
 
@@ -420,6 +435,8 @@ Other than using prefunded predeployed accounts, you can also add funds to an ac
 
 By not setting the `lite` parameter or by setting it to `false`, new tokens will be minted in a separate transaction. You will receive the hash of this transaction, as well as the new balance after minting in the response.
 
+`amount` needs to be an integer (or a float whose fractional part is 0, e.g. `1000.0` or `1e21`)
+
 ```
 POST /mint
 {
@@ -510,6 +527,8 @@ When running tests locally, do it from the project root:
 ./scripts/compile_contracts.sh # first generate the artifacts
 
 poetry run pytest test/
+
+poetry run pytest -n auto --dist loadscope test/  # parallel testing using n CPU workers
 
 poetry run pytest -s -v test/ # for more verbose output
 

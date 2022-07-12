@@ -56,7 +56,7 @@ def test_negative_mint():
     assert resp.status_code == 400
     assert resp.json["message"] == "amount value must be greater than 0."
 
-def test_mint_amount_not_int():
+def test_mint_amount_string():
     """Assert failure if mint amount not int"""
     resp = mint_client({
         "amount": "abc",
@@ -65,6 +65,34 @@ def test_mint_amount_not_int():
 
     assert resp.status_code == 400
     assert resp.json["message"] == "amount value must be an integer."
+
+def test_mint_amount_bool():
+    """Assert failure if mint amount not int"""
+    resp = mint_client({
+        "amount": True,
+        "address": "0x1"
+    })
+
+    assert resp.status_code == 400
+    assert resp.json["message"] == "amount value must be an integer."
+
+def test_mint_amount_scientific():
+    """Assert failure if mint amount not int"""
+    resp = mint_client({
+        "amount": 10e21,
+        "address": "0x1"
+    })
+
+    assert resp.status_code == 200
+
+def test_mint_amount_integer_float():
+    """Assert failure if mint amount not int"""
+    resp = mint_client({
+        "amount": 12.00,
+        "address": "0x1"
+    })
+
+    assert resp.status_code == 200
 
 def test_missing_mint_amount():
     """Assert failure if mint amount missing"""

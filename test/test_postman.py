@@ -6,7 +6,7 @@ import json
 import subprocess
 
 from test.web3_util import web3_call, web3_deploy, web3_transact
-from test.settings import L1_HOST, L1_PORT, L1_URL, GATEWAY_URL
+from test.settings import APP_URL, L1_HOST, L1_PORT, L1_URL
 from test.util import call, deploy, devnet_in_background, ensure_server_alive, invoke, load_file_content, terminate_and_wait
 
 import psutil
@@ -49,7 +49,7 @@ def run_before_and_after_test():
 def flush():
     """Flushes the postman messages. Returns response data"""
     res = requests.post(
-        f"{GATEWAY_URL}/postman/flush"
+        f"{APP_URL}/postman/flush"
     )
 
     return res.json()
@@ -90,7 +90,7 @@ def init_messaging_contract():
         "networkUrl": L1_URL
     }
     resp = requests.post(
-        f"{GATEWAY_URL}/postman/load_l1_messaging_contract",
+        f"{APP_URL}/postman/load_l1_messaging_contract",
         json=deploy_messaging_contract_request
     )
     return json.loads(resp.text)
@@ -120,7 +120,7 @@ def load_messaging_contract(starknet_messaging_contract_address):
     }
 
     resp = requests.post(
-        f"{GATEWAY_URL}/postman/load_l1_messaging_contract",
+        f"{APP_URL}/postman/load_l1_messaging_contract",
         json=load_messaging_contract_request
     )
 
@@ -276,7 +276,7 @@ def test_postman():
 def load_l1_messaging_contract(req_dict: dict):
     """Load L1 messaging contract"""
     return requests.post(
-        f"{GATEWAY_URL}/postman/load_l1_messaging_contract",
+        f"{APP_URL}/postman/load_l1_messaging_contract",
         json=(req_dict)
     )
 

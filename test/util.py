@@ -12,7 +12,7 @@ import requests
 from starkware.starknet.services.api.contract_class import ContractClass
 
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
-from .settings import GATEWAY_URL, FEEDER_GATEWAY_URL, HOST, PORT, APP_URL
+from .settings import HOST, PORT, APP_URL
 
 class ReturnCodeAssertionError(AssertionError):
     """Error to be raised when the return code of an executed process is not as expected."""
@@ -115,8 +115,8 @@ def run_starknet(args, raise_on_nonzero=True, add_gateway_urls=True):
     my_args = ["poetry", "run", "starknet", *args]
     if add_gateway_urls:
         my_args.extend([
-            "--gateway_url", GATEWAY_URL,
-            "--feeder_gateway_url", FEEDER_GATEWAY_URL
+            "--gateway_url", APP_URL,
+            "--feeder_gateway_url", APP_URL
         ])
     output = subprocess.run(my_args, encoding="utf-8", check=False, capture_output=True)
     if output.returncode != 0 and raise_on_nonzero:

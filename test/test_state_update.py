@@ -11,7 +11,7 @@ from starkware.starknet.public.abi import get_selector_from_name
 from .util import (
     deploy, invoke, load_contract_class, devnet_in_background, get_block, assert_equal
 )
-from .settings import FEEDER_GATEWAY_URL
+from .settings import APP_URL
 from .shared import STORAGE_CONTRACT_PATH, STORAGE_ABI_PATH
 
 STORAGE_KEY = hex(get_selector_from_name("storage"))
@@ -24,7 +24,7 @@ def get_state_update_response(block_hash=None, block_number=None):
     }
 
     res = requests.get(
-        f"{FEEDER_GATEWAY_URL}/feeder_gateway/get_state_update",
+        f"{APP_URL}/feeder_gateway/get_state_update",
         params=params
     )
 

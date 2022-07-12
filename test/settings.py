@@ -1,11 +1,16 @@
 """Constants used in test files."""
 
-HOST = "127.0.0.1"
-PORT = "5050"
-L1_HOST = "localhost"
-L1_PORT = "8545"
+import socket
 
-APP_URL = f"http://{HOST}:{PORT}"
-GATEWAY_URL = APP_URL
-FEEDER_GATEWAY_URL = APP_URL
-L1_URL = f"http://{L1_HOST}:{L1_PORT}/"
+def bind_free_port(host):
+    """return assigned free port and test base endpoint"""
+    sock = socket.socket()
+    sock.bind(("", 0))
+    port = str(sock.getsockname()[1])
+    return port, f"http://{host}:{port}"
+
+HOST = "127.0.0.1"
+PORT, APP_URL = bind_free_port(HOST)
+
+L1_HOST = "localhost"
+L1_PORT, L1_URL = bind_free_port(L1_HOST)

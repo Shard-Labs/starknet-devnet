@@ -1,7 +1,7 @@
 """
 Test account functionality.
 """
-from test.settings import GATEWAY_URL
+from test.settings import APP_URL
 
 import json
 import requests
@@ -54,7 +54,7 @@ def deploy_events_contract():
 
 def get_account_balance(address: str) -> int:
     """Get balance (wei) of account with `address` (hex)."""
-    resp = requests.get(f"{GATEWAY_URL}/account_balance?address={address}")
+    resp = requests.get(f"{APP_URL}/account_balance?address={address}")
     assert resp.status_code == 200
     return int(resp.json()["amount"])
 
@@ -239,7 +239,7 @@ def test_multicall():
 def estimate_fee_local(req_dict: dict):
     """Estimate fee of a given transaction"""
     return requests.post(
-        f"{GATEWAY_URL}/feeder_gateway/estimate_fee",
+        f"{APP_URL}/feeder_gateway/estimate_fee",
         json=req_dict
     )
 

@@ -5,7 +5,7 @@ Test restart endpoint
 import pytest
 import requests
 
-from .settings import APP_URL, FEEDER_GATEWAY_URL
+from .settings import APP_URL
 from .util import devnet_in_background, deploy, assert_transaction_not_received, assert_tx_status, call, invoke
 from .shared import CONTRACT_PATH, ABI_PATH
 
@@ -15,7 +15,7 @@ def restart():
 
 def get_state_update():
     """Get state update"""
-    res = requests.get(f"{FEEDER_GATEWAY_URL}/feeder_gateway/get_state_update")
+    res = requests.get(f"{APP_URL}/feeder_gateway/get_state_update")
     return res.json()
 
 

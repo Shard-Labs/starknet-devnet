@@ -9,14 +9,18 @@ from starknet_devnet.util import StarknetDevnetException
 
 base = Blueprint("base", __name__)
 
+def extract_int(value):
+    """extract int from float if an integer value"""
+    return isinstance(value, float) and value.is_integer() and int(value) or value
+
 def extract_positive(request_json, prop_name: str):
     """Expects `prop_name` from `request_json` and expects it to be positive"""
-    value = request_json.get(prop_name)
+    value = extract_int(request_json.get(prop_name))
 
     if value is None:
         raise StarknetDevnetException(message=f"{prop_name} value must be provided.", status_code=400)
 
-    if not isinstance(value, int):
+    if not isinstance(value, int) or isinstance(value, bool):
         raise StarknetDevnetException(message=f"{prop_name} value must be an integer.", status_code=400)
 
     if value < 0:
