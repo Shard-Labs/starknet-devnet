@@ -11,7 +11,7 @@ base = Blueprint("base", __name__)
 
 def extract_int(value):
     """extract int from float if an integer value"""
-    return isinstance(value, float) and value%1 == 0 and int(value) or value
+    return isinstance(value, float) and value.is_integer() and int(value) or value
 
 def extract_positive(request_json, prop_name: str):
     """Expects `prop_name` from `request_json` and expects it to be positive"""
