@@ -24,7 +24,7 @@ class FeeToken:
     HASH_BYTES = to_bytes(HASH)
 
     # Precalculated to fixed address
-    # ADDRESS = calculate_contract_address_from_hash(salt=10, class_hash=HASH, 
+    # ADDRESS = calculate_contract_address_from_hash(salt=10, class_hash=HASH,
     # constructor_calldata=[], caller_address=0)
     ADDRESS = 2774287484619332564597403632816768868845110259953541691709975889937073775752
 
