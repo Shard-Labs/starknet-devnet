@@ -115,14 +115,13 @@ def handle(error: StarkException):
 def api():
     """Return available endpoints."""
     routes = {}
-    # pylint: disable=protected-access
-    for url in app.url_map._rules:
-        routes[url.rule] = {
-            "functionName": url.endpoint,
-            "methods": list(url.methods),
-            "doc": app.view_functions[url.endpoint].__doc__
-        }
-    #routes.pop("/static/<path:filename>")
+    for url in app.url_map.iter_rules():
+        if url.endpoint != "static":
+            routes[url.rule] = {
+                "functionName": url.endpoint,
+                "methods": list(url.methods),
+                "doc": app.view_functions[url.endpoint].__doc__.strip()
+            }
     return jsonify(routes)
 
 if __name__ == "__main__":
