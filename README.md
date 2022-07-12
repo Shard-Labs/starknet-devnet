@@ -431,6 +431,9 @@ Response:
 
 Other than using prefunded predeployed accounts, you can also add funds to an account that you deployed yourself.
 
+Mintable ETH Contract Address:
+`0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488L`
+
 ### Mint with a transaction
 
 By not setting the `lite` parameter or by setting it to `false`, new tokens will be minted in a separate transaction. You will receive the hash of this transaction, as well as the new balance after minting in the response.
