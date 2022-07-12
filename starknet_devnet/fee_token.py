@@ -18,7 +18,7 @@ class FeeToken:
 
     CONTRACT_CLASS: ContractClass = None # loaded lazily
 
-    # Precalcuated
+    # Precalculated
     # HASH = to_bytes(compute_class_hash(contract_class=FeeToken.get_contract_class()))
     HASH = 3000409729603134799471314790024123407246450023546294072844903167350593031855
     HASH_BYTES = to_bytes(HASH)
