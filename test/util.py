@@ -112,7 +112,7 @@ def extract_address(stdout):
 
 def run_starknet(args, raise_on_nonzero=True, add_gateway_urls=True):
     """Wrapper around subprocess.run"""
-    my_args = ["poetry", "run", "starknet", *args]
+    my_args = ["poetry", "run", "starknet", *args, "--no_wallet"]
     if add_gateway_urls:
         my_args.extend([
             "--gateway_url", APP_URL,

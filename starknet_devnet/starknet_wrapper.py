@@ -378,11 +378,21 @@ class StarknetWrapper:
         child_state = state.state.create_child_state_for_querying()
         call_info = await internal_tx.execute(child_state, state.general_config, only_query=True)
 
-        return calculate_tx_fee(
+        tx_fee = calculate_tx_fee(
             state=child_state,
             call_info=call_info,
             general_config=state.general_config
         )
+
+        gas_price = state.state.block_info.gas_price
+        gas_usage = tx_fee // gas_price
+
+        return {
+            "overall_fee": tx_fee,
+            "unit": "wei",
+            "gas_price": gas_price,
+            "gas_usage": gas_usage,
+        }
 
     def increase_block_time(self, time_s: int):
         """Increases the block time by `time_s`."""

@@ -184,9 +184,6 @@ def get_state_update():
 async def estimate_fee():
     """Returns the estimated fee for a transaction."""
     transaction = validate_transaction(request.data, InvokeFunction)
-    actual_fee = await state.starknet_wrapper.calculate_actual_fee(transaction)
+    fee_response = await state.starknet_wrapper.calculate_actual_fee(transaction)
 
-    return jsonify({
-        "amount": actual_fee,
-        "unit": "wei"
-    })
+    return jsonify(fee_response)

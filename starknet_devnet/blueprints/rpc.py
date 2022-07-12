@@ -526,7 +526,7 @@ def rpc_state_update(state_update: BlockStateUpdate) -> RpcStateUpdate:
         for contract in state_update.state_diff.deployed_contracts:
             diff: RpcContractDiff = {
                 "address": rpc_felt(contract.address),
-                "contract_hash": rpc_root(contract.class_hash.hex())
+                "contract_hash": rpc_felt(contract.class_hash)
             }
             _contracts.append(diff)
         return _contracts

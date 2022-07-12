@@ -9,6 +9,8 @@ from starkware.starknet.core.os.block_hash.block_hash import calculate_block_has
 from starkware.starknet.services.api.feeder_gateway.response_objects import StarknetBlock, BlockStatus
 from starkware.starknet.services.api.feeder_gateway.response_objects import BlockStateUpdate
 
+from starknet_devnet.constants import CAIRO_LANG_VERSION
+
 from .origin import Origin
 from .util import StarknetDevnetException
 from .transactions import DevnetTransaction
@@ -132,7 +134,8 @@ class DevnetBlocks():
             status=BlockStatus.ACCEPTED_ON_L2,
             gas_price=state.state.block_info.gas_price,
             sequencer_address=state.general_config.sequencer_address,
-            parent_block_hash=parent_block_hash
+            parent_block_hash=parent_block_hash,
+            starknet_version=CAIRO_LANG_VERSION
         )
 
         self.__num2block[block_number] = block
