@@ -419,6 +419,7 @@ Other than using prefunded predeployed accounts, you can also add funds to an ac
 ### Mint with a transaction
 
 By not setting the `lite` parameter or by setting it to `false`, new tokens will be minted in a separate transaction. You will receive the hash of this transaction, as well as the new balance after minting in the response.
+`amount` support `positive integer scientific notation`
 
 ```
 POST /mint
