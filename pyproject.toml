@@ -41,14 +41,15 @@ markers = [
     "call",
     "declare",
     "deploy",
+    "estimate_fee",
     "fee_token",
+    "general_workflow",
     "invoke",
     "restart",
     "state_update",
-    "transaction_trace",
-    "general_workflow",
-    "tx_version",
     "timestamps",
+    "transaction_trace",
+    "tx_version",
     "web3_messaging"
 ]
 junit_family="xunit1"

@@ -171,7 +171,7 @@ def parse_args():
     )
     parser.add_argument(
         "--gas-price", "-g",
-        type=int,
+        action=NonNegativeAction,
         default=DEFAULT_GAS_PRICE,
         help="Specify the gas price in wei per gas unit; " +
              f"defaults to {DEFAULT_GAS_PRICE:g}"

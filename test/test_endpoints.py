@@ -7,12 +7,14 @@ import requests
 import pytest
 
 from starknet_devnet.server import app
-from .util import devnet_in_background, load_file_content
+from .util import deploy, devnet_in_background, load_file_content
 from .settings import APP_URL
+from .shared import CONTRACT_PATH
 
 DEPLOY_CONTENT = load_file_content("deploy.json")
 INVOKE_CONTENT = load_file_content("invoke.json")
 CALL_CONTENT = load_file_content("call.json")
+ESTIMATE_FEE_CONTENT = load_file_content("estimate_fee.json")
 INVALID_HASH = "0x58d4d4ed7580a7a98ab608883ec9fe722424ce52c19f2f369eeea301f535914"
 INVALID_ADDRESS = "0x123"
 
@@ -44,11 +46,6 @@ def assert_invoke_resp(resp: bytes):
     assert set(resp_dict.keys()) == set(["address", "code", "transaction_hash", "result"])
     assert resp_dict["code"] == "TRANSACTION_RECEIVED"
     assert resp_dict["result"] == []
-
-def assert_call_resp(resp: bytes):
-    """Asserts the validity of call response body."""
-    resp_dict = json.loads(resp.data.decode("utf-8"))
-    assert resp_dict == { "result": ["0xa"] }
 
 @pytest.mark.deploy
 def test_deploy_without_calldata():
@@ -112,7 +109,8 @@ def test_call_with_complete_request_data():
     """Call with complete request data"""
     req_dict = json.loads(CALL_CONTENT)
     resp = send_call(req_dict)
-    assert_call_resp(resp)
+    resp_dict = json.loads(resp.data.decode("utf-8"))
+    assert resp_dict == { "result": ["0xa"] }
 
 # Error response tests
 def send_transaction_with_requests(req_dict: dict):
@@ -129,6 +127,13 @@ def send_call_with_requests(req_dict: dict):
         json=json.dumps(req_dict)
     )
 
+def send_estimate_fee_with_requests(req_dict: dict):
+    """Sends the estimate fee dict in a POST request and returns the response data."""
+    return requests.post(
+        f"{APP_URL}/feeder_gateway/estimate_fee",
+        json=json.dumps(req_dict)
+    )
+
 def get_block_number(req_dict: dict):
     """Get block number from request dict"""
     block_number = req_dict["blockNumber"]
@@ -138,7 +143,6 @@ def get_block_number(req_dict: dict):
 
 def get_transaction_trace(transaction_hash:str):
     """Get transaction trace from request dict"""
-    # transactionHash
     return requests.get(
         f"{APP_URL}/feeder_gateway/get_transaction_trace?transactionHash={transaction_hash}"
     )
@@ -167,6 +171,7 @@ def get_state_update(block_hash, block_number):
         f"{APP_URL}/feeder_gateway/get_state_update?blockHash={block_hash}&blockNumber={block_number}"
     )
 
+@pytest.mark.deploy
 @devnet_in_background()
 def test_error_response_deploy_without_calldata():
     """Deploy with incomplete request data"""
@@ -178,6 +183,7 @@ def test_error_response_deploy_without_calldata():
     msg = "Invalid tx:"
     assert msg in json_error_message
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_without_calldata():
     """Call without calldata"""
@@ -189,6 +195,7 @@ def test_error_response_call_without_calldata():
     assert resp.status_code == 400
     assert json_error_message is not None
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_with_negative_block_number():
     """Call with negative block number"""
@@ -198,6 +205,7 @@ def test_error_response_call_with_negative_block_number():
     assert resp.status_code == 500
     assert json_error_message is not None
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_with_invalid_transaction_hash():
     """Call with invalid transaction hash"""
@@ -208,6 +216,7 @@ def test_error_response_call_with_invalid_transaction_hash():
     assert resp.status_code == 500
     assert json_error_message.startswith(msg)
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_with_unavailable_contract():
     """Call with unavailable contract"""
@@ -217,6 +226,7 @@ def test_error_response_call_with_unavailable_contract():
     assert resp.status_code == 500
     assert json_error_message is not None
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_with_state_update():
     """Call with unavailable state update"""
@@ -225,6 +235,30 @@ def test_error_response_call_with_state_update():
     json_error_message = resp.json()["message"]
     assert resp.status_code == 500
     assert json_error_message is not None
+
+GAS_PRICE = int(1e11)
+
+@pytest.mark.estimate_fee
+@devnet_in_background("--gas-price", str(GAS_PRICE))
+def test_estimate_fee_with_complete_request_data():
+    """Estimate fee with complete request data"""
+
+    deploy_info = deploy(CONTRACT_PATH, ["0"])
+    print("DEBUG deploy_info", deploy_info)
+    response = send_estimate_fee_with_requests({
+        "contract_address": deploy_info["address"],
+        "version": "0x100000000000000000000000000000000",
+        "signature": [],
+        "calldata": ["10", "20"],
+        "max_fee": "0x0",
+        "entry_point_selector": "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320"
+    })
+
+    print(response.json())
+    assert response.status_code == 200
+    assert response.json() == {
+
+    }
 
 @devnet_in_background()
 def test_error_response_class_hash_at():
