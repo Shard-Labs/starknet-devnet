@@ -3,6 +3,7 @@
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import deploy
+from starkware.cairo.common.bool import TRUE
 
 # Define a storage variable for the salt.
 @storage_var
@@ -43,6 +44,7 @@ func deploy_contract{
         contract_address_salt=current_salt,
         constructor_calldata_size=1,
         constructor_calldata=cast(new (initial_balance,), felt*),
+        deploy_from_zero=TRUE
     )
     salt.write(value=current_salt + 1)
 
