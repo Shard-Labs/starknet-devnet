@@ -5,7 +5,7 @@ A server exposing Starknet functionalities as API endpoints.
 import sys
 from pickle import UnpicklingError
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 import meinheld
 
@@ -110,6 +110,19 @@ def main():
 def handle(error: StarkException):
     """Handles the error and responds in JSON. """
     return {"message": error.message, "status_code": error.status_code}, error.status_code
+
+@app.route("/api", methods = ["GET"])
+def api():
+    """Return available endpoints."""
+    routes = {}
+    for url in app.url_map.iter_rules():
+        if url.endpoint != "static":
+            routes[url.rule] = {
+                "functionName": url.endpoint,
+                "methods": list(url.methods),
+                "doc": app.view_functions[url.endpoint].__doc__.strip()
+            }
+    return jsonify(routes)
 
 if __name__ == "__main__":
     main()
