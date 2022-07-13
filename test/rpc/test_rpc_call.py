@@ -1,8 +1,8 @@
 """
-Tests RPC rpc_call.
+Tests RPC rpc_call
 """
 
-from test_rpc_endpoints import rpc_call
+from rpc_utils import rpc_call
 
 import pytest
 from starkware.starknet.public.abi import get_selector_from_name

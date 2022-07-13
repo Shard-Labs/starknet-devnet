@@ -1,5 +1,5 @@
 """
-Tests RPC endpoints.
+Fixtures for RPC tests
 """
 # pylint: disable=too-many-lines
 from __future__ import annotations
@@ -14,7 +14,7 @@ from starkware.starknet.services.api.gateway.transaction import Transaction, Dep
 from test.util import load_file_content
 from test.test_endpoints import send_transaction
 
-from test_rpc_endpoints import gateway_call
+from rpc_utils import gateway_call
 
 
 DEPLOY_CONTENT = load_file_content("deploy_rpc.json")

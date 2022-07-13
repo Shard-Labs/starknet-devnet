@@ -1,11 +1,12 @@
 """
-Tests RPC transactions.
+Tests RPC transactions
 """
 from __future__ import annotations
 
 from typing import List
 
-from test_rpc_endpoints import rpc_call, get_block_with_transaction, pad_zero
+from rpc_utils import rpc_call, get_block_with_transaction, pad_zero
+
 
 def test_get_transaction_by_hash_deploy(deploy_info):
     """

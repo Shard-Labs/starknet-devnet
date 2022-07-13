@@ -1,11 +1,11 @@
 """
-Tests RPC blocks.
+Tests RPC blocks
 """
 
 # pylint: disable=unused-argument
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
 
-from test_rpc_endpoints import rpc_call, get_block_with_transaction, pad_zero, gateway_call
+from rpc_utils import rpc_call, get_block_with_transaction, pad_zero, gateway_call
 
 
 def test_get_block_by_number(deploy_info):

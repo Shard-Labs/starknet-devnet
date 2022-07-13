@@ -1,65 +1,17 @@
 """
-Tests RPC endpoints.
+Tests RPC miscellaneous
 """
 # pylint: disable=too-many-lines
 from __future__ import annotations
 
 import json
-from typing import Union
 
 from starkware.starknet.public.abi import get_storage_var_address
 from starkware.starknet.core.os.class_hash import compute_class_hash
 
-from starknet_devnet.server import app
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
 
-
-def rpc_call(method: str, params: Union[dict, list]) -> dict:
-    """
-    Make a call to the RPC endpoint
-    """
-    req = {
-        "jsonrpc": "2.0",
-        "method": method,
-        "params": params,
-        "id": 0
-    }
-
-    resp = app.test_client().post(
-        "/rpc",
-        content_type="application/json",
-        data=json.dumps(req)
-    )
-    result = json.loads(resp.data.decode("utf-8"))
-    return result
-
-
-def gateway_call(method: str, **kwargs):
-    """
-    Make a call to the gateway
-    """
-    resp = app.test_client().get(
-        f"/feeder_gateway/{method}?{'&'.join(f'{key}={value}&' for key, value in kwargs.items())}"
-    )
-    return json.loads(resp.data.decode("utf-8"))
-
-
-def get_block_with_transaction(transaction_hash: str) -> dict:
-    """
-    Retrieve block for given transaction
-    """
-    transaction = gateway_call("get_transaction", transactionHash=transaction_hash)
-    block_number: int = transaction["block_number"]
-    block = gateway_call("get_block", blockNumber=block_number)
-    return block
-
-
-def pad_zero(felt: str) -> str:
-    """
-    Convert felt with format `0xValue` to format `0x0Value`
-    """
-    felt = felt.lstrip("0x")
-    return "0x0" + felt
+from rpc_utils import rpc_call, gateway_call, get_block_with_transaction, pad_zero
 
 
 def test_get_state_update_by_hash(deploy_info, invoke_info, contract_class):

@@ -1,11 +1,11 @@
 """
-Tests RPC storage.
+Tests RPC storage
 """
-
-from test_rpc_endpoints import rpc_call, get_block_with_transaction
 
 import pytest
 from starkware.starknet.public.abi import get_storage_var_address
+
+from rpc_utils import rpc_call, get_block_with_transaction
 
 
 def test_get_storage_at(deploy_info):
