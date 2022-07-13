@@ -5,6 +5,7 @@ import json
 
 from abc import ABC, abstractmethod
 from web3 import HTTPProvider, Web3
+from web3.middleware import geth_poa_middleware
 
 from starkware.solidity.utils import load_nearby_contract
 from starkware.starknet.testing.postman import Postman
@@ -127,6 +128,7 @@ class LocalPostmanWrapper(PostmanWrapper):
         super().__init__()
         request_kwargs = {"timeout": TIMEOUT_FOR_WEB3_REQUESTS}
         self.web3 = Web3(HTTPProvider(network_url, request_kwargs=request_kwargs))
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         self.eth_account = EthAccount(self.web3,self.web3.eth.accounts[0])
 
     def load_mock_messaging_contract_in_l1(self, starknet, contract_address):
