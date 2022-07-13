@@ -18,20 +18,14 @@ class FeeToken:
 
     CONTRACT_CLASS: ContractClass = None # loaded lazily
 
-    # Precalcuated to save time
+    # Precalculated
     # HASH = to_bytes(compute_class_hash(contract_class=FeeToken.get_contract_class()))
     HASH = 3000409729603134799471314790024123407246450023546294072844903167350593031855
     HASH_BYTES = to_bytes(HASH)
 
-    # Random value to fix the token contract address
-    SALT = 10
-    CONSTRUCTOR_CALLDATA = []
-
-    # Precalculated to save time
-    # ADDRESS = calculate_contract_address_from_hash(salt=SALT, class_hash=HASH,
-    #     constructor_calldata=CONSTRUCTOR_CALLDATA,
-    #     caller_address=0
-    # )
+    # Precalculated to fixed address
+    # ADDRESS = calculate_contract_address_from_hash(salt=10, class_hash=HASH,
+    # constructor_calldata=[], caller_address=0)
     ADDRESS = 2774287484619332564597403632816768868845110259953541691709975889937073775752
 
     contract: StarknetContract = None
@@ -61,10 +55,8 @@ class FeeToken:
             state=newly_deployed_fee_token_state,
             storage_updates={
                 # Running the constructor doesn't need to be simulated
-                # If it was, it would be done like this:
-                # get_selector_from_name("ERC20_name_"): StorageLeaf(42)
-                get_selector_from_name('ERC20_name'): StorageLeaf(int.from_bytes(bytes('DevnetST', "ascii"), "big")),
-                get_selector_from_name('ERC20_symbol'): StorageLeaf(int.from_bytes(bytes('DST', "ascii"), "big")),
+                get_selector_from_name('ERC20_name'): StorageLeaf(int.from_bytes(bytes('ether', "ascii"), "big")),
+                get_selector_from_name('ERC20_symbol'): StorageLeaf(int.from_bytes(bytes('ETH', "ascii"), "big")),
                 get_selector_from_name('ERC20_decimals'): StorageLeaf(18)
             }
         )
