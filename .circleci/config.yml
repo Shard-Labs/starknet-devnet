@@ -27,7 +27,7 @@ jobs:
           command: ./scripts/check_versions.sh
       - run:
           name: Lint
-          command: poetry run pylint starknet_devnet test
+          command: ./scripts/lint.sh
       - run:
           name: Compile test contracts
           command: ./scripts/compile_contracts.sh

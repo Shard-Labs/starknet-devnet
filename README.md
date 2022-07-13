@@ -513,13 +513,13 @@ poetry run starknet-devnet
 ### Development - Run in debug mode
 
 ```text
-./scripts/starknet-devnet-debug.sh
+./scripts/starknet_devnet_debug.sh
 ```
 
 ### Development - Lint
 
 ```text
-poetry run pylint starknet_devnet test
+./scripts/lint.sh
 ```
 
 ### Development - Test

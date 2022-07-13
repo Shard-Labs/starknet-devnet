@@ -1,5 +1,7 @@
+"""Utilities for schema validation"""
+
 import json
-from os.path import join, dirname, abspath
+from os.path import join, dirname
 from jsonschema import validate, RefResolver
 
 
@@ -18,5 +20,5 @@ def _load_json_schema(filename):
     relative_path = join("schemas", filename)
     absolute_path = join(dirname(__file__), relative_path)
 
-    with open(absolute_path) as schema_file:
+    with open(absolute_path, encoding="utf-8") as schema_file:
         return json.loads(schema_file.read())
