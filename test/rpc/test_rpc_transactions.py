@@ -1,11 +1,12 @@
 """
 Tests RPC transactions
 """
+
 from __future__ import annotations
 
 from typing import List
 
-from rpc_utils import rpc_call, get_block_with_transaction, pad_zero
+from .rpc_utils import rpc_call, get_block_with_transaction, pad_zero
 
 
 def test_get_transaction_by_hash_deploy(deploy_info):
@@ -95,6 +96,7 @@ def test_get_transaction_by_hash_declare(declare_info):
     assert transaction["contract_class"]["program"] != ""
 
 
+# pylint: disable=unused-argument
 def test_get_transaction_by_hash_raises_on_incorrect_hash(deploy_info):
     """
     Get transaction by incorrect hash

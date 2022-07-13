@@ -2,10 +2,10 @@
 Tests RPC rpc_call
 """
 
-from rpc_utils import rpc_call
-
 import pytest
 from starkware.starknet.public.abi import get_selector_from_name
+
+from .rpc_utils import rpc_call
 
 
 def test_call(deploy_info):
@@ -29,6 +29,7 @@ def test_call(deploy_info):
     assert result["result"][0] == "0x0"
 
 
+# pylint: disable=unused-argument
 def test_call_raises_on_incorrect_contract_address(deploy_info):
     """
     Call contract with incorrect address

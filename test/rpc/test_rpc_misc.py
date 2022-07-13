@@ -1,7 +1,7 @@
 """
 Tests RPC miscellaneous
 """
-# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import json
@@ -11,7 +11,7 @@ from starkware.starknet.core.os.class_hash import compute_class_hash
 
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
 
-from rpc_utils import rpc_call, gateway_call, get_block_with_transaction, pad_zero
+from .rpc_utils import rpc_call, gateway_call, get_block_with_transaction, pad_zero
 
 
 def test_get_state_update_by_hash(deploy_info, invoke_info, contract_class):
@@ -97,6 +97,7 @@ def test_get_code(deploy_info):
     assert json.loads(code["abi"]) == contract["abi"]
 
 
+# pylint: disable=unused-argument
 def test_get_code_raises_on_incorrect_contract(deploy_info):
     """
     Get contract code by incorrect contract address

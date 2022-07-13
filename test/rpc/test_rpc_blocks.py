@@ -2,10 +2,9 @@
 Tests RPC blocks
 """
 
-# pylint: disable=unused-argument
 from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
 
-from rpc_utils import rpc_call, get_block_with_transaction, pad_zero, gateway_call
+from .rpc_utils import rpc_call, get_block_with_transaction, pad_zero, gateway_call
 
 
 def test_get_block_by_number(deploy_info):
@@ -34,6 +33,7 @@ def test_get_block_by_number(deploy_info):
     assert block["transactions"] == [transaction_hash]
 
 
+# pylint: disable=unused-argument
 def test_get_block_by_number_raises_on_incorrect_number(deploy_info):
     """
     Get block by incorrect number

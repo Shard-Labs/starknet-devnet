@@ -1,20 +1,20 @@
 """
 Fixtures for RPC tests
 """
-# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import json
 import typing
 
+from test.util import load_file_content
+from test.test_endpoints import send_transaction
+
 import pytest
 from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starknet.services.api.gateway.transaction import Transaction, Deploy
 
-from test.util import load_file_content
-from test.test_endpoints import send_transaction
-
-from rpc_utils import gateway_call
+from .rpc_utils import gateway_call
 
 
 DEPLOY_CONTENT = load_file_content("deploy_rpc.json")

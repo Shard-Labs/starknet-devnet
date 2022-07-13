@@ -5,7 +5,7 @@ Tests RPC storage
 import pytest
 from starkware.starknet.public.abi import get_storage_var_address
 
-from rpc_utils import rpc_call, get_block_with_transaction
+from .rpc_utils import rpc_call, get_block_with_transaction
 
 
 def test_get_storage_at(deploy_info):
@@ -28,6 +28,7 @@ def test_get_storage_at(deploy_info):
     assert storage == "0x0"
 
 
+# pylint: disable=unused-argument
 def test_get_storage_at_raises_on_incorrect_contract(deploy_info):
     """
     Get storage at incorrect contract

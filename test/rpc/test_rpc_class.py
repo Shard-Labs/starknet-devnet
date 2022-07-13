@@ -2,7 +2,7 @@
 Tests RPC contract class
 """
 
-from rpc_utils import rpc_call
+from .rpc_utils import rpc_call
 
 
 def test_get_class(class_hash):
