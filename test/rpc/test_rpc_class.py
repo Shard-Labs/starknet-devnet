@@ -1,5 +1,5 @@
 """
-Tests RPC contract class.
+Tests RPC contract class
 """
 
 from rpc_utils import rpc_call
