@@ -205,7 +205,8 @@ Loads a `StarknetMockMessaging` contract. The `address` parameter is optional; i
 `networkUrl` is the URL of the JSON-RPC API of the L1 node you've run locally or that already exists; possibilities include, and are not limited to:
 
 - [Goerli testnet](https://goerli.net/)
-- [Ganache node](https://www.npmjs.com/package/ganache)
+- [Ganache](https://www.npmjs.com/package/ganache)
+- [Geth](https://github.com/ethereum/go-ethereum#docker-quick-start)
 - [Hardhat node](https://hardhat.org/hardhat-network/#running-stand-alone-in-order-to-support-wallets-and-other-software).
 
 ### Postman - Flush
