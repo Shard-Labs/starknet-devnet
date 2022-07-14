@@ -3,7 +3,6 @@ Test account functionality.
 """
 from test.settings import APP_URL
 
-import json
 import requests
 import pytest
 
@@ -235,36 +234,6 @@ def test_multicall():
     # check if balance is increased
     balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
     assert balance == "100"
-
-def estimate_fee_local(req_dict: dict):
-    """Estimate fee of a given transaction"""
-    return requests.post(
-        f"{APP_URL}/feeder_gateway/estimate_fee",
-        json=req_dict
-    )
-
-@devnet_in_background()
-def test_estimate_fee_in_unknown_address():
-    """Call with unknown invoke function"""
-    req_dict = json.loads(INVOKE_CONTENT)
-    del req_dict["type"]
-    resp = estimate_fee_local(req_dict)
-
-    json_error_message = resp.json()["message"]
-    msg = "Contract with address"
-    assert resp.status_code == 500
-    assert json_error_message.startswith(msg)
-
-@devnet_in_background()
-def test_estimate_fee_with_invalid_data():
-    """Call estimate fee with invalid data on body"""
-    req_dict = json.loads(DEPLOY_CONTENT)
-    resp = estimate_fee_local(req_dict)
-
-    json_error_message = resp.json()["message"]
-    msg = "Invalid tx:"
-    assert resp.status_code == 400
-    assert msg in json_error_message
 
 @pytest.mark.account
 @devnet_in_background(*ACCOUNTS_SEED_DEVNET_ARGS)

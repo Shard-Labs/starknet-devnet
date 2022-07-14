@@ -7,14 +7,12 @@ import requests
 import pytest
 
 from starknet_devnet.server import app
-from .util import deploy, devnet_in_background, load_file_content
+from .util import devnet_in_background, load_file_content
 from .settings import APP_URL
-from .shared import CONTRACT_PATH
 
 DEPLOY_CONTENT = load_file_content("deploy.json")
 INVOKE_CONTENT = load_file_content("invoke.json")
 CALL_CONTENT = load_file_content("call.json")
-ESTIMATE_FEE_CONTENT = load_file_content("estimate_fee.json")
 INVALID_HASH = "0x58d4d4ed7580a7a98ab608883ec9fe722424ce52c19f2f369eeea301f535914"
 INVALID_ADDRESS = "0x123"
 
@@ -127,13 +125,6 @@ def send_call_with_requests(req_dict: dict):
         json=json.dumps(req_dict)
     )
 
-def send_estimate_fee_with_requests(req_dict: dict):
-    """Sends the estimate fee dict in a POST request and returns the response data."""
-    return requests.post(
-        f"{APP_URL}/feeder_gateway/estimate_fee",
-        json=json.dumps(req_dict)
-    )
-
 def get_block_number(req_dict: dict):
     """Get block number from request dict"""
     block_number = req_dict["blockNumber"]
@@ -235,30 +226,6 @@ def test_error_response_call_with_state_update():
     json_error_message = resp.json()["message"]
     assert resp.status_code == 500
     assert json_error_message is not None
-
-GAS_PRICE = int(1e11)
-
-@pytest.mark.estimate_fee
-@devnet_in_background("--gas-price", str(GAS_PRICE))
-def test_estimate_fee_with_complete_request_data():
-    """Estimate fee with complete request data"""
-
-    deploy_info = deploy(CONTRACT_PATH, ["0"])
-    print("DEBUG deploy_info", deploy_info)
-    response = send_estimate_fee_with_requests({
-        "contract_address": deploy_info["address"],
-        "version": "0x100000000000000000000000000000000",
-        "signature": [],
-        "calldata": ["10", "20"],
-        "max_fee": "0x0",
-        "entry_point_selector": "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320"
-    })
-
-    print(response.json())
-    assert response.status_code == 200
-    assert response.json() == {
-
-    }
 
 @devnet_in_background()
 def test_error_response_class_hash_at():

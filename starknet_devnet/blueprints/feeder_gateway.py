@@ -9,7 +9,6 @@ from werkzeug.datastructures import MultiDict
 
 from starknet_devnet.state import state
 from starknet_devnet.util import StarknetDevnetException, custom_int, fixed_length_hex
-from .shared import validate_transaction
 
 feeder_gateway = Blueprint("feeder_gateway", __name__, url_prefix="/feeder_gateway")
 
@@ -183,7 +182,7 @@ def get_state_update():
 @feeder_gateway.route("/estimate_fee", methods=["POST"])
 async def estimate_fee():
     """Returns the estimated fee for a transaction."""
-    transaction = validate_transaction(request.data, InvokeFunction)
+    transaction = validate_call(request.data)
     fee_response = await state.starknet_wrapper.calculate_actual_fee(transaction)
 
     return jsonify(fee_response)
