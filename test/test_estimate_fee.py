@@ -52,7 +52,7 @@ def test_estimate_fee_with_invalid_data():
 
     json_error_message = resp.json()["message"]
     assert resp.status_code == 400
-    assert "Invalid tx:" in json_error_message
+    assert "Invalid Starknet function call" in json_error_message
 
 GAS_PRICE = int(1e11)
 
@@ -75,7 +75,7 @@ def test_estimate_fee_with_complete_request_data():
     assert response.status_code == 200
     response_parsed = response.json()
 
-    assert isinstance(response_parsed["gas_price"], int)
+    assert response_parsed["gas_price"] == GAS_PRICE
     assert isinstance(response_parsed["gas_usage"], int)
     assert response_parsed["overall_fee"] == response_parsed["gas_price"] * response_parsed["gas_usage"]
     assert response_parsed["unit"] == "wei"
