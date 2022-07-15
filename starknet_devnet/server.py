@@ -2,7 +2,6 @@
 A server exposing Starknet functionalities as API endpoints.
 """
 
-import os
 from pickle import UnpicklingError
 import sys
 
@@ -16,7 +15,7 @@ from .blueprints.gateway import gateway
 from .blueprints.feeder_gateway import feeder_gateway
 from .blueprints.postman import postman
 from .blueprints.rpc import rpc
-from .util import DumpOn, parse_args
+from .util import DumpOn, check_valid_dump_path, parse_args
 from .starknet_wrapper import DevnetConfig
 from .state import state
 
@@ -43,21 +42,14 @@ def generate_accounts(args):
             seed=args.seed
         )
 
-def _check_dump_path(dump_path: str):
-    """Checks if dump path is a directory."""
-    dump_path_dir = os.path.dirname(dump_path)
-
-    if not dump_path_dir:
-        # dump_path is just a file, with no parent dir
-        return
-
-    if not os.path.isdir(dump_path_dir):
-        sys.exit(f"Error: Invalid dump path: directory '{dump_path_dir}' not found.")
-
 def set_dump_options(args):
     """Assign dumping options from args to state."""
     if args.dump_path:
-        _check_dump_path(args.dump_path)
+        try:
+            check_valid_dump_path(args.dump_path)
+        except ValueError as error:
+            sys.exit(str(error))
+
     state.dumper.dump_path = args.dump_path
     state.dumper.dump_on = args.dump_on
 

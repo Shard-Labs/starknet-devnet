@@ -117,15 +117,25 @@ def test_dumping_if_path_not_provided():
     resp = send_dump_request()
     assert resp.status_code == 400
 
-def test_dumping_if_nonexistent_directory():
-    """Assert failure if dumping attempted with a path containing a non-existent directory."""
-    nonexistent_dir = "nonexistent-dir"
-    invalid_path = os.path.join(nonexistent_dir, DUMP_PATH)
+NONEXISTENT_DIR = "nonexistent-dir"
+
+def test_dumping_if_nonexistent_dir_via_cli():
+    """Assert failure if dumping attempted via cli with a path containing a nonexistent dir"""
+    invalid_path = os.path.join(NONEXISTENT_DIR, DUMP_PATH)
     devnet_proc = ACTIVE_DEVNET.start("--dump-path", invalid_path, stderr=subprocess.PIPE)
     assert devnet_proc.returncode == 1
 
-    expected_msg = f"Error: Invalid dump path: directory '{nonexistent_dir}' not found.\n"
+    expected_msg = f"Invalid dump path: directory '{NONEXISTENT_DIR}' not found.\n"
     assert expected_msg == devnet_proc.stderr.read().decode("utf-8")
+
+@devnet_in_background()
+def test_dumping_if_nonexistent_dir_via_http():
+    """Assert failure if dumping attempted via http with a path containing a nonexistent dir"""
+    invalid_path = os.path.join(NONEXISTENT_DIR, DUMP_PATH)
+
+    resp = send_dump_request(dump_path=invalid_path)
+    assert resp.json()["message"] == f"Invalid dump path: directory '{NONEXISTENT_DIR}' not found."
+    assert resp.status_code == 400
 
 @devnet_in_background("--dump-path", DUMP_PATH)
 def test_dumping_if_path_provided_as_cli_option():

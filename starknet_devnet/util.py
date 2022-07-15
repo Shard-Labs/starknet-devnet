@@ -2,9 +2,10 @@
 Utility functions used across the project.
 """
 
+import argparse
 from dataclasses import dataclass
 from enum import Enum, auto
-import argparse
+import os
 import sys
 from typing import List, Dict, Union
 
@@ -302,3 +303,15 @@ def to_bytes(value: Union[int, bytes]) -> bytes:
     If bytes, return the received value
     """
     return value if isinstance(value, bytes) else value.to_bytes(32, "big")
+
+def check_valid_dump_path(dump_path: str):
+    """Checks if dump path is a directory. Raises ValueError if not."""
+
+    dump_path_dir = os.path.dirname(dump_path)
+
+    if not dump_path_dir:
+        # dump_path is just a file, with no parent dir
+        return
+
+    if not os.path.isdir(dump_path_dir):
+        raise ValueError(f"Invalid dump path: directory '{dump_path_dir}' not found.")
