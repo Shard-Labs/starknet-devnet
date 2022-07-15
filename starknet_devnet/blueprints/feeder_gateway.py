@@ -54,11 +54,8 @@ async def call_contract():
 
     return jsonify(result_dict)
 
-@feeder_gateway.route("/get_block", methods=["GET"])
-async def get_block():
-    """Endpoint for retrieving a block identified by its hash or number."""
-    block_hash = request.args.get("blockHash")
-    block_number = request.args.get("blockNumber", type=custom_int)
+def _get_block_object(block_hash: str, block_number: int):
+    """Returns the block object"""
 
     _check_block_arguments(block_hash, block_number)
 
@@ -67,7 +64,39 @@ async def get_block():
     else:
         block = state.starknet_wrapper.blocks.get_by_number(block_number)
 
+    return block
+
+@feeder_gateway.route("/get_block", methods=["GET"])
+def get_block():
+    """Endpoint for retrieving a block identified by its hash or number."""
+
+    block_hash = request.args.get("blockHash")
+    block_number = request.args.get("blockNumber", type=custom_int)
+
+    block = _get_block_object(block_hash=block_hash, block_number=block_number)
+
     return Response(block.dumps(), status=200, mimetype="application/json")
+
+@feeder_gateway.route("/get_block_traces", methods=["GET"])
+def get_block_traces():
+    """Returns the traces of the transactions in the specified block."""
+
+    block_hash = request.args.get("blockHash")
+    block_number = request.args.get("blockNumber", type=custom_int)
+
+    block = _get_block_object(block_hash=block_hash, block_number=block_number)
+
+    traces = []
+    for transaction in block.transaction_receipts:
+        tx_hash = hex(transaction.transaction_hash)
+        trace = state.starknet_wrapper.transactions.get_transaction_trace(tx_hash)
+
+        # expected trace is equal to response of get_transaction, but with the hash property
+        trace_dict = trace.dump()
+        trace_dict["transaction_hash"] = tx_hash
+        traces.append(trace_dict)
+
+    return jsonify({ "traces": traces })
 
 @feeder_gateway.route("/get_code", methods=["GET"])
 def get_code():

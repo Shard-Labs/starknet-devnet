@@ -4,8 +4,9 @@ Test get_transaction endpoint
 
 import pytest
 import requests
+from starkware.starknet.services.api.feeder_gateway.response_objects import BlockTransactionTraces
 
-from .util import deploy, invoke, load_json_from_path, devnet_in_background
+from .util import deploy, get_transaction_receipt, invoke, load_json_from_path, devnet_in_background
 from .settings import APP_URL
 from .shared import ABI_PATH, CONTRACT_PATH, SIGNATURE, NONEXISTENT_TX_HASH
 
@@ -95,3 +96,31 @@ def test_nonexistent_transaction_hash():
     res = get_transaction_trace_response(NONEXISTENT_TX_HASH)
 
     assert res.status_code == 500
+
+def assert_get_block_traces_response(params, expected_tx_hash):
+    """Assert response of get_block_traces"""
+    block_traces = requests.get(
+        f"{APP_URL}/feeder_gateway/get_block_traces",
+        params=params
+    ).json()
+
+    # loading to assert valid structure
+    BlockTransactionTraces.load(block_traces)
+
+    # index 0 assuming it's the only tx in the response
+    actual_tx_hash = block_traces["traces"][0]["transaction_hash"]
+    assert actual_tx_hash == expected_tx_hash
+
+@pytest.mark.transaction_trace
+@devnet_in_background()
+def test_get_block_traces():
+    """Test getting all traces of a block"""
+
+    tx_hash = deploy_empty_contract()["tx_hash"]
+
+    tx_receipt = get_transaction_receipt(tx_hash=tx_hash)
+    block_hash = tx_receipt["block_hash"]
+
+    assert_get_block_traces_response({ "blockHash": block_hash }, tx_hash)
+    assert_get_block_traces_response({ "blockNumber": 0 }, tx_hash)
+    assert_get_block_traces_response({}, tx_hash) # default behavior - no params provided

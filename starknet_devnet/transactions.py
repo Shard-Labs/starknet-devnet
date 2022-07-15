@@ -2,7 +2,7 @@
 Classes for storing and handling transactions.
 """
 
-from typing import List, Union
+from typing import Dict, List, Union
 
 from web3 import Web3
 
@@ -156,7 +156,7 @@ class DevnetTransactions:
 
     def __init__(self, origin: Origin):
         self.origin = origin
-        self.__instances = {}
+        self.__instances: Dict[int, DevnetTransaction] = {}
 
     def __get_transaction_by_hash(self, tx_hash: str) -> DevnetTransaction or None:
         """
