@@ -46,6 +46,11 @@ def generate_accounts(args):
 def _check_dump_path(dump_path: str):
     """Checks if dump path is a directory."""
     dump_path_dir = os.path.dirname(dump_path)
+
+    if not dump_path_dir:
+        # dump_path is just a file, with no parent dir
+        return
+
     if not os.path.isdir(dump_path_dir):
         sys.exit(f"Error: Invalid dump path: directory '{dump_path_dir}' not found.")
 
