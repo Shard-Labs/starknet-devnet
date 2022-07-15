@@ -32,6 +32,18 @@ def _check_block_arguments(block_hash, block_number):
         message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
         raise StarknetDevnetException(message=message, status_code=500)
 
+def _get_block_object(block_hash: str, block_number: int):
+    """Returns the block object"""
+
+    _check_block_arguments(block_hash, block_number)
+
+    if block_hash is not None:
+        block = state.starknet_wrapper.blocks.get_by_hash(block_hash)
+    else:
+        block = state.starknet_wrapper.blocks.get_by_number(block_number)
+
+    return block
+
 @feeder_gateway.route("/is_alive", methods=["GET"])
 def is_alive():
     """Health check endpoint."""
@@ -53,18 +65,6 @@ async def call_contract():
     result_dict = await state.starknet_wrapper.call(call_specifications)
 
     return jsonify(result_dict)
-
-def _get_block_object(block_hash: str, block_number: int):
-    """Returns the block object"""
-
-    _check_block_arguments(block_hash, block_number)
-
-    if block_hash is not None:
-        block = state.starknet_wrapper.blocks.get_by_hash(block_hash)
-    else:
-        block = state.starknet_wrapper.blocks.get_by_number(block_number)
-
-    return block
 
 @feeder_gateway.route("/get_block", methods=["GET"])
 def get_block():
