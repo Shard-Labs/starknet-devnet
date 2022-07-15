@@ -2,22 +2,23 @@
 A server exposing Starknet functionalities as API endpoints.
 """
 
-import sys
+import os
 from pickle import UnpicklingError
+import sys
 
 from flask import Flask, jsonify
 from flask_cors import CORS
 import meinheld
-
 from starkware.starkware_utils.error_handling import StarkException
+
 from .blueprints.base import base
 from .blueprints.gateway import gateway
 from .blueprints.feeder_gateway import feeder_gateway
 from .blueprints.postman import postman
 from .blueprints.rpc import rpc
 from .util import DumpOn, parse_args
-from .state import state
 from .starknet_wrapper import DevnetConfig
+from .state import state
 
 app = Flask(__name__)
 CORS(app)
@@ -42,8 +43,16 @@ def generate_accounts(args):
             seed=args.seed
         )
 
+def _check_dump_path(dump_path: str):
+    """Checks if dump path is a directory."""
+    dump_path_dir = os.path.dirname(dump_path)
+    if not os.path.isdir(dump_path_dir):
+        sys.exit(f"Error: Invalid dump path: directory '{dump_path_dir}' not found.")
+
 def set_dump_options(args):
     """Assign dumping options from args to state."""
+    if args.dump_path:
+        _check_dump_path(args.dump_path)
     state.dumper.dump_path = args.dump_path
     state.dumper.dump_on = args.dump_on
 
@@ -89,8 +98,8 @@ def main():
     # starknet_wrapper.origin = origin
 
     load_dumped(args)
-    generate_accounts(args)
     set_dump_options(args)
+    generate_accounts(args)
     enable_lite_mode(args)
     set_start_time(args)
     set_gas_price(args)

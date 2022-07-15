@@ -107,7 +107,7 @@ def test_load_if_no_file():
     """Test loading if dump file not present."""
     assert_no_dump_present(DUMP_PATH)
     devnet_proc = ACTIVE_DEVNET.start("--load-path", DUMP_PATH, stderr=subprocess.PIPE)
-    assert devnet_proc.returncode != 0
+    assert devnet_proc.returncode == 1
     expected_msg = f"Error: Cannot load from {DUMP_PATH}. Make sure the file exists and contains a Devnet dump.\n"
     assert expected_msg == devnet_proc.stderr.read().decode("utf-8")
 
@@ -116,6 +116,16 @@ def test_dumping_if_path_not_provided():
     """Assert failure if dumping attempted without a known path."""
     resp = send_dump_request()
     assert resp.status_code == 400
+
+def test_dumping_if_nonexistent_directory():
+    """Assert failure if dumping attempted with a path containing a non-existent directory."""
+    nonexistent_dir = "nonexistent-dir"
+    invalid_path = os.path.join(nonexistent_dir, DUMP_PATH)
+    devnet_proc = ACTIVE_DEVNET.start("--dump-path", invalid_path, stderr=subprocess.PIPE)
+    assert devnet_proc.returncode == 1
+
+    expected_msg = f"Error: Invalid dump path: directory '{nonexistent_dir}' not found.\n"
+    assert expected_msg == devnet_proc.stderr.read().decode("utf-8")
 
 @devnet_in_background("--dump-path", DUMP_PATH)
 def test_dumping_if_path_provided_as_cli_option():
@@ -207,7 +217,7 @@ def test_invalid_dump_on_option():
         stderr=subprocess.PIPE
     )
 
-    assert devnet_proc.returncode != 0
+    assert devnet_proc.returncode == 1
     expected_msg = b"Error: Invalid --dump-on option: obviously-invalid. Valid options: exit, transaction\n"
     assert devnet_proc.stderr.read() == expected_msg
 
@@ -215,7 +225,7 @@ def test_dump_path_not_present_with_dump_on_present():
     """Test behavior when dump-path is not present and dump-on is."""
     devnet_proc = ACTIVE_DEVNET.start("--dump-on", "exit", stderr=subprocess.PIPE)
 
-    assert devnet_proc.returncode != 0
+    assert devnet_proc.returncode == 1
     expected_msg = b"Error: --dump-path required if --dump-on present\n"
     assert devnet_proc.stderr.read() == expected_msg
 
