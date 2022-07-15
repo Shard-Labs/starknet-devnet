@@ -4,6 +4,7 @@ Feeder gateway routes.
 
 from flask import request, jsonify, Blueprint, Response
 from marshmallow import ValidationError
+from starkware.starknet.services.api.feeder_gateway.response_objects import BlockTransactionTraces
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction
 from werkzeug.datastructures import MultiDict
 
@@ -96,7 +97,10 @@ def get_block_traces():
         trace_dict["transaction_hash"] = tx_hash
         traces.append(trace_dict)
 
-    return jsonify({ "traces": traces })
+    # assert correct structure
+    block_transaction_traces = BlockTransactionTraces.load({ "traces": traces })
+
+    return jsonify(block_transaction_traces.dump())
 
 @feeder_gateway.route("/get_code", methods=["GET"])
 def get_code():
