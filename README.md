@@ -542,10 +542,18 @@ poetry run pytest test/<TEST_FILE> # for a single file
 poetry run pytest test/<TEST_FILE>::<TEST_CASE> # for a single test case
 ```
 
-### Development - Check Versioning consistency
+### Development - Check versioning consistency
 
 ```
 ./scripts/check_versions.sh
+```
+
+### Development - working with a local version of cairo-lang:
+
+In `pyproject.toml` under `[tool.poetry.dependencies]` specify
+
+```
+cairo-lang = { path = "your-cairo-lang-version.zip" }
 ```
 
 ### Development - Build
