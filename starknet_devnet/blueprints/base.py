@@ -5,7 +5,7 @@ from flask import Blueprint, Response, request, jsonify
 from starknet_devnet.fee_token import FeeToken
 
 from starknet_devnet.state import state
-from starknet_devnet.util import StarknetDevnetException
+from starknet_devnet.util import StarknetDevnetException, check_valid_dump_path
 
 base = Blueprint("base", __name__)
 
@@ -60,6 +60,11 @@ def dump():
     dump_path = request_dict.get("path") or state.dumper.dump_path
     if not dump_path:
         raise StarknetDevnetException(message="No path provided.", status_code=400)
+
+    try:
+        check_valid_dump_path(dump_path)
+    except ValueError as error:
+        raise StarknetDevnetException(status_code=400, message=str(error)) from error
 
     state.dumper.dump(dump_path)
     return Response(status=200)

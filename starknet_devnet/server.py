@@ -2,22 +2,22 @@
 A server exposing Starknet functionalities as API endpoints.
 """
 
-import sys
 from pickle import UnpicklingError
+import sys
 
 from flask import Flask, jsonify
 from flask_cors import CORS
 import meinheld
-
 from starkware.starkware_utils.error_handling import StarkException
+
 from .blueprints.base import base
 from .blueprints.gateway import gateway
 from .blueprints.feeder_gateway import feeder_gateway
 from .blueprints.postman import postman
 from .blueprints.rpc import rpc
-from .util import DumpOn, parse_args
-from .state import state
+from .util import DumpOn, check_valid_dump_path, parse_args
 from .starknet_wrapper import DevnetConfig
+from .state import state
 
 app = Flask(__name__)
 CORS(app)
@@ -44,6 +44,12 @@ def generate_accounts(args):
 
 def set_dump_options(args):
     """Assign dumping options from args to state."""
+    if args.dump_path:
+        try:
+            check_valid_dump_path(args.dump_path)
+        except ValueError as error:
+            sys.exit(str(error))
+
     state.dumper.dump_path = args.dump_path
     state.dumper.dump_on = args.dump_on
 
@@ -89,8 +95,8 @@ def main():
     # starknet_wrapper.origin = origin
 
     load_dumped(args)
-    generate_accounts(args)
     set_dump_options(args)
+    generate_accounts(args)
     enable_lite_mode(args)
     set_start_time(args)
     set_gas_price(args)
