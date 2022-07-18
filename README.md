@@ -553,7 +553,7 @@ poetry run pytest test/<TEST_FILE>::<TEST_CASE> # for a single test case
 In `pyproject.toml` under `[tool.poetry.dependencies]` specify
 
 ```
-cairo-lang = { path = "your-cairo-lang-version.zip" }
+cairo-lang = { path = "your-cairo-lang-package.zip" }
 ```
 
 ### Development - Build
