@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eu
 
 [ -f .env ] && source .env
 
@@ -7,11 +7,22 @@ IMAGE=shardlabs/starknet-devnet
 LOCAL_VERSION=$(./scripts/get_version.sh version)
 echo "Local version: $LOCAL_VERSION"
 
-LOCAL_VERSION_TAG="${LOCAL_VERSION}${TAG_SUFFIX}"
-LATEST_VERSION_TAG="latest$TAG_SUFFIX"
+LOCAL_VERSION_TAG="${LOCAL_VERSION}${ARCH_SUFFIX}"
+LATEST_VERSION_TAG="latest$ARCH_SUFFIX"
 
 echo "Build image regardless of versioning"
-docker build -t "$IMAGE:$LOCAL_VERSION_TAG" -t "$IMAGE:$LATEST_VERSION_TAG" .
+docker build . \
+    -t "$IMAGE:$LOCAL_VERSION_TAG" \
+    -t "$IMAGE:$LATEST_VERSION_TAG" \
+
+SEED_SUFFIX="-seed0"
+LOCAL_VERSION_SEEDED_TAG="${LOCAL_VERSION_TAG}${SEED_SUFFIX}"
+LATEST_VERSION_SEEDED_TAG="${LATEST_VERSION_TAG}${SEED_SUFFIX}"
+docker build . \
+    -f seed0.Dockerfile \
+    --build-arg BASE_TAG=$LOCAL_VERSION_TAG
+    -t "$IMAGE:$LOCAL_VERSION_SEEDED_TAG" \
+    -t "$IMAGE:$LATEST_VERSION_SEEDED_TAG" \
 
 echo "Run a devnet instance in background; sleep to allow it to start"
 # can't use "localhost" because docker doesn't allow such mapping
@@ -40,6 +51,8 @@ function push() {
     docker login --username "$DOCKER_USER" --password "$DOCKER_PASS"
     docker push "$IMAGE:$LOCAL_VERSION_TAG"
     docker push "$IMAGE:$LATEST_VERSION_TAG"
+    docker push "$IMAGE:$LOCAL_VERSION_SEEDED_TAG"
+    docker push "$IMAGE:$LATEST_VERSION_SEEDED_TAG"
 }
 
 dockerhub_url="https://hub.docker.com/v2/repositories/$IMAGE/tags/$LOCAL_VERSION_TAG"
