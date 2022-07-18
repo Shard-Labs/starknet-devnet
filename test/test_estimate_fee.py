@@ -14,7 +14,6 @@ from .settings import APP_URL
 from .shared import CONTRACT_PATH
 
 DEPLOY_CONTENT = load_file_content("deploy.json")
-ESTIMATE_FEE_CONTENT = load_file_content("estimate_fee.json")
 INVOKE_CONTENT = load_file_content("invoke.json")
 
 def estimate_fee_local(req_dict: dict):
