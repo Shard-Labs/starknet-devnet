@@ -352,10 +352,9 @@ async def add_invoke_transaction(function_invocation: dict, signature: List[str]
     )
 
     _, transaction_hash, _ = await state.starknet_wrapper.invoke(invoke_function=invoke_function)
-    result = RpcInvokeTransactionResult(
+    return RpcInvokeTransactionResult(
         transaction_hash=rpc_felt(transaction_hash),
     )
-    return result
 
 
 async def add_declare_transaction(contract_class: RpcContractClass, version: str) -> dict:
@@ -379,11 +378,10 @@ async def add_declare_transaction(contract_class: RpcContractClass, version: str
     )
 
     class_hash, transaction_hash = await state.starknet_wrapper.declare(declare_transaction=declare_transaction)
-    result = RpcDeclareTransactionResult(
+    return RpcDeclareTransactionResult(
         transaction_hash=rpc_felt(transaction_hash),
         class_hash=rpc_felt(class_hash),
     )
-    return result
 
 async def add_deploy_transaction(contract_address_salt: str, constructor_calldata: List[str], contract_definition: RpcContractClass) -> dict:
     """
@@ -404,11 +402,10 @@ async def add_deploy_transaction(contract_address_salt: str, constructor_calldat
     )
 
     contract_address, transaction_hash = await state.starknet_wrapper.deploy(deploy_transaction=deploy_transaction)
-    result = RpcDeployTransactionResult(
+    return RpcDeployTransactionResult(
         transaction_hash=rpc_felt(transaction_hash),
         contract_address=rpc_felt(contract_address),
     )
-    return result
 
 
 def make_invoke_function(request_body: dict) -> InvokeFunction:
