@@ -2,6 +2,8 @@
 RPC routes
 rpc version: 0.15.0
 """
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 import dataclasses
 import json
@@ -14,7 +16,12 @@ import marshmallow
 from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.definitions import constants
-from starkware.starknet.services.api.gateway.transaction import InvokeFunction, Deploy, Declare
+from starkware.starknet.services.api.gateway.transaction import (
+    DECLARE_SENDER_ADDRESS,
+    Declare,
+    Deploy,
+    InvokeFunction,
+)
 from starkware.starknet.services.api.gateway.transaction_utils import compress_program, decompress_program
 from starkware.starknet.services.api.feeder_gateway.response_objects import (
     StarknetBlock,
@@ -345,7 +352,10 @@ async def add_invoke_transaction(function_invocation: dict, signature: List[str]
     )
 
     _, transaction_hash, _ = await state.starknet_wrapper.invoke(invoke_function=invoke_function)
-    return { "transaction_hash": rpc_felt(transaction_hash) }
+    result = RpcInvokeTransactionResult(
+        transaction_hash=rpc_felt(transaction_hash),
+    )
+    return result
 
 
 async def add_declare_transaction(contract_class: RpcContractClass, version: str) -> dict:
@@ -356,24 +366,24 @@ async def add_declare_transaction(contract_class: RpcContractClass, version: str
         decompressed_program = decompress_program({"contract_class": contract_class}, False)["contract_class"]
         contract = ContractClass.loads(json.dumps(decompressed_program, sort_keys=True))
         contract = dataclasses.replace(contract, abi=[])
-    except marshmallow.exceptions.MarshmallowError as ex:
+    except (StarkException, TypeError, marshmallow.exceptions.MarshmallowError) as ex:
         raise RpcError(code=50, message="Invalid contract class") from ex
 
     declare_transaction = Declare(
         contract_class=contract,
         version=version,
-        sender_address=1,
+        sender_address=DECLARE_SENDER_ADDRESS,
         max_fee=0,
         signature=[],
         nonce=0,
     )
 
     class_hash, transaction_hash = await state.starknet_wrapper.declare(declare_transaction=declare_transaction)
-    return {
-        "transaction_hash": rpc_felt(transaction_hash),
-        "class_hash": rpc_felt(class_hash),
-    }
-
+    result = RpcDeclareTransactionResult(
+        transaction_hash=rpc_felt(transaction_hash),
+        class_hash=rpc_felt(class_hash),
+    )
+    return result
 
 async def add_deploy_transaction(contract_address_salt: str, constructor_calldata: List[str], contract_definition: RpcContractClass) -> dict:
     """
@@ -383,7 +393,7 @@ async def add_deploy_transaction(contract_address_salt: str, constructor_calldat
         decompressed_program = decompress_program({"contract_definition": contract_definition}, False)["contract_definition"]
         contract = ContractClass.loads(json.dumps(decompressed_program, sort_keys=True))
         contract = dataclasses.replace(contract, abi=[])
-    except marshmallow.exceptions.MarshmallowError as ex:
+    except (StarkException, TypeError, marshmallow.exceptions.MarshmallowError) as ex:
         raise RpcError(code=50, message="Invalid contract class") from ex
 
     deploy_transaction = Deploy(
@@ -394,10 +404,11 @@ async def add_deploy_transaction(contract_address_salt: str, constructor_calldat
     )
 
     contract_address, transaction_hash = await state.starknet_wrapper.deploy(deploy_transaction=deploy_transaction)
-    return {
-        "transaction_hash": rpc_felt(transaction_hash),
-        "contract_address": rpc_felt(contract_address),
-    }
+    result = RpcDeployTransactionResult(
+        transaction_hash=rpc_felt(transaction_hash),
+        contract_address=rpc_felt(contract_address),
+    )
+    return result
 
 
 def make_invoke_function(request_body: dict) -> InvokeFunction:
@@ -665,6 +676,29 @@ class RpcDeclareTransaction(TypedDict):
     max_fee: str
     version: str
     signature: List[str]
+
+
+class RpcInvokeTransactionResult(TypedDict):
+    """
+    TypedDict for rpc invoke transaction result
+    """
+    transaction_hash: str
+
+
+class RpcDeclareTransactionResult(TypedDict):
+    """
+    TypedDict for rpc declare transaction result
+    """
+    transaction_hash: str
+    class_hash: str
+
+
+class RpcDeployTransactionResult(TypedDict):
+    """
+    TypedDict for rpc deploy transaction result
+    """
+    transaction_hash: str
+    contract_address: str
 
 
 def rpc_invoke_transaction(transaction: InvokeSpecificInfo) -> RpcInvokeTransaction:
