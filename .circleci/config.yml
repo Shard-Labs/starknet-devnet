@@ -73,6 +73,7 @@ jobs:
           name: Build and push image
           command: ./scripts/image_build_and_push.sh
           environment:
+            ARCH_SUFFIX: ""
             REMOTE: true
 
   image_build_and_push_arm:
@@ -85,7 +86,8 @@ jobs:
           name: Build and push image
           command: ./scripts/image_build_and_push.sh
           environment:
-            TAG_SUFFIX: -arm
+            ARCH_SUFFIX: -arm
+            REMOTE: ""
 
 workflows:
   version: 2
