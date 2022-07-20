@@ -87,6 +87,7 @@ jobs:
           command: ./scripts/image_build_and_push.sh
           environment:
             ARCH_SUFFIX: -arm
+            REMOTE: ""
 
 workflows:
   version: 2
