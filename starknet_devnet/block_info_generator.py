@@ -7,6 +7,8 @@ import time
 from starkware.starknet.business_logic.state.state import BlockInfo
 from starkware.starknet.definitions.general_config import StarknetGeneralConfig
 
+from starknet_devnet.constants import CAIRO_LANG_VERSION
+
 def now() -> int:
     """Get the current time in seconds."""
     return int(time.time())
@@ -34,7 +36,8 @@ class BlockInfoGenerator():
             gas_price=self.gas_price,
             block_number=block_info.block_number,
             block_timestamp=block_timestamp,
-            sequencer_address=general_config.sequencer_address
+            sequencer_address=general_config.sequencer_address,
+            starknet_version=CAIRO_LANG_VERSION
         )
 
     def increase_time(self, time_s: int):
