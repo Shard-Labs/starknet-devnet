@@ -116,6 +116,13 @@ Image tags correspond to Devnet versions as on PyPI and GitHub, with the `latest
 
 - `shardlabs/starknet-devnet:0.2.5` - image for the amd64 architecture
 - `shardlabs/starknet-devnet:0.2.5-arm` - image for the arm64 architecture
+- `shardlabs/starknet-devnet:latest-arm`
+
+By appending the `-seed0` suffix, you can access images which [predeploy funded accounts](#predeployed-accounts) with `--seed 0`, thus always deploying the same set of accounts. E.g.:
+
+- `shardlabs/starknet-devnet:0.2.5-seed0`
+- `shardlabs/starknet-devnet:latest-seed0`
+- `shardlabs/starknet-devnet:0.2.5-arm-seed0`
 
 The server inside the container listens to the port 5050, which you need to publish to a desired `<PORT>` on your host machine:
 
