@@ -30,6 +30,28 @@ def send_estimate_fee_with_requests(req_dict: dict):
         json=req_dict
     )
 
+@devnet_in_background()
+def test_estimate_fee_without_block_zero_gas():
+    """Call without transaction, expect pass with gas_price zero"""
+    response = send_estimate_fee_with_requests({
+        "entry_point_selector": "0x2f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354",
+        "calldata": [
+            "1786654640273905855542517570545751199272449814774211541121677632577420730552",
+            "1000000000000000000000",
+            "0"
+        ],
+        "signature": [],
+        "contract_address": "0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488"
+    })
+
+    assert response.status_code == 200
+    response_parsed = response.json()
+    assert response_parsed["gas_price"] == 0
+    assert response_parsed["gas_usage"] == 0
+    assert response_parsed["overall_fee"] == 0
+    assert response_parsed["unit"] == "wei"
+    assert response_parsed["warning"] == "block isn't produced"
+
 @pytest.mark.estimate_fee
 @devnet_in_background()
 def test_estimate_fee_in_unknown_address():
