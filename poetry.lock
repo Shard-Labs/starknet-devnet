@@ -623,7 +623,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "marshmallow"
-version = "3.16.0"
+version = "3.17.0"
 description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
 category = "main"
 optional = false
@@ -633,9 +633,9 @@ python-versions = ">=3.7"
 packaging = ">=17.0"
 
 [package.extras]
-dev = ["pytest", "pytz", "simplejson", "mypy (==0.960)", "flake8 (==4.0.1)", "flake8-bugbear (==22.4.25)", "pre-commit (>=2.4,<3.0)", "tox"]
+dev = ["pytest", "pytz", "simplejson", "mypy (==0.961)", "flake8 (==4.0.1)", "flake8-bugbear (==22.6.22)", "pre-commit (>=2.4,<3.0)", "tox"]
 docs = ["sphinx (==4.5.0)", "sphinx-issues (==3.0.1)", "alabaster (==0.7.12)", "sphinx-version-warning (==1.1.2)", "autodocsumm (==0.2.8)"]
-lint = ["mypy (==0.960)", "flake8 (==4.0.1)", "flake8-bugbear (==22.4.25)", "pre-commit (>=2.4,<3.0)"]
+lint = ["mypy (==0.961)", "flake8 (==4.0.1)", "flake8-bugbear (==22.6.22)", "pre-commit (>=2.4,<3.0)"]
 tests = ["pytest", "pytz", "simplejson"]
 
 [[package]]
@@ -1088,7 +1088,7 @@ test = ["pytest", "typing-extensions", "mypy"]
 
 [[package]]
 name = "typing-extensions"
-version = "4.2.0"
+version = "4.3.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "main"
 optional = false
@@ -1213,7 +1213,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.2,<3.10"
-content-hash = "24ee88e402dddfa9522d2d379f693494e1ca064d302f811c75fe9bb1fc16944e"
+content-hash = "b1e18a3f7f94fa0e99830ca7bcddbfc03f56fbaa4ba27fe55faa9715b86b4cba"
 
 [metadata.files]
 aiohttp = [
@@ -1665,8 +1665,8 @@ markupsafe = [
     {file = "MarkupSafe-2.1.1.tar.gz", hash = "sha256:7f91197cc9e48f989d12e4e6fbc46495c446636dfc81b9ccf50bb0ec74b91d4b"},
 ]
 marshmallow = [
-    {file = "marshmallow-3.16.0-py3-none-any.whl", hash = "sha256:53a1e0ee69f79e1f3e80d17393b25cfc917eda52f859e8183b4af72c3390c1f1"},
-    {file = "marshmallow-3.16.0.tar.gz", hash = "sha256:a762c1d8b2bcb0e5c8e964850d03f9f3bffd6a12b626f3c14b9d6b1841999af5"},
+    {file = "marshmallow-3.17.0-py3-none-any.whl", hash = "sha256:00040ab5ea0c608e8787137627a8efae97fabd60552a05dc889c888f814e75eb"},
+    {file = "marshmallow-3.17.0.tar.gz", hash = "sha256:635fb65a3285a31a30f276f30e958070f5214c7196202caa5c7ecf28f5274bc7"},
 ]
 marshmallow-dataclass = [
     {file = "marshmallow_dataclass-8.5.8-py3-none-any.whl", hash = "sha256:9558cad84f65908df269d762deda903a8b42e25621c8a6be2a8d9b19cd55b9f5"},
@@ -2074,8 +2074,8 @@ typeguard = [
     {file = "typeguard-2.13.3.tar.gz", hash = "sha256:00edaa8da3a133674796cf5ea87d9f4b4c367d77476e185e80251cc13dfbb8c4"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-4.2.0-py3-none-any.whl", hash = "sha256:6657594ee297170d19f67d55c05852a874e7eb634f4f753dbd667855e07c1708"},
-    {file = "typing_extensions-4.2.0.tar.gz", hash = "sha256:f1c24655a0da0d1b67f07e17a5e6b2a105894e6824b92096378bb3668ef02376"},
+    {file = "typing_extensions-4.3.0-py3-none-any.whl", hash = "sha256:25642c956049920a5aa49edcdd6ab1e06d7e5d467fc00e0506c44ac86fbfca02"},
+    {file = "typing_extensions-4.3.0.tar.gz", hash = "sha256:e6d2677a32f47fc7eb2795db1dd15c1f34eff616bcaf2cfb5e997f854fa1c4a6"},
 ]
 typing-inspect = [
     {file = "typing_inspect-0.7.1-py2-none-any.whl", hash = "sha256:b1f56c0783ef0f25fb064a01be6e5407e54cf4a4bf4f3ba3fe51e0bd6dcea9e5"},

@@ -347,6 +347,7 @@ def test_add_invoke_transaction(invoke_content):
     receipt = resp["result"]
 
     assert set(receipt.keys()) == set(["transaction_hash"])
+    assert receipt["transaction_hash"]
 
 
 def test_add_declare_transaction_on_incorrect_contract(declare_content):
@@ -395,6 +396,8 @@ def test_add_declare_transaction(declare_content):
     receipt = resp["result"]
 
     assert set(receipt.keys()) == set(["transaction_hash", "class_hash"])
+    assert receipt["transaction_hash"]
+    assert receipt["class_hash"]
 
 
 def test_add_deploy_transaction_on_incorrect_contract(deploy_content):
@@ -445,3 +448,5 @@ def test_add_deploy_transaction(deploy_content):
     receipt = resp["result"]
 
     assert set(receipt.keys()) == set(["transaction_hash", "contract_address"])
+    assert receipt["transaction_hash"]
+    assert receipt["contract_address"]

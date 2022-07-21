@@ -11,7 +11,7 @@ import json
 from typing import Callable, Union, List, Tuple, Optional, Any
 from typing_extensions import TypedDict
 from flask import Blueprint, request
-import marshmallow
+from marshmallow.exceptions import MarshmallowError
 
 from starkware.starknet.services.api.contract_class import ContractClass
 from starkware.starkware_utils.error_handling import StarkException
@@ -41,6 +41,7 @@ from ..util import StarknetDevnetException
 rpc = Blueprint("rpc", __name__, url_prefix="/rpc")
 
 PROTOCOL_VERSION = "0.15.0"
+
 
 @rpc.route("", methods=["POST"])
 async def base_route():
@@ -363,13 +364,13 @@ async def add_declare_transaction(contract_class: RpcContractClass, version: str
     """
     try:
         decompressed_program = decompress_program({"contract_class": contract_class}, False)["contract_class"]
-        contract = ContractClass.loads(json.dumps(decompressed_program, sort_keys=True))
-        contract = dataclasses.replace(contract, abi=[])
-    except (StarkException, TypeError, marshmallow.exceptions.MarshmallowError) as ex:
+        contract_definition = ContractClass.load(decompressed_program)
+        contract_definition = dataclasses.replace(contract_definition, abi=[])
+    except (StarkException, TypeError, MarshmallowError) as ex:
         raise RpcError(code=50, message="Invalid contract class") from ex
 
     declare_transaction = Declare(
-        contract_class=contract,
+        contract_class=contract_definition,
         version=version,
         sender_address=DECLARE_SENDER_ADDRESS,
         max_fee=0,
@@ -383,21 +384,22 @@ async def add_declare_transaction(contract_class: RpcContractClass, version: str
         class_hash=rpc_felt(class_hash),
     )
 
+
 async def add_deploy_transaction(contract_address_salt: str, constructor_calldata: List[str], contract_definition: RpcContractClass) -> dict:
     """
     Submit a new deploy contract transaction
     """
     try:
         decompressed_program = decompress_program({"contract_definition": contract_definition}, False)["contract_definition"]
-        contract = ContractClass.loads(json.dumps(decompressed_program, sort_keys=True))
-        contract = dataclasses.replace(contract, abi=[])
-    except (StarkException, TypeError, marshmallow.exceptions.MarshmallowError) as ex:
+        contract_class = ContractClass.load(decompressed_program)
+        contract_class = dataclasses.replace(contract_class, abi=[])
+    except (StarkException, TypeError, MarshmallowError) as ex:
         raise RpcError(code=50, message="Invalid contract class") from ex
 
     deploy_transaction = Deploy(
         contract_address_salt=contract_address_salt,
         constructor_calldata=constructor_calldata,
-        contract_definition=contract,
+        contract_definition=contract_class,
         version=constants.TRANSACTION_VERSION,
     )
 
