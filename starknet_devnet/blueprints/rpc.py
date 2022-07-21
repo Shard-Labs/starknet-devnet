@@ -276,7 +276,7 @@ async def call(contract_address: str, entry_point_selector: str, calldata: list,
         raise RpcError(code=-1, message=ex.message) from ex
 
 
-async def estimate_fee():
+async def estimate_fee(request_body: dict):
     """
     Get the estimate fee for the transaction
     """
@@ -907,7 +907,7 @@ def parse_body(body: dict) -> Tuple[Callable, Union[List, dict], int]:
         "estimateFee": estimate_fee,
     }
 
-    method_name = body["method"].lstrip("starknet_")
+    method_name = body["method"].split("starknet_")[-1]
     args: Union[List, dict] = body["params"]
     message_id = body["id"]
 
