@@ -71,3 +71,27 @@ def fixture_declare_info() -> dict:
     resp = send_transaction(declare_tx)
     declare_info = json.loads(resp.data.decode("utf-8"))
     return {**declare_info, **declare_tx}
+
+
+@pytest.fixture(name="invoke_content", scope="module")
+def fixture_invoke_content() -> dict:
+    """
+    Invoke content JSON object
+    """
+    return json.loads(INVOKE_CONTENT)
+
+
+@pytest.fixture(name="deploy_content", scope="module")
+def fixture_deploy_content() -> dict:
+    """
+    Deploy content JSON object
+    """
+    return json.loads(DEPLOY_CONTENT)
+
+
+@pytest.fixture(name="declare_content", scope="module")
+def fixture_declare_content() -> dict:
+    """
+    Declare content JSON object
+    """
+    return json.loads(DECLARE_CONTENT)

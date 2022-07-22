@@ -6,6 +6,9 @@ from __future__ import annotations
 
 from typing import List
 
+from starkware.starknet.definitions import constants
+from starknet_devnet.blueprints.rpc import RpcContractClass, RpcInvokeTransaction
+
 from .rpc_utils import rpc_call, get_block_with_transaction, pad_zero
 
 
@@ -320,3 +323,131 @@ def test_get_deploy_transaction_receipt(deploy_info):
         "statusData": None,
         "actual_fee": "0x0"
     }
+
+
+def test_add_invoke_transaction(invoke_content):
+    """
+    Add invoke transaction
+    """
+    function_invocation = RpcInvokeTransaction(
+        contract_address=invoke_content["contract_address"],
+        entry_point_selector=invoke_content["entry_point_selector"],
+        calldata=invoke_content["calldata"],
+    )
+
+    resp = rpc_call(
+        "starknet_addInvokeTransaction",
+        params={
+            "function_invocation": function_invocation,
+            "signature": invoke_content["signature"],
+            "max_fee": hex(0),
+            "version": hex(constants.TRANSACTION_VERSION),
+        }
+    )
+    receipt = resp["result"]
+
+    assert set(receipt.keys()) == set(["transaction_hash"])
+    assert receipt["transaction_hash"][:3] == "0x0"
+
+
+def test_add_declare_transaction_on_incorrect_contract(declare_content):
+    """
+    Add declare transaction on incorrect class
+    """
+    contract_class = declare_content["contract_class"]
+
+    rpc_contract = RpcContractClass(
+        program="",
+        entry_points_by_type=contract_class["entry_points_by_type"],
+    )
+
+    ex = rpc_call(
+        "starknet_addDeclareTransaction",
+        params={
+            "contract_class": rpc_contract,
+            "version": constants.TRANSACTION_VERSION,
+        }
+    )
+
+    assert ex["error"] == {
+        "code": 50,
+        "message": "Invalid contract class"
+    }
+
+
+def test_add_declare_transaction(declare_content):
+    """
+    Add declare transaction
+    """
+    contract_class = declare_content["contract_class"]
+
+    rpc_contract = RpcContractClass(
+        program=contract_class["program"],
+        entry_points_by_type=contract_class["entry_points_by_type"],
+    )
+
+    resp = rpc_call(
+        "starknet_addDeclareTransaction",
+        params={
+            "contract_class": rpc_contract,
+            "version": constants.TRANSACTION_VERSION,
+        }
+    )
+    receipt = resp["result"]
+
+    assert set(receipt.keys()) == set(["transaction_hash", "class_hash"])
+    assert receipt["transaction_hash"][:3] == "0x0"
+    assert receipt["class_hash"][:3] == "0x0"
+
+
+def test_add_deploy_transaction_on_incorrect_contract(deploy_content):
+    """
+    Add deploy transaction on incorrect class
+    """
+    contract_definition = deploy_content["contract_definition"]
+
+    rpc_contract = RpcContractClass(
+        program="",
+        entry_points_by_type=contract_definition["entry_points_by_type"],
+    )
+
+    ex = rpc_call(
+        "starknet_addDeployTransaction",
+        params={
+            "contract_address_salt": int(deploy_content["contract_address_salt"], 16),
+            "constructor_calldata": deploy_content["constructor_calldata"],
+            "contract_definition": rpc_contract,
+        }
+    )
+
+    assert ex["error"] == {
+        "code": 50,
+        "message": "Invalid contract class"
+    }
+
+
+def test_add_deploy_transaction(deploy_content):
+    """
+    Add deploy transaction
+    """
+    contract_definition = deploy_content["contract_definition"]
+
+    rpc_contract = RpcContractClass(
+        program=contract_definition["program"],
+        entry_points_by_type=contract_definition["entry_points_by_type"],
+    )
+
+    resp = rpc_call(
+        "starknet_addDeployTransaction",
+        params={
+            "contract_address_salt": int(deploy_content["contract_address_salt"], 16),
+            "constructor_calldata": deploy_content["constructor_calldata"],
+            "contract_definition": rpc_contract,
+        }
+    )
+    receipt = resp["result"]
+
+    assert set(receipt.keys()) == set(["transaction_hash", "contract_address"])
+
+    assert receipt["transaction_hash"][:3] == "0x0"
+    assert receipt["contract_address"][:3] == "0x0"

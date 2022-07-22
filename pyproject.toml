@@ -19,6 +19,8 @@ meinheld = "~1.0.2"
 Werkzeug = "~2.0.3"
 cloudpickle = "~2.1.0"
 crypto-cpp-py = "~1.0.4"
+marshmallow = "~3.17.0"
+typing-extensions = "~4.3.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "~2.12.2"
