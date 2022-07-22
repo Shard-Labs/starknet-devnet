@@ -11,6 +11,8 @@ from starkware.crypto.signature.signature import private_to_stark_key
 from .account import Account
 from .dump import Dumper
 from .starknet_wrapper import StarknetWrapper, DevnetConfig
+from .time import progress
+progress(19)
 
 class State():
     """

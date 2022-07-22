@@ -1,6 +1,8 @@
 """
 A server exposing Starknet functionalities as API endpoints.
 """
+from .time import progress
+progress(1)
 
 from pickle import UnpicklingError
 import sys
