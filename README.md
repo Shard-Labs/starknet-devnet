@@ -114,8 +114,15 @@ docker pull shardlabs/starknet-devnet:<TAG>
 
 Image tags correspond to Devnet versions as on PyPI and GitHub, with the `latest` tag used for the latest image. These images are built for linux/amd64. To use the arm64 versions, since `0.1.23` you can append `-arm` to the tag. E.g.:
 
-- `shardlabs/starknet-devnet:0.2.5` - image for the amd64 architecture
-- `shardlabs/starknet-devnet:0.2.5-arm` - image for the arm64 architecture
+- `shardlabs/starknet-devnet:0.2.6` - image for the amd64 architecture
+- `shardlabs/starknet-devnet:0.2.6-arm` - image for the arm64 architecture
+- `shardlabs/starknet-devnet:latest-arm`
+
+By appending the `-seed0` suffix, you can access images which [predeploy funded accounts](#predeployed-accounts) with `--seed 0`, thus always deploying the same set of accounts. E.g.:
+
+- `shardlabs/starknet-devnet:0.2.6-seed0`
+- `shardlabs/starknet-devnet:latest-seed0`
+- `shardlabs/starknet-devnet:0.2.6-arm-seed0`
 
 The server inside the container listens to the port 5050, which you need to publish to a desired `<PORT>` on your host machine:
 
@@ -144,6 +151,7 @@ If you don't specify the `HOST` part, the server will indeed be available on all
   - `deploy`
   - `estimate_fee`
   - `get_block` (currently pending block is not supported)
+  - `get_block_traces`
   - `get_class_by_hash`
   - `get_class_hash_at`
   - `get_code`
@@ -378,11 +386,11 @@ docker run -p 127.0.0.1:5050:5050 -e PYTHONUNBUFFERED=1 shardlabs/starknet-devne
 
 Devnet predeploys `--accounts` with some `--initial-balance`. The accounts get charged for transactions according to the `--gas-price`. A `--seed` can be used to regenerate the same set of accounts. Read more about it in the [Run section](#run).
 
-To get the code of the account (currently OpenZeppelin v0.1.0), use one of the following:
+To get the code of the account (currently OpenZeppelin v0.2.1), use one of the following:
 
 - `GET /get_code?contractAddress=<ACCOUNT_ADDRESS>`
 - [Starknet CLI](https://www.cairo-lang.org/docs/hello_starknet/cli.html#get-code): `starknet get_code --contract_address <ACCOUNT_ADDRESS> --feeder_gateway_url <DEVNET_URL>`
-- [OpenZeppelin's cairo-contract repository](https://github.com/OpenZeppelin/cairo-contracts/tree/v0.1.0)
+- [OpenZeppelin's cairo-contract repository](https://github.com/OpenZeppelin/cairo-contracts/tree/v0.2.1)
 
 You can use the accounts in e.g. [starknet-hardhat-plugin](https://github.com/Shard-Labs/starknet-hardhat-plugin) via:
 
@@ -541,10 +549,18 @@ poetry run pytest test/<TEST_FILE> # for a single file
 poetry run pytest test/<TEST_FILE>::<TEST_CASE> # for a single test case
 ```
 
-### Development - Check Versioning consistency
+### Development - Check versioning consistency
 
 ```
 ./scripts/check_versions.sh
+```
+
+### Development - working with a local version of cairo-lang:
+
+In `pyproject.toml` under `[tool.poetry.dependencies]` specify
+
+```
+cairo-lang = { path = "your-cairo-lang-package.zip" }
 ```
 
 ### Development - Build

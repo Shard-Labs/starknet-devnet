@@ -19,22 +19,22 @@ class Account:
     """Account contract wrapper."""
 
     CONTRACT_CLASS: ContractClass = None # loaded lazily
-    CONTRACT_PATH = "accounts_artifacts/OpenZeppelin/b27101eb826fae73f49751fa384c2a0ff3377af2/Account.cairo/Account"
+    CONTRACT_PATH = "accounts_artifacts/OpenZeppelin/0.2.1/Account.cairo/Account"
 
     # Precalculated to save time
     # HASH = compute_class_hash(contract_class=Account.get_contract_class()))
-    HASH = 1803505466663265559571280894381905521939782500874858933595227108099796801620
+    HASH = 3234970678029762354735267567433689214900679403476863445247436772798892968339
     HASH_BYTES = to_bytes(HASH)
-
-    # Random value to make the constructor_calldata the only thing that affects the account address
-    SALT = 20
 
     def __init__(self, private_key: int, public_key: int, initial_balance: int):
         self.private_key = private_key
         self.public_key = public_key
+
+        # salt and class_hash have frozen values that make the constructor_calldata
+        # the only thing that affects the account address
         self.address = calculate_contract_address_from_hash(
-            salt=Account.SALT,
-            class_hash=Account.HASH,
+            salt=20,
+            class_hash=1803505466663265559571280894381905521939782500874858933595227108099796801620,
             constructor_calldata=[public_key],
             deployer_address=0
         )

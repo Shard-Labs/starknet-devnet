@@ -8,7 +8,7 @@ def web3_deploy(web3: Web3, contract, *inputs):
     bytecode=contract['bytecode']
     contract = web3.eth.contract(abi=abi, bytecode=bytecode)
     tx_hash = contract.constructor(*inputs).transact()
-    tx_receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     return web3.eth.contract(address=tx_receipt.contractAddress, abi=abi)
 
 def web3_transact(web3: Web3, function, contract,  *inputs):
@@ -16,7 +16,7 @@ def web3_transact(web3: Web3, function, contract,  *inputs):
 
     contract_function = contract.get_function_by_name(function)(*inputs)
     tx_hash = contract_function.transact()
-    web3.eth.waitForTransactionReceipt(tx_hash)
+    web3.eth.wait_for_transaction_receipt(tx_hash)
 
     return tx_hash
 

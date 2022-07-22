@@ -35,7 +35,7 @@ class ContractWrapper:
         Calls the function identified with `entry_point_selector`, potentially passing in `calldata` and `signature`.
         """
 
-        call_info = await self.contract.state.call_raw(
+        call_info, _ = await self.contract.state.call_raw(
             calldata=calldata,
             caller_address=caller_address,
             contract_address=self.contract.contract_address,

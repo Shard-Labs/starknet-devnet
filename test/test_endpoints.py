@@ -45,11 +45,6 @@ def assert_invoke_resp(resp: bytes):
     assert resp_dict["code"] == "TRANSACTION_RECEIVED"
     assert resp_dict["result"] == []
 
-def assert_call_resp(resp: bytes):
-    """Asserts the validity of call response body."""
-    resp_dict = json.loads(resp.data.decode("utf-8"))
-    assert resp_dict == { "result": ["0xa"] }
-
 @pytest.mark.deploy
 def test_deploy_without_calldata():
     """Deploy with complete request data"""
@@ -112,7 +107,8 @@ def test_call_with_complete_request_data():
     """Call with complete request data"""
     req_dict = json.loads(CALL_CONTENT)
     resp = send_call(req_dict)
-    assert_call_resp(resp)
+    resp_dict = json.loads(resp.data.decode("utf-8"))
+    assert resp_dict == { "result": ["0xa"] }
 
 # Error response tests
 def send_transaction_with_requests(req_dict: dict):
@@ -138,7 +134,6 @@ def get_block_number(req_dict: dict):
 
 def get_transaction_trace(transaction_hash:str):
     """Get transaction trace from request dict"""
-    # transactionHash
     return requests.get(
         f"{APP_URL}/feeder_gateway/get_transaction_trace?transactionHash={transaction_hash}"
     )
@@ -167,6 +162,7 @@ def get_state_update(block_hash, block_number):
         f"{APP_URL}/feeder_gateway/get_state_update?blockHash={block_hash}&blockNumber={block_number}"
     )
 
+@pytest.mark.deploy
 @devnet_in_background()
 def test_error_response_deploy_without_calldata():
     """Deploy with incomplete request data"""
@@ -178,6 +174,7 @@ def test_error_response_deploy_without_calldata():
     msg = "Invalid tx:"
     assert msg in json_error_message
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_without_calldata():
     """Call without calldata"""
@@ -189,6 +186,7 @@ def test_error_response_call_without_calldata():
     assert resp.status_code == 400
     assert json_error_message is not None
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_with_negative_block_number():
     """Call with negative block number"""
@@ -198,6 +196,7 @@ def test_error_response_call_with_negative_block_number():
     assert resp.status_code == 500
     assert json_error_message is not None
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_with_invalid_transaction_hash():
     """Call with invalid transaction hash"""
@@ -208,6 +207,7 @@ def test_error_response_call_with_invalid_transaction_hash():
     assert resp.status_code == 500
     assert json_error_message.startswith(msg)
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_with_unavailable_contract():
     """Call with unavailable contract"""
@@ -217,6 +217,7 @@ def test_error_response_call_with_unavailable_contract():
     assert resp.status_code == 500
     assert json_error_message is not None
 
+@pytest.mark.call
 @devnet_in_background()
 def test_error_response_call_with_state_update():
     """Call with unavailable state update"""

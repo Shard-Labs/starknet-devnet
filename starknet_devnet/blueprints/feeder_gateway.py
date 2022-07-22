@@ -4,12 +4,12 @@ Feeder gateway routes.
 
 from flask import request, jsonify, Blueprint, Response
 from marshmallow import ValidationError
+from starkware.starknet.services.api.feeder_gateway.response_objects import BlockTransactionTraces
 from starkware.starknet.services.api.gateway.transaction import InvokeFunction
 from werkzeug.datastructures import MultiDict
 
 from starknet_devnet.state import state
 from starknet_devnet.util import StarknetDevnetException, custom_int, fixed_length_hex
-from .shared import validate_transaction
 
 feeder_gateway = Blueprint("feeder_gateway", __name__, url_prefix="/feeder_gateway")
 
@@ -32,6 +32,18 @@ def _check_block_arguments(block_hash, block_number):
     if block_hash is not None and block_number is not None:
         message = "Ambiguous criteria: only one of (block number, block hash) can be provided."
         raise StarknetDevnetException(message=message, status_code=500)
+
+def _get_block_object(block_hash: str, block_number: int):
+    """Returns the block object"""
+
+    _check_block_arguments(block_hash, block_number)
+
+    if block_hash is not None:
+        block = state.starknet_wrapper.blocks.get_by_hash(block_hash)
+    else:
+        block = state.starknet_wrapper.blocks.get_by_number(block_number)
+
+    return block
 
 @feeder_gateway.route("/is_alive", methods=["GET"])
 def is_alive():
@@ -56,19 +68,39 @@ async def call_contract():
     return jsonify(result_dict)
 
 @feeder_gateway.route("/get_block", methods=["GET"])
-async def get_block():
+def get_block():
     """Endpoint for retrieving a block identified by its hash or number."""
+
     block_hash = request.args.get("blockHash")
     block_number = request.args.get("blockNumber", type=custom_int)
 
-    _check_block_arguments(block_hash, block_number)
-
-    if block_hash is not None:
-        block = state.starknet_wrapper.blocks.get_by_hash(block_hash)
-    else:
-        block = state.starknet_wrapper.blocks.get_by_number(block_number)
+    block = _get_block_object(block_hash=block_hash, block_number=block_number)
 
     return Response(block.dumps(), status=200, mimetype="application/json")
+
+@feeder_gateway.route("/get_block_traces", methods=["GET"])
+def get_block_traces():
+    """Returns the traces of the transactions in the specified block."""
+
+    block_hash = request.args.get("blockHash")
+    block_number = request.args.get("blockNumber", type=custom_int)
+
+    block = _get_block_object(block_hash=block_hash, block_number=block_number)
+
+    traces = []
+    for transaction in block.transaction_receipts:
+        tx_hash = hex(transaction.transaction_hash)
+        trace = state.starknet_wrapper.transactions.get_transaction_trace(tx_hash)
+
+        # expected trace is equal to response of get_transaction, but with the hash property
+        trace_dict = trace.dump()
+        trace_dict["transaction_hash"] = tx_hash
+        traces.append(trace_dict)
+
+    # assert correct structure
+    block_transaction_traces = BlockTransactionTraces.load({ "traces": traces })
+
+    return jsonify(block_transaction_traces.dump())
 
 @feeder_gateway.route("/get_code", methods=["GET"])
 def get_code():
@@ -183,10 +215,7 @@ def get_state_update():
 @feeder_gateway.route("/estimate_fee", methods=["POST"])
 async def estimate_fee():
     """Returns the estimated fee for a transaction."""
-    transaction = validate_transaction(request.data, InvokeFunction)
-    actual_fee = await state.starknet_wrapper.calculate_actual_fee(transaction)
+    transaction = validate_call(request.data)
+    fee_response = await state.starknet_wrapper.calculate_actual_fee(transaction)
 
-    return jsonify({
-        "amount": actual_fee,
-        "unit": "wei"
-    })
+    return jsonify(fee_response)

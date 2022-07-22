@@ -172,7 +172,7 @@ def parse_args():
     )
     parser.add_argument(
         "--gas-price", "-g",
-        type=int,
+        action=NonNegativeAction,
         default=DEFAULT_GAS_PRICE,
         help="Specify the gas price in wei per gas unit; " +
              f"defaults to {DEFAULT_GAS_PRICE:g}"
@@ -265,14 +265,25 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
     Returns roots, deployed contracts and storage diffs between 2 states
     """
     deployed_contracts: List[DeployedContract] = []
+    declared_contracts: List[int] = []
     storage_diffs: Dict[int, List[StorageEntry]] = {}
 
-    for contract_address in current_state.contract_states.keys():
+    for class_hash in current_state.contract_definitions:
+        if class_hash not in previous_state.contract_definitions:
+            declared_contracts.append(
+                int.from_bytes(class_hash, byteorder="big")
+            )
+
+    for contract_address in current_state.contract_states:
         if contract_address not in previous_state.contract_states:
+            class_hash = int.from_bytes(
+                current_state.contract_states[contract_address].state.contract_hash,
+                "big"
+            )
             deployed_contracts.append(
                 DeployedContract(
                     address=contract_address,
-                    class_hash=current_state.contract_states[contract_address].state.contract_hash
+                    class_hash=class_hash
                 )
             )
         else:
@@ -287,7 +298,8 @@ def generate_state_update(previous_state: CarriedState, current_state: CarriedSt
     old_root = previous_state.shared_state.contract_states.root
     state_diff = StateDiff(
         deployed_contracts=deployed_contracts,
-        storage_diffs=storage_diffs,
+        declared_contracts=tuple(declared_contracts),
+        storage_diffs=storage_diffs
     )
 
     return BlockStateUpdate(

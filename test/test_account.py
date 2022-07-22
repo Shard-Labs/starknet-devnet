@@ -3,7 +3,6 @@ Test account functionality.
 """
 from test.settings import APP_URL
 
-import json
 import requests
 import pytest
 
@@ -31,7 +30,7 @@ from .account import (
 
 INVOKE_CONTENT = load_file_content("invoke.json")
 DEPLOY_CONTENT = load_file_content("deploy.json")
-ACCOUNT_ADDRESS = "0x01c396f5ab967921c282c3a300c008fa84069dc72b543ba9405927a9944a0dde"
+ACCOUNT_ADDRESS = "0x056eae9186bb1b937e8552c81b9838b9249d66008e2ab5783cc1dff5617fb19e"
 INVALID_HASH = "0x58d4d4ed7580a7a98ab608883ec9fe722424ce52c19f2f369eeea301f535914"
 SALT = "0x99"
 
@@ -235,36 +234,6 @@ def test_multicall():
     # check if balance is increased
     balance = call("get_balance", deploy_info["address"], abi_path=ABI_PATH)
     assert balance == "100"
-
-def estimate_fee_local(req_dict: dict):
-    """Estimate fee of a given transaction"""
-    return requests.post(
-        f"{APP_URL}/feeder_gateway/estimate_fee",
-        json=req_dict
-    )
-
-@devnet_in_background()
-def test_estimate_fee_in_unknown_address():
-    """Call with unknown invoke function"""
-    req_dict = json.loads(INVOKE_CONTENT)
-    del req_dict["type"]
-    resp = estimate_fee_local(req_dict)
-
-    json_error_message = resp.json()["message"]
-    msg = "Contract with address"
-    assert resp.status_code == 500
-    assert json_error_message.startswith(msg)
-
-@devnet_in_background()
-def test_estimate_fee_with_invalid_data():
-    """Call estimate fee with invalid data on body"""
-    req_dict = json.loads(DEPLOY_CONTENT)
-    resp = estimate_fee_local(req_dict)
-
-    json_error_message = resp.json()["message"]
-    msg = "Invalid tx:"
-    assert resp.status_code == 400
-    assert msg in json_error_message
 
 @pytest.mark.account
 @devnet_in_background(*ACCOUNTS_SEED_DEVNET_ARGS)
