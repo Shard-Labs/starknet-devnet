@@ -907,7 +907,7 @@ def parse_body(body: dict) -> Tuple[Callable, Union[List, dict], int]:
         "estimateFee": estimate_fee,
     }
 
-    method_name = body["method"].split("starknet_")[-1]
+    method_name = body["method"].lstrip("starknet_")
     args: Union[List, dict] = body["params"]
     message_id = body["id"]
 
