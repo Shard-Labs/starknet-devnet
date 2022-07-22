@@ -365,6 +365,8 @@ async def add_declare_transaction(contract_class: RpcContractClass, version: str
     try:
         decompressed_program = decompress_program({"contract_class": contract_class}, False)["contract_class"]
         contract_definition = ContractClass.load(decompressed_program)
+
+        # Replace None with [] in abi key to avoid Missing Abi exception
         contract_definition = dataclasses.replace(contract_definition, abi=[])
     except (StarkException, TypeError, MarshmallowError) as ex:
         raise RpcError(code=50, message="Invalid contract class") from ex
