@@ -137,3 +137,14 @@ async def mint():
 
     new_balance = await FeeToken.get_balance(address)
     return jsonify({"new_balance": new_balance, "unit": "wei", "tx_hash": tx_hash})
+
+@base.route("/create_block", methods=["POST"])
+async def create_block():
+    """Create empyt block"""
+    request_json = request.json or {}
+    #is_lite = request_json.get("lite", False)
+
+    block = await state.starknet_wrapper.create_empty_block()
+
+
+    return Response(block.dumps(), status=200, mimetype="application/json")
