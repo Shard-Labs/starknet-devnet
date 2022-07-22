@@ -4,6 +4,7 @@ Global state singletone
 
 import random
 import sys
+import asyncio
 
 from starkware.crypto.signature.signature import private_to_stark_key
 
@@ -18,6 +19,8 @@ class State():
     def __init__(self):
         self.starknet_wrapper = StarknetWrapper(config=DevnetConfig())
         self.dumper = Dumper(self.starknet_wrapper)
+        asyncio.run(self.starknet_wrapper.initialize())
+        
 
     def __set_starknet_wrapper(self, starknet_wrapper: StarknetWrapper):
         """Sets starknet wrapper and creates new instance of dumper"""
