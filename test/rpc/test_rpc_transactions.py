@@ -8,6 +8,7 @@ from typing import List
 
 from starkware.starknet.definitions import constants
 from starknet_devnet.blueprints.rpc import RpcContractClass, RpcInvokeTransaction
+from test.shared import GENESIS_BLOCK_HASH
 
 from .rpc_utils import rpc_call, get_block_with_transaction, pad_zero
 
@@ -149,7 +150,7 @@ def test_get_transaction_by_block_hash_and_index_raises_on_incorrect_block_hash(
     """
     ex = rpc_call(
         "starknet_getTransactionByBlockHashAndIndex", params={
-            "block_hash": "0x0",
+            "block_hash": GENESIS_BLOCK_HASH,
             "index": 0
         }
     )
