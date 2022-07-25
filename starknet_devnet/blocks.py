@@ -167,7 +167,7 @@ class DevnetBlocks():
         else:
             last_block = self.__get_last_block()
             parent_block_hash = last_block.block_hash
-        
+
         #Fake block number
         block_hash = block_number
 
@@ -177,7 +177,7 @@ class DevnetBlocks():
             state_root=state_root,
             transactions=[],
             timestamp=timestamp,
-            transaction_receipts=None,
+            transaction_receipts=(),
             status=BlockStatus.ACCEPTED_ON_L2,
             gas_price=state.state.block_info.gas_price,
             sequencer_address=state.general_config.sequencer_address,

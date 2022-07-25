@@ -3,7 +3,6 @@ This module introduces `StarknetWrapper`, a wrapper class of
 starkware.starknet.testing.starknet.Starknet.
 """
 import dataclasses
-from .time import progress
 from copy import deepcopy
 from typing import Dict, List, Tuple, Union
 
@@ -24,6 +23,7 @@ from starkware.starknet.services.api.feeder_gateway.response_objects import Tran
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.objects import FunctionInvocation
 
+from .time import progress
 from .account import Account
 from .fee_token import FeeToken
 from .general_config import DEFAULT_GENERAL_CONFIG
@@ -103,7 +103,7 @@ class StarknetWrapper:
     async def __preserve_current_state(self, state: CarriedState):
         self.__current_carried_state = deepcopy(state)
         self.__current_carried_state.shared_state = state.shared_state
-    
+
     async def __init_starknet(self):
         """
         Create and return underlying Starknet instance
