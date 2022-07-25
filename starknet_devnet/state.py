@@ -75,5 +75,6 @@ class State():
             file=sys.stderr
         )
         print()
+        sys.stdout.flush()
 
 state = State()
