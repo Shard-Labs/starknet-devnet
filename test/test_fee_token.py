@@ -20,7 +20,7 @@ def test_fee_token_address():
     """Sends fee token request;"""
     response = requests.get(f"{APP_URL}/fee_token")
     assert response.status_code == 200
-    assert response.json().get("address") == 2774287484619332564597403632816768868845110259953541691709975889937073775752
+    assert response.json().get("address") == "0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488"
     assert response.json().get("symbol") == "ETH"
 
 

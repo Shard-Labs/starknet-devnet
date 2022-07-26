@@ -123,7 +123,7 @@ async def get_fee_token():
     """Get the address of the fee token"""
     fee_token_address = FeeToken.ADDRESS
     symbol = FeeToken.SYMBOL
-    return jsonify({"symbol": symbol, "address": fee_token_address})
+    return jsonify({"symbol": symbol, "address": hex(fee_token_address)})
 
 @base.route("/mint", methods=["POST"])
 async def mint():
