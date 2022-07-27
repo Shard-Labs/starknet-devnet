@@ -27,6 +27,7 @@ from .shared import (
     EXPECTED_SALTY_DEPLOY_ADDRESS,
     EXPECTED_SALTY_DEPLOY_HASH,
     FAILING_CONTRACT_PATH,
+    GENESIS_BLOCK_NUMBER,
     NONEXISTENT_TX_HASH
 )
 
@@ -46,7 +47,7 @@ def test_general_workflow():
     # check block and receipt after deployment
     assert_negative_block_input()
 
-    assert_block(0, deploy_info["tx_hash"])
+    assert_block(GENESIS_BLOCK_NUMBER + 1, deploy_info["tx_hash"])
     assert_receipt(deploy_info["tx_hash"], "test/expected/deploy_receipt.json")
     assert_transaction_receipt_not_received(NONEXISTENT_TX_HASH)
 
@@ -78,7 +79,7 @@ def test_general_workflow():
 
     # check storage, block and receipt after increase
     assert_storage(deploy_info["address"], BALANCE_KEY, "0x1e")
-    assert_block(1, invoke_tx_hash)
+    assert_block(GENESIS_BLOCK_NUMBER + 2, invoke_tx_hash)
     assert_receipt(invoke_tx_hash, "test/expected/invoke_receipt.json")
 
     # check handling complex input

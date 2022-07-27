@@ -35,6 +35,10 @@ def get_ts_from_last_block():
     """Returns the timestamp of the last block"""
     return get_block(parse=True)["timestamp"]
 
+def get_ts_from_first_block():
+    """Returns the timestamp of the first block"""
+    return get_block(block_number=0, parse=True)["timestamp"]
+
 def increase_time(time_s):
     """Increases the block timestamp offset"""
     increase_time_response = requests.post(f"{APP_URL}/increase_time", json={"time": time_s})
@@ -137,7 +141,6 @@ def test_set_time():
 @devnet_in_background("--start-time", str(SET_TIME_ARGUMENT))
 def test_set_time_argument():
     """Test timestamp set time argument"""
-    deploy_ts_contract()
     first_block_ts = get_ts_from_last_block()
 
     assert first_block_ts == SET_TIME_ARGUMENT

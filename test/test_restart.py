@@ -7,7 +7,7 @@ import requests
 
 from .settings import APP_URL
 from .util import devnet_in_background, deploy, assert_transaction_not_received, assert_tx_status, call, invoke
-from .shared import CONTRACT_PATH, ABI_PATH
+from .shared import CONTRACT_PATH, ABI_PATH, GENESIS_BLOCK_HASH
 
 def restart():
     """Get restart response"""
@@ -72,9 +72,10 @@ def test_state_update():
     state_update = get_state_update()
 
     assert state_update is not None
+    assert state_update["block_hash"] != GENESIS_BLOCK_HASH
 
     restart()
 
     state_update = get_state_update()
 
-    assert state_update is None
+    assert state_update["block_hash"] == GENESIS_BLOCK_HASH

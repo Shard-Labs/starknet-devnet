@@ -8,7 +8,7 @@ from starkware.starknet.services.api.feeder_gateway.response_objects import Bloc
 
 from .util import deploy, get_transaction_receipt, invoke, load_json_from_path, devnet_in_background
 from .settings import APP_URL
-from .shared import ABI_PATH, CONTRACT_PATH, SIGNATURE, NONEXISTENT_TX_HASH
+from .shared import ABI_PATH, CONTRACT_PATH, SIGNATURE, NONEXISTENT_TX_HASH, GENESIS_BLOCK_NUMBER
 
 def get_transaction_trace_response(tx_hash=None):
     """Get transaction trace response"""
@@ -122,5 +122,5 @@ def test_get_block_traces():
     block_hash = tx_receipt["block_hash"]
 
     assert_get_block_traces_response({ "blockHash": block_hash }, tx_hash)
-    assert_get_block_traces_response({ "blockNumber": 0 }, tx_hash)
+    assert_get_block_traces_response({ "blockNumber": GENESIS_BLOCK_NUMBER + 1 }, tx_hash)
     assert_get_block_traces_response({}, tx_hash) # default behavior - no params provided

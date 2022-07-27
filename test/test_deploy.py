@@ -11,7 +11,7 @@ from starkware.starknet.services.api.gateway.transaction import Deploy
 from starkware.starknet.services.api.feeder_gateway.response_objects import TransactionStatus
 
 from starknet_devnet.starknet_wrapper import StarknetWrapper, DevnetConfig
-from .shared import CONTRACT_PATH
+from .shared import CONTRACT_PATH, GENESIS_BLOCK_NUMBER
 
 def get_contract_class():
     """Get the contract class from the contract.json file."""
@@ -49,7 +49,7 @@ async def test_deploy():
 
     assert contract_address == expected_contract_address
 
-    state = await devnet.get_state()
+    state = devnet.get_state()
 
     internal_tx = InternalDeploy.from_external(
         external_tx=deploy_transaction,
@@ -81,4 +81,4 @@ async def test_deploy_lite():
     tx_status = devnet.transactions.get_transaction_status(hex(tx_hash))
 
     assert tx_status["tx_status"] == TransactionStatus.ACCEPTED_ON_L2.name
-    assert tx_status["block_hash"] == 0
+    assert tx_status["block_hash"] == GENESIS_BLOCK_NUMBER + 1

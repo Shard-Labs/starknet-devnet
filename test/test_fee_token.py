@@ -2,6 +2,7 @@
 
 from test.settings import APP_URL
 from test.test_account import deploy_empty_contract, execute, assert_tx_status, get_transaction_receipt, get_account_balance
+from test.shared import GENESIS_BLOCK_NUMBER
 import json
 import pytest
 import requests
@@ -132,7 +133,7 @@ def test_mint():
     get_block(block_number="latest")
     response = requests.get(f"{APP_URL}/feeder_gateway/get_block?blockNumber=latest")
     assert response.status_code == 200
-    assert response.json().get("block_number") == 0
+    assert response.json().get("block_number") == GENESIS_BLOCK_NUMBER + 1
     assert int(response.json().get("transactions")[0].get("calldata")[1], 16) == 50_000
 
 @pytest.mark.fee_token
@@ -147,10 +148,6 @@ def test_mint_lite():
     assert response.get("new_balance") == 50000
     assert response.get("unit") == "wei"
     assert response.get("tx_hash") is None
-
-    response = requests.get(f"{APP_URL}/feeder_gateway/get_block?blockNumber=latest")
-    assert response.status_code == 500
-    assert response.json().get("message") == "Requested the latest block, but there are no blocks so far."
 
 @pytest.mark.fee_token
 @devnet_in_background(

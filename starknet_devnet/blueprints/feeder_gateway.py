@@ -45,6 +45,21 @@ def _get_block_object(block_hash: str, block_number: int):
 
     return block
 
+def _get_block_transaction_traces(block):
+    traces = []
+    if block.transaction_receipts:
+        for transaction in block.transaction_receipts:
+            tx_hash = hex(transaction.transaction_hash)
+            trace = state.starknet_wrapper.transactions.get_transaction_trace(tx_hash)
+
+            # expected trace is equal to response of get_transaction, but with the hash property
+            trace_dict = trace.dump()
+            trace_dict["transaction_hash"] = tx_hash
+            traces.append(trace_dict)
+
+    # assert correct structure
+    return BlockTransactionTraces.load({ "traces": traces })
+
 @feeder_gateway.route("/is_alive", methods=["GET"])
 def is_alive():
     """Health check endpoint."""
@@ -86,19 +101,7 @@ def get_block_traces():
     block_number = request.args.get("blockNumber", type=custom_int)
 
     block = _get_block_object(block_hash=block_hash, block_number=block_number)
-
-    traces = []
-    for transaction in block.transaction_receipts:
-        tx_hash = hex(transaction.transaction_hash)
-        trace = state.starknet_wrapper.transactions.get_transaction_trace(tx_hash)
-
-        # expected trace is equal to response of get_transaction, but with the hash property
-        trace_dict = trace.dump()
-        trace_dict["transaction_hash"] = tx_hash
-        traces.append(trace_dict)
-
-    # assert correct structure
-    block_transaction_traces = BlockTransactionTraces.load({ "traces": traces })
+    block_transaction_traces = _get_block_transaction_traces(block)
 
     return jsonify(block_transaction_traces.dump())
 

@@ -30,6 +30,33 @@ def send_estimate_fee_with_requests(req_dict: dict):
         json=req_dict
     )
 
+def common_estimate_response(response):
+    """expected response from estimate_fee request"""
+    assert response.status_code == 200
+    response_parsed = response.json()
+
+    assert response_parsed.get("gas_price") == GAS_PRICE
+    assert isinstance(response_parsed.get("gas_usage"), int)
+    assert response_parsed.get("overall_fee") == response_parsed.get("gas_price") * response_parsed.get("gas_usage")
+    assert response_parsed.get("unit") == "wei"
+    assert response_parsed.get("warning") is None
+
+@devnet_in_background()
+def test_estimate_fee_with_genesis_block():
+    """Call without transaction, expect pass with gas_price zero"""
+    response = send_estimate_fee_with_requests({
+        "entry_point_selector": "0x2f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354",
+        "calldata": [
+            "1786654640273905855542517570545751199272449814774211541121677632577420730552",
+            "1000000000000000000000",
+            "0"
+        ],
+        "signature": [],
+        "contract_address": "0x62230ea046a9a5fbc261ac77d03c8d41e5d442db2284587570ab46455fd2488"
+    })
+
+    common_estimate_response(response)
+
 @pytest.mark.estimate_fee
 @devnet_in_background()
 def test_estimate_fee_in_unknown_address():
@@ -71,10 +98,4 @@ def test_estimate_fee_with_complete_request_data():
         "entry_point_selector": "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320"
     })
 
-    assert response.status_code == 200
-    response_parsed = response.json()
-
-    assert response_parsed["gas_price"] == GAS_PRICE
-    assert isinstance(response_parsed["gas_usage"], int)
-    assert response_parsed["overall_fee"] == response_parsed["gas_price"] * response_parsed["gas_usage"]
-    assert response_parsed["unit"] == "wei"
+    common_estimate_response(response)

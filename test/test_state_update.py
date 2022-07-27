@@ -9,10 +9,10 @@ from starkware.starknet.core.os.class_hash import compute_class_hash
 from starkware.starknet.public.abi import get_selector_from_name
 
 from .util import (
-    deploy, invoke, load_contract_class, devnet_in_background, get_block, assert_equal
+    deploy, invoke, load_contract_class, devnet_in_background, get_block, assert_equal,
 )
 from .settings import APP_URL
-from .shared import STORAGE_CONTRACT_PATH, STORAGE_ABI_PATH
+from .shared import GENESIS_BLOCK_HASH, STORAGE_CONTRACT_PATH, STORAGE_ABI_PATH, GENESIS_BLOCK_NUMBER
 
 STORAGE_KEY = hex(get_selector_from_name("storage"))
 
@@ -55,7 +55,7 @@ def test_initial_state_update():
     """Test initial state update"""
     state_update = get_state_update()
 
-    assert_equal(state_update, None)
+    assert_equal(state_update["block_hash"], GENESIS_BLOCK_HASH)
 
 @pytest.mark.state_update
 @devnet_in_background()
@@ -141,8 +141,8 @@ def test_block_number():
     deploy_empty_contract()
 
     new_state_update = get_state_update()
-    first_block_state_update = get_state_update(block_number=0)
-    second_block_state_update = get_state_update(block_number=1)
+    first_block_state_update = get_state_update(block_number=GENESIS_BLOCK_NUMBER + 1)
+    second_block_state_update = get_state_update(block_number=GENESIS_BLOCK_NUMBER + 2)
 
     assert_equal(first_block_state_update, initial_state_update)
     assert_equal(second_block_state_update, new_state_update)

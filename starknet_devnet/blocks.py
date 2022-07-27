@@ -152,3 +152,50 @@ class DevnetBlocks():
         self.__state_updates[block_number] = state_update
 
         return block
+
+    def generate_empty(
+        self, state: StarknetState, state_root: bytes, state_update = None
+    ) -> StarknetBlock:
+        """
+        Generate block without transaction
+        """
+        block_number = self.get_number_of_blocks()
+        timestamp = state.state.block_info.block_timestamp
+
+        if block_number == 0:
+            parent_block_hash = 0
+        else:
+            last_block = self.__get_last_block()
+            parent_block_hash = last_block.block_hash
+
+        #Fake block number
+        block_hash = block_number
+
+        block = StarknetBlock.create(
+            block_hash=block_hash,
+            block_number=block_number,
+            state_root=state_root,
+            transactions=[],
+            timestamp=timestamp,
+            transaction_receipts=(),
+            status=BlockStatus.ACCEPTED_ON_L2,
+            gas_price=state.state.block_info.gas_price,
+            sequencer_address=state.general_config.sequencer_address,
+            parent_block_hash=parent_block_hash,
+            starknet_version=CAIRO_LANG_VERSION
+        )
+
+        self.__num2block[block_number] = block
+        self.__hash2num[block_hash] = block_number
+
+        if state_update is not None:
+            state_update = BlockStateUpdate(
+                block_hash=block_hash,
+                old_root=state_update.old_root,
+                new_root=state_update.new_root,
+                state_diff=state_update.state_diff,
+            )
+
+        self.__state_updates[block_number] = state_update
+
+        return block

@@ -15,7 +15,8 @@ from .util import (
 
 from .shared import (
     ABI_PATH,
-    CONTRACT_PATH
+    CONTRACT_PATH,
+    GENESIS_BLOCK_NUMBER
 )
 
 NONEXISTENT_TX_HASH = "0x12345678910111213"
@@ -34,8 +35,8 @@ def test_general_workflow_lite():
     # check block and receipt after deployment
     assert_negative_block_input()
 
-    assert_block(0, deploy_info["tx_hash"])
-    assert_block_hash(0, "0x0")
+    assert_block(GENESIS_BLOCK_NUMBER + 1, deploy_info["tx_hash"])
+    assert_block_hash(GENESIS_BLOCK_NUMBER + 1, hex(GENESIS_BLOCK_NUMBER + 1))
 
     # increase and assert balance
     invoke_tx_hash = invoke(
@@ -51,5 +52,5 @@ def test_general_workflow_lite():
     )
     assert_equal(value, "30", "Invoke+call failed!")
 
-    assert_block(1, invoke_tx_hash)
-    assert_block_hash(1, "0x1")
+    assert_block(GENESIS_BLOCK_NUMBER + 2, invoke_tx_hash)
+    assert_block_hash(GENESIS_BLOCK_NUMBER + 2, hex(GENESIS_BLOCK_NUMBER + 2))

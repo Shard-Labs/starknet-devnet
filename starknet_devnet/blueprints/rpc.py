@@ -285,7 +285,7 @@ async def call(contract_address: str, entry_point_selector: str, calldata: list,
         raise RpcError(code=-1, message=ex.message) from ex
 
 
-async def estimate_fee():
+async def estimate_fee(request_body: dict):
     """
     Get the estimate fee for the transaction
     """
@@ -304,7 +304,7 @@ async def chain_id() -> str:
     """
     Return the currently configured StarkNet chain id
     """
-    devnet_state = await state.starknet_wrapper.get_state()
+    devnet_state = state.starknet_wrapper.get_state()
     config = devnet_state.general_config
     chain: int = config.chain_id.value
     return hex(chain)
@@ -526,7 +526,7 @@ async def rpc_block(block: StarknetBlock, requested_scope: Optional[str] = "TXN_
     }
     transactions: list = await mapping[requested_scope]()
 
-    devnet_state = await state.starknet_wrapper.get_state()
+    devnet_state = state.starknet_wrapper.get_state()
     config = devnet_state.general_config
 
     block: RpcBlock = {

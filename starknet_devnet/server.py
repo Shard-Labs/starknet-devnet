@@ -4,6 +4,7 @@ A server exposing Starknet functionalities as API endpoints.
 
 from pickle import UnpicklingError
 import sys
+import asyncio
 
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -100,6 +101,8 @@ def main():
     enable_lite_mode(args)
     set_start_time(args)
     set_gas_price(args)
+
+    asyncio.run(state.starknet_wrapper.initialize())
 
     try:
         meinheld.listen((args.host, args.port))
