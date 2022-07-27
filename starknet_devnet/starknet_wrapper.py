@@ -23,7 +23,6 @@ from starkware.starknet.services.api.feeder_gateway.response_objects import Tran
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.objects import FunctionInvocation
 
-from .time import progress
 from .account import Account
 from .fee_token import FeeToken
 from .general_config import DEFAULT_GENERAL_CONFIG
@@ -86,12 +85,9 @@ class StarknetWrapper:
 
             await self.__deploy_fee_token()
             await self.__deploy_accounts()
-            progress(10)
             await self.__preserve_current_state(starknet.state.state)
-            progress(5)
             await self.create_empty_block()
             self.__initialized = True
-            progress(5, True)
 
     async def create_empty_block(self):
         """create empty block"""

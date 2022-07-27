@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from typing import List
 
+from test.shared import INCORECT_GENESIS_BLOCK_HASH
 from starkware.starknet.definitions import constants
 from starknet_devnet.blueprints.rpc import RpcContractClass, RpcInvokeTransaction
-from test.shared import INCORECT_GENESIS_BLOCK_HASH
 
 from .rpc_utils import rpc_call, get_block_with_transaction, pad_zero
 

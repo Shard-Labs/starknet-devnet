@@ -2,8 +2,8 @@
 Tests RPC blocks
 """
 
-from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
 from test.shared import GENESIS_BLOCK_NUMBER, INCORECT_GENESIS_BLOCK_HASH
+from starknet_devnet.general_config import DEFAULT_GENERAL_CONFIG
 
 from .rpc_utils import rpc_call, get_block_with_transaction, pad_zero, gateway_call
 
