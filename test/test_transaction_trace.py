@@ -122,5 +122,5 @@ def test_get_block_traces():
     block_hash = tx_receipt["block_hash"]
 
     assert_get_block_traces_response({ "blockHash": block_hash }, tx_hash)
-    assert_get_block_traces_response({ "blockNumber": GENESIS_BLOCK_NUMBER }, tx_hash)
+    assert_get_block_traces_response({ "blockNumber": GENESIS_BLOCK_NUMBER + 1 }, tx_hash)
     assert_get_block_traces_response({}, tx_hash) # default behavior - no params provided

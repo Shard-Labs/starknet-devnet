@@ -10,7 +10,7 @@ from .util import (
     call, deploy, invoke
 )
 
-from .shared import ARTIFACTS_PATH, SIGNATURE
+from .shared import ARTIFACTS_PATH, GENESIS_BLOCK_NUMBER, SIGNATURE
 
 CONTRACT_PATH = f"{ARTIFACTS_PATH}/auth_contract.cairo/auth_contract.json"
 ABI_PATH = f"{ARTIFACTS_PATH}/auth_contract.cairo/auth_contract_abi.json"
@@ -37,7 +37,7 @@ def test_general_workflow_auth():
     assert_transaction(deploy_info["tx_hash"], "ACCEPTED_ON_L2")
 
     # check block and receipt after deployment
-    assert_block(0, deploy_info["tx_hash"])
+    assert_block(GENESIS_BLOCK_NUMBER + 1, deploy_info["tx_hash"])
     assert_receipt(deploy_info["tx_hash"], "test/expected/deploy_receipt_auth.json")
 
 

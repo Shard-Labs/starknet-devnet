@@ -182,7 +182,7 @@ def test_get_block_transaction_count_by_number(deploy_info):
     """
     Get count of transactions in block by block number
     """
-    block_number: int = GENESIS_BLOCK_NUMBER
+    block_number: int = GENESIS_BLOCK_NUMBER + 1
 
     resp = rpc_call(
         "starknet_getBlockTransactionCountByNumber", params={"block_number": block_number}

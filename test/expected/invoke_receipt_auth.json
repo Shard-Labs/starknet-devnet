@@ -1,7 +1,7 @@
 {
     "actual_fee": "0x0",
-    "block_hash": "0x1",
-    "block_number": 1,
+    "block_hash": "0x2",
+    "block_number": 2,
     "events": [],
     "execution_resources": {
         "builtin_instance_counter": {
