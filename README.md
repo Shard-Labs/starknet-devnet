@@ -315,6 +315,15 @@ docker run \
 
 A local block explorer (Voyager), as noted [here](https://voyager.online/local-version/), apparently cannot be set up to work with Devnet. Read more in [this issue](https://github.com/Shard-Labs/starknet-devnet/issues/60).
 
+## Block
+
+Devnet start with genesis block.
+You can create empty block without transaction.
+
+```
+GET /create_block
+```
+
 ## Lite mode
 
 To improve Devnet performance, instead of calculating the actual hash of deployment transactions and blocks, sequential numbering can be used (0x0, 0x1, 0x2, ...).

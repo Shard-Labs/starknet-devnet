@@ -7,8 +7,9 @@ import requests
 import pytest
 
 from starknet_devnet.server import app
-from .util import devnet_in_background, load_file_content
+from .util import devnet_in_background, load_file_content, deploy
 from .settings import APP_URL
+from .shared import GENESIS_BLOCK_HASH, GENESIS_BLOCK_NUMBER, STORAGE_CONTRACT_PATH
 
 DEPLOY_CONTENT = load_file_content("deploy.json")
 INVOKE_CONTENT = load_file_content("invoke.json")
@@ -248,3 +249,22 @@ def test_error_response_class_by_hash():
     assert resp.status_code == 500
     expected_message = f"Class with hash {INVALID_HASH} is not declared"
     assert expected_message == error_message
+
+@devnet_in_background()
+def test_create_block_endpoint():
+    """test empty block creationn"""
+    resp = get_block_number({"blockNumber": "latest"}).json()
+    assert resp.get('block_hash') == GENESIS_BLOCK_HASH
+    assert resp.get('block_number') == GENESIS_BLOCK_NUMBER
+
+    resp = requests.get(f"{APP_URL}/create_block").json()
+    assert resp.get('block_number') == GENESIS_BLOCK_NUMBER + 1
+    assert resp.get('block_hash') == hex(GENESIS_BLOCK_NUMBER + 1)
+
+    deploy(STORAGE_CONTRACT_PATH)
+    resp = get_block_number({"blockNumber": "latest"}).json()
+    assert resp.get('block_number') == GENESIS_BLOCK_NUMBER + 2
+
+    resp = requests.get(f"{APP_URL}/create_block").json()
+    assert resp.get('block_number') == GENESIS_BLOCK_NUMBER + 3
+    assert resp.get('block_hash') == hex(GENESIS_BLOCK_NUMBER + 3)
